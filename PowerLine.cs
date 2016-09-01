@@ -10,11 +10,11 @@ namespace PowerLine
 {
     public static class AnsiHelper
     {
-        public static string GetCode(this ConsoleColor? color, bool background = false)
+        public static string GetCode(this ConsoleColor? color, bool forBackground = false)
         {
             string colorCode = color == null ? "Clear" : color.ToString();
 
-            return background ? Background[colorCode] : Foreground[colorCode];
+            return forBackground ? Background[colorCode] : Foreground[colorCode];
 
         }
         public static Dictionary<string, string> Foreground = new Dictionary<string, string>
@@ -69,6 +69,15 @@ namespace PowerLine
 
     public class Block
     {
+        public static string LeftCap = "\ue0b0"; // right-pointing arrow
+        public static string RightCap = "\ue0b2"; // left-pointing arrow
+        public static string LeftSep = "\ue0b1"; // left open >
+        public static string RightSep = "\ue0b3"; // right open <
+        public static string Branch = "\ue0a0"; // Branch symbol
+        public static string LOCK = "\ue0a2"; // Padlock
+        public static string GEAR = "\u26ef"; // The settings icon, I use it for debug
+        public static string POWER = "\u26a1"; // The Power lightning-bolt icon
+
         public ConsoleColor? BackgroundColor { get; set; }
         public ConsoleColor? ForegroundColor { get; set; }
 
@@ -196,7 +205,7 @@ namespace PowerLine
         }
     }
 
-    public static class Cachet
+    public static class Cacher
     {
         public static BlockCache Cache(this Block block)
         {
@@ -206,15 +215,6 @@ namespace PowerLine
 
     public class Line : List<Block>
     {
-        public static string LeftCap = "\ue0b0"; // right-pointing arrow
-        public static string RightCap = "\ue0b2"; // left-pointing arrow
-        public static string LeftSep = "\ue0b1"; // left open >
-        public static string RightSep = "\ue0b3"; // right open <
-        public static string Branch = "\ue0a0"; // Branch symbol
-        public static string LOCK = "\ue0a2"; // Padlock
-        public static string GEAR = "\u26ef"; // The settings icon, I use it for debug
-        public static string POWER = "\u26a1"; // The Power lightning-bolt icon
-
         public Line() { }
 
         public Line(params Block[] blocks) : base(blocks) { }
@@ -252,7 +252,7 @@ namespace PowerLine
                     if (l > 0 && !BlockCache.Prompt.Equals(ValidBlocks[l - 1]))
                     {
                         // Use the Background of the previous block as the foreground
-                        output.Append(AnsiHelper.WriteAnsi(ValidBlocks[l - 1].BackgroundColor, null, Line.LeftCap, true));
+                        output.Append(AnsiHelper.WriteAnsi(ValidBlocks[l - 1].BackgroundColor, null, Block.LeftCap, true));
                     }
 
                     output.Append(AnsiHelper.EscapeCodes.ESC + space + "G");
@@ -260,7 +260,7 @@ namespace PowerLine
                     if (l < ValidBlocks.Length)
                     {
                         // the right cap uses the background of the next block as it's foreground
-                        output.Append(AnsiHelper.WriteAnsi(ValidBlocks[l + 1].BackgroundColor, null, Line.RightCap));
+                        output.Append(AnsiHelper.WriteAnsi(ValidBlocks[l + 1].BackgroundColor, null, Block.RightCap));
                     }
                 }
                 else if (BlockCache.Prompt.Equals(block))
@@ -283,17 +283,17 @@ namespace PowerLine
                         // if the next block is the sambe background color, use a >
                         if (block.BackgroundColor == ValidBlocks[l + 1].BackgroundColor)
                         {
-                            output.Append(rightLength > 0 ? Line.RightSep : Line.LeftSep);
+                            output.Append(rightLength > 0 ? Block.RightSep : Block.LeftSep);
                         }
                         else
                         {
                             if (rightLength > 0)
                             {
-                                output.Append(AnsiHelper.WriteAnsi(ValidBlocks[l + 1].BackgroundColor, block.BackgroundColor, Line.RightCap));
+                                output.Append(AnsiHelper.WriteAnsi(ValidBlocks[l + 1].BackgroundColor, block.BackgroundColor, Block.RightCap));
                             }
                             else
                             {
-                                output.Append(AnsiHelper.WriteAnsi(block.BackgroundColor, ValidBlocks[l + 1].BackgroundColor, Line.LeftCap));
+                                output.Append(AnsiHelper.WriteAnsi(block.BackgroundColor, ValidBlocks[l + 1].BackgroundColor, Block.LeftCap));
                             }
                         }
                     }
@@ -303,7 +303,7 @@ namespace PowerLine
             // Output a cap on the left if we didn't already
             if (rightLength == 0 && leftLength > 0)
             {
-                output.Append(AnsiHelper.WriteAnsi(ValidBlocks.Last().BackgroundColor, null, Line.LeftCap, true));
+                output.Append(AnsiHelper.WriteAnsi(ValidBlocks.Last().BackgroundColor, null, Block.LeftCap, true));
             }
             // clear the end of each line in case it's not part of a prompt.
             output.Append(AnsiHelper.Foreground["Clear"]);

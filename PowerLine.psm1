@@ -4,23 +4,14 @@ using namespace System.Collections.Generic
 Add-Type -Path $PSScriptRoot/PowerLine.cs
 
 
-if(!(Test-Path Variable:Global:PowerLinePrompt)) {
-    $PromptLine = [PowerLine.Line]::New(
-        @{ bg = "blue";     fg = "white"; text = { $MyInvocation.HistoryId } },
-        @{ bg = "cyan";     fg = "white"; text = { "$([PowerLine.Line]::Gear)" * $NestedPromptLevel } },
-        @{ bg = "darkblue"; fg = "white"; text = { $pwd.Drive.Name } },
-        @{ bg = "darkblue"; fg = "white"; text = { Split-Path $pwd -leaf } }
-    )
+if(!$PowerLinePrompt) {
+    [PowerLine.Prompt]$Script:PowerLinePrompt = @(,[PowerLine.Line]::New(
+        @{ bg = "Cyan";     fg = "White"; text = { $MyInvocation.HistoryId } },
+        @{ bg = "DarkBlue"; fg = "White"; text = { $pwd } }
+    ))
     # Get-Location -Stack doesn't work when we define the scriptblock in the module -- not sure why
     #    [PowerLine.Block]@{ bg = "cyan";     fg = "white"; text = { if($pushd = (Get-Location -Stack).count) { "»" + $pushd } } }
-    $global:PowerLinePrompt = [PowerLine.Prompt]::new($PromptLine)
 }
-
-# # Add calculated values for the "Default" colors
-# [PowerLine.Block]::EscapeCodes.fg.Default = [PowerLine.Block]::EscapeCodes.fg."$($Host.UI.RawUI.ForegroundColor)"
-# [PowerLine.Block]::EscapeCodes.fg.Background = [PowerLine.Block]::EscapeCodes.fg."$($Host.UI.RawUI.BackgroundColor)"
-# [PowerLine.Block]::EscapeCodes.bg.Default = [PowerLine.Block]::EscapeCodes.bg."$($Host.UI.RawUI.BackgroundColor)"
-
 
 function Get-Elapsed {
    [CmdletBinding()]
@@ -70,4 +61,4 @@ function Set-PowerLinePrompt {
     }
 }
 
-Update-TypeData -TypeName PowerLine.Block -DefaultDisplayPropertySet "BackgroundColor", "ForegroundColor", "Content"
+Export-ModuleMember -Function Set-PowerLinePrompt, Get-Elapsed -Variable PowerLinePrompt
