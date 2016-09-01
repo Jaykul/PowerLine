@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Types>
+   <Type>
+      <Name>PowerLine.Block</Name>
+      <Members>
+         <MemberSet>
+            <Name>StandardMembers</Name>
+            <Members>
+               <PropertySet>
+                  <Name>DefaultDisplayPropertySet</Name>
+                  <ReferencedProperties>
+                     <Name>BackgroundColor</Name>
+                     <Name>ForegroundColor</Name>
+                     <Name>Content</Name>
+                  </ReferencedProperties>
+               </PropertySet>
+            </Members>
+         </MemberSet>
+      </Members>
+   </Type>
+</Types>

@@ -22,7 +22,7 @@ CompanyName = 'HuddledMasses.org'
 Copyright = '(c) 2016 Joel Bennett. All rights reserved.'
 
 # Description of the functionality provided by this module
-# Description = ''
+Description = 'Classes for richer output and prompts'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.0.0'
