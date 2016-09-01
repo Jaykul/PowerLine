@@ -15,6 +15,7 @@ if(!(Test-Path Variable:Global:PowerLinePrompt)) {
     #    [PowerLine.Block]@{ bg = "cyan";     fg = "white"; text = { if($pushd = (Get-Location -Stack).count) { "»" + $pushd } } }
     $global:PowerLinePrompt = [PowerLine.Prompt]::new($PromptLine)
 }
+
 # # Add calculated values for the "Default" colors
 # [PowerLine.Block]::EscapeCodes.fg.Default = [PowerLine.Block]::EscapeCodes.fg."$($Host.UI.RawUI.ForegroundColor)"
 # [PowerLine.Block]::EscapeCodes.fg.Background = [PowerLine.Block]::EscapeCodes.fg."$($Host.UI.RawUI.BackgroundColor)"
@@ -37,6 +38,13 @@ function Get-Elapsed {
 }
 
 function Set-PowerLinePrompt {
+    if($null -eq $script:OldPrompt) {
+        $script:OldPrompt = $function:global:prompt
+        $MyInvocation.MyCommand.Module.OnRemove = {
+            $function:global:prompt = $script:OldPrompt
+        }
+    }
+
     $function:global:prompt =  {
 
         # FIRST, make a note if there was an error in the previous command
@@ -59,7 +67,6 @@ function Set-PowerLinePrompt {
         } else {
             "> "
         }
-
     }
 }
 
