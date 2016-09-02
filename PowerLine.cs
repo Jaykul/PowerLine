@@ -43,19 +43,26 @@ namespace PowerLine
                 {"Gray",        "\u001B[47m"}, {"White",    "\u001B[107m"},
             };
 
-        public static string WriteAnsi(ConsoleColor? foreground, ConsoleColor? background, object value, bool clear = false)
+
+        public static string WriteAnsi(ConsoleColor? foreground, ConsoleColor? background, string value, bool clear = false)
         {
             var output = new StringBuilder();
 
             output.Append(background.GetCode(true));
             output.Append(foreground.GetCode());
-            output.Append(LanguagePrimitives.ConvertTo(value, typeof(string)));
+
+            output.Append(value);
             if (clear)
             {
                 output.Append(AnsiHelper.Background["Clear"]);
                 output.Append(AnsiHelper.Foreground["Clear"]);
             }
             return output.ToString();
+        }
+
+        public static string GetString(object @object)
+        {
+            return (string)LanguagePrimitives.ConvertTo(@object is ScriptBlock ? ((ScriptBlock)@object).Invoke() : @object, typeof(string));
         }
 
         public struct EscapeCodes
@@ -81,26 +88,8 @@ namespace PowerLine
         public ConsoleColor? BackgroundColor { get; set; }
         public ConsoleColor? ForegroundColor { get; set; }
 
-        private object _content;
+        public object Object { get; set; }
 
-        public object Content
-        {
-            get
-            {
-                if (_content is ScriptBlock)
-                {
-                    return ((ScriptBlock)_content).Invoke();
-                }
-                else
-                {
-                    return _content;
-                }
-            }
-            set
-            {
-                _content = value;
-            }
-        }
         public bool Clear { get; set; }
 
         public Block() { }
@@ -110,7 +99,7 @@ namespace PowerLine
         {
             BackgroundColor = block.BackgroundColor;
             ForegroundColor = block.ForegroundColor;
-            Content = block.Content;
+            Object = block.Object;
         }
 
         public Block(IDictionary values)
@@ -128,7 +117,7 @@ namespace PowerLine
                 }
                 else if (Regex.IsMatch("text", pattern) || Regex.IsMatch("Content", pattern))
                 {
-                    Content = values[key];
+                    Object = values[key];
                 }
                 else if (Regex.IsMatch("Clear", pattern))
                 {
@@ -141,9 +130,79 @@ namespace PowerLine
             }
         }
 
+        /// <summary>
+        /// Get the Object rendered to text.
+        /// With special handling for ScriptBlocks and Blocks, and ScriptBlocks which output Blocks...
+        /// </summary>
+        /// <returns></returns>
+        public string GetObjectText()
+        {
+            object value = Object;
+
+            if (Object is ScriptBlock)
+            {
+                value = ((ScriptBlock)Object).Invoke();
+            }
+
+            if (Object is IEnumerable<ScriptBlock>)
+            {
+                value = ((IEnumerable<ScriptBlock>)Object)
+                            .SelectMany(block => block.Invoke()
+                                .Select(pso => pso.BaseObject))
+                            .Select(o => o is Block ? ((Block)o).GetObjectText() : o);
+            }
+
+            if (value is Block)
+            {
+                value = ((Block)value).GetObjectText();
+            }
+
+            if (value is IEnumerable<Block>)
+            {
+                value = ((IEnumerable<Block>)value).Select(block => block.GetObjectText());
+            }
+
+            if (value is IEnumerable<object>)
+            {
+                value = ((IEnumerable<object>)value).Select(o => o is Block ? ((Block)o).GetObjectText() : o);
+            }
+
+            return (string)LanguagePrimitives.ConvertTo(value, typeof(string));
+        }
+
         public override string ToString()
         {
-            return AnsiHelper.WriteAnsi(ForegroundColor, BackgroundColor, Content, Clear);
+            object value = Object;
+            string text = null;
+
+            if (Object is ScriptBlock)
+            {
+                value = ((ScriptBlock)Object).Invoke();
+            }
+            if (value is Block)
+            {
+                return value.ToString();
+            }
+
+            if (Object is IEnumerable<ScriptBlock>)
+            {
+                text = AnsiHelper.GetString(((IEnumerable<ScriptBlock>)Object)
+                            .SelectMany(block => block.Invoke()
+                                .Select(pso => pso.BaseObject))
+                            .Select(o => o is Block ? ((Block)o).ToString() : AnsiHelper.GetString(o)));
+            }
+
+            if (value is IEnumerable<Block>)
+            {
+                text = AnsiHelper.GetString(((IEnumerable<Block>)value).Select(block => block.ToString()));
+            }
+
+            if (value is IEnumerable<object>)
+            {
+                text = AnsiHelper.GetString(((IEnumerable<object>)value).Select(o => o is Block ? ((Block)o).ToString() : AnsiHelper.GetString(o)));
+            }
+
+            return AnsiHelper.WriteAnsi(ForegroundColor, BackgroundColor, text ?? GetObjectText(), Clear);
         }
 
         // override object.Equals
@@ -158,36 +217,37 @@ namespace PowerLine
             var other = obj as Block;
 
             // Console.WriteLine("Is " + GetType().FullName + " '" + Content + "' == " + obj.GetType().FullName + " '" + other.Content + "'");
-            return Content == other.Content && ForegroundColor == other.ForegroundColor && BackgroundColor == other.BackgroundColor;
+            return Object == other.Object && ForegroundColor == other.ForegroundColor && BackgroundColor == other.BackgroundColor;
         }
 
         // override object.GetHashCode
         public override int GetHashCode()
         {
-            return Content.GetHashCode() + BackgroundColor.GetHashCode() + ForegroundColor.GetHashCode();
+            return Object.GetHashCode() + BackgroundColor.GetHashCode() + ForegroundColor.GetHashCode();
         }
     }
 
     public class BlockCache : Block
     {
-        private string _content;
-        new public string Content
+        private string _text;
+        new public string Object
         {
             get
             {
-                return _content;
+                return _text ?? GetObjectText();
             }
             set
             {
-                _content = value;
-                base.Content = value;
-                Length = _content.Length;
+                _text = value;
+                base.Object = value;
+                Length = _text.Length;
             }
         }
+
         public int Length { get; private set; }
 
-        public static BlockCache Column = new BlockCache() { Content = "\t" };
-        public static BlockCache Prompt = new BlockCache() { Content = AnsiHelper.EscapeCodes.Store };
+        public static BlockCache Column = new BlockCache() { Object = "\t" };
+        public static BlockCache Prompt = new BlockCache() { Object = AnsiHelper.EscapeCodes.Store };
 
         public BlockCache() { }
 
@@ -195,13 +255,13 @@ namespace PowerLine
         {
             BackgroundColor = block.BackgroundColor;
             ForegroundColor = block.ForegroundColor;
-            Content = (string)LanguagePrimitives.ConvertTo(block.Content, typeof(string));
-            Length = Content.Length;
+            Object = block.GetObjectText();
+            Length = Object.Length;
         }
 
         public override string ToString()
         {
-            return AnsiHelper.WriteAnsi(ForegroundColor, BackgroundColor, Content, Clear);
+            return AnsiHelper.WriteAnsi(ForegroundColor, BackgroundColor, Object, Clear);
         }
     }
 
@@ -327,7 +387,8 @@ namespace PowerLine
 
         public Prompt(params Line[] lines) : base(lines) { }
 
-        public Prompt(object[] lines) {
+        public Prompt(object[] lines)
+        {
             if (lines.First() is int)
             {
                 PrefixLines = (int)lines.First();
@@ -335,7 +396,7 @@ namespace PowerLine
             }
 
             AddRange(lines.Select(b => b is Block[] ?
-                                       new Line((Block[])b) :
+                                        new Line((Block[])b) :
                                             b is object[] ?
                                                 new Line((object[])b) :
                                                 (Line)b));

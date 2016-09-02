@@ -49,14 +49,15 @@ function Set-PowerLinePrompt {
             if($PowerLinePrompt.SetCwd) {
                 # Make sure Windows & .Net know where we are
                 # They can only handle the FileSystem, and not in .Net Core
-                [Environment]::CurrentDirectory = (Get-Location -PSProvider FileSystem).ProviderPath
+                [System.IO.Directory]::SetCurrentDirectory( (Get-Location -PSProvider FileSystem).ProviderPath )
             }
         } catch {}
 
-        if($Host.UI.SupportsVirtualTerminal) {
+        if($Host.UI.SupportsVirtualTerminal -or ($Env:ConEmuANSI -eq "ON")) {
             $PowerLinePrompt.ToString()
         } else {
-            "> "
+            Write-Host "No PowerLine for you! `$Host.UI.SupportsVirtualTerminal is false, and `$Env:ConEmuANSI` is not 'ON'" -ForegroundColor Red -BackgroundColor Black
+            return "> "
         }
     }
 }
