@@ -107,19 +107,19 @@ namespace PowerLine
             foreach (string key in values.Keys)
             {
                 var pattern = "^" + Regex.Escape(key);
-                if ("bg".Equals(key, System.StringComparison.InvariantCultureIgnoreCase) || Regex.IsMatch("BackgroundColor", pattern))
+                if ("bg".Equals(key, System.StringComparison.InvariantCultureIgnoreCase) || Regex.IsMatch("BackgroundColor", pattern, RegexOptions.IgnoreCase))
                 {
                     BackgroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), values[key].ToString(), true);
                 }
-                else if ("fg".Equals(key, System.StringComparison.InvariantCultureIgnoreCase) || Regex.IsMatch("ForegroundColor", pattern))
+                else if ("fg".Equals(key, System.StringComparison.InvariantCultureIgnoreCase) || Regex.IsMatch("ForegroundColor", pattern, RegexOptions.IgnoreCase))
                 {
                     ForegroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), values[key].ToString(), true);
                 }
-                else if (Regex.IsMatch("text", pattern) || Regex.IsMatch("Content", pattern))
+                else if (Regex.IsMatch("text", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("Content", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("Object", pattern, RegexOptions.IgnoreCase))
                 {
                     Object = values[key];
                 }
-                else if (Regex.IsMatch("Clear", pattern))
+                else if (Regex.IsMatch("Clear", pattern, RegexOptions.IgnoreCase))
                 {
                     Clear = (bool)values[key];
                 }
