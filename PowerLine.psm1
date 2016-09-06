@@ -29,11 +29,25 @@ function Get-Elapsed {
 }
 
 function Set-PowerLinePrompt {
+    [CmdletBinding()]
+    param(
+        # Update the Window Title each time the prompt is run
+        [switch]$Title,
+
+        # Keep the .Net Current Directory in sync with PowerShell's
+        [switch]$CurrentDirectory
+    )
     if($null -eq $script:OldPrompt) {
         $script:OldPrompt = $function:global:prompt
         $MyInvocation.MyCommand.Module.OnRemove = {
             $function:global:prompt = $script:OldPrompt
         }
+    }
+    if($PSBoundParameters.ContainsKey("Title")) {
+        $global:PowerLinePrompt.SetTitle = $Title
+    }
+    if($PSBoundParameters.ContainsKey("CurrentDirectory")) {
+        $global:PowerLinePrompt.SetCurrentDirectory = $CurrentDirectory
     }
 
     $function:global:prompt =  {
@@ -46,7 +60,7 @@ function Set-PowerLinePrompt {
                 # Put the path in the title ... (don't restrict this to the FileSystem)
                 $Host.UI.RawUI.WindowTitle = "{0} - {1} ({2})" -f $global:WindowTitlePrefix, (Convert-Path $pwd),  $pwd.Provider.Name
             }
-            if($PowerLinePrompt.SetCwd) {
+            if($PowerLinePrompt.SetCurrentDirectory) {
                 # Make sure Windows & .Net know where we are
                 # They can only handle the FileSystem, and not in .Net Core
                 [System.IO.Directory]::SetCurrentDirectory( (Get-Location -PSProvider FileSystem).ProviderPath )

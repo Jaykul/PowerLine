@@ -363,11 +363,8 @@ namespace PowerLine
             // Output a cap on the left if we didn't already
             if (rightLength == 0 && leftLength > 0)
             {
-                output.Append(AnsiHelper.WriteAnsi(ValidBlocks.Last().BackgroundColor, null, Block.LeftCap, true));
+                output.Append(AnsiHelper.WriteAnsi(ValidBlocks.Last().BackgroundColor, null, Block.LeftCap));
             }
-            // clear the end of each line in case it's not part of a prompt.
-            output.Append(AnsiHelper.Foreground["Clear"]);
-            output.Append(AnsiHelper.Background["Clear"]);
             return output.ToString();
         }
     }
