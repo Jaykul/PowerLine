@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Types>
    <Type>
-      <Name>PowerLine.Block</Name>
+      <Name>PowerLine.Prompt</Name>
       <Members>
          <MemberSet>
             <Name>StandardMembers</Name>
@@ -9,9 +9,10 @@
                <PropertySet>
                   <Name>DefaultDisplayPropertySet</Name>
                   <ReferencedProperties>
-                     <Name>BackgroundColor</Name>
-                     <Name>ForegroundColor</Name>
-                     <Name>Content</Name>
+                     <Name>PrefixLines</Name>
+                     <Name>Title</Name>
+                     <Name>SetCurrentDirectory</Name>
+                     <Name>Lines</Name>
                   </ReferencedProperties>
                </PropertySet>
             </Members>

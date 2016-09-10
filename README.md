@@ -13,12 +13,12 @@ How about a trivial example:
 #requires -module PowerLine
 using module PowerLine
 
-$PowerLinePrompt = ,(
-        @{ bg = "Cyan";     fg = "White"; text = { $MyInvocation.HistoryId } },
+$PowerLinePrompt = @(
+        @{ bg = "Cyan";     fg = "White"; text = { $MyInvocation.HistoryId } }
         @{ bg = "DarkBlue"; fg = "White"; text = { $pwd } }
     )
 
-Set-PowerLinePrompt
+Set-PowerLinePrompt -PowerLineFont
 ```
 
 ![Simple Powerline](https://github.com/Jaykul/PowerLine/raw/media/simple_powerline.png)
@@ -42,38 +42,40 @@ using namespace PowerLine
 
 $PowerLinePrompt = 1,
     (
-        [BlockCache]::Column, # Right align this line
-        @{ bg = "DarkGray"; fg = "White"; text = { Get-Elapsed } },
-        @{ bg = "Black";    fg = "White"; text = { Get-Date -f "T" } }
+        $null, # No left-aligned content on this line
+        @(
+            @{ bg = "DarkGray"; fg = "White"; text = { Get-Elapsed } }
+            @{ bg = "Black";    fg = "White"; text = { Get-Date -f "T" } }
+        )
     ),
     (
-        @{ bg = "Blue";     fg = "White"; text = { $MyInvocation.HistoryId } },
-        @{ bg = "Cyan";     fg = "White"; text = { [Line]::Gear * $NestedPromptLevel } },
-        @{ bg = "Cyan";     fg = "White"; text = { if($pushd = (Get-Location -Stack).count) { "$([char]187)" + $pushd } } },
-        @{ bg = "DarkBlue"; fg = "White"; text = { $pwd.Drive.Name } },
-        @{ bg = "DarkBlue"; fg = "White"; text = { Split-Path $pwd -leaf } },
-        [BlockCache]::Prompt,
-        [BlockCache]::Column,
-        @{ bg = "DarkRed";  fg = "White"; text = $Env:USERNAME + "@" + $Env:COMPUTERNAME}
+       @(
+            @{ bg = "Blue";     fg = "White"; text = { $MyInvocation.HistoryId } }
+            @{ bg = "Cyan";     fg = "White"; text = { [PowerLine.Prompt]::Gear * $NestedPromptLevel } }
+            @{ bg = "Cyan";     fg = "White"; text = { if($pushd = (Get-Location -Stack).count) { "$([char]187)" + $pushd } } }
+            @{ bg = "DarkBlue"; fg = "White"; text = { $pwd.Drive.Name } }
+            @{ bg = "DarkBlue"; fg = "White"; text = { Split-Path $pwd -leaf } }
+       ),
+       @(
+            @{ bg = "DarkRed";  fg = "White"; text = $Env:USERNAME + "@" + $Env:COMPUTERNAME}
+       )
     )
 
-Set-PowerLinePrompt
+Set-PowerLinePrompt -PowerLineFont
 ```
 
 ![Powerline Features](https://github.com/Jaykul/PowerLine/raw/media/powerline_features.png)
 
 This example shows most of the major features:
-
-1. The value of a `[PowerLine.Prompt]` is actually an array of `[PowerLine.Line]`s, and each line is an array of `[Powerline.Block]`s.
-2. You can pass a number as the first value to cause the first `n` lines to be output _above_ the prompt line.
-This risks overlapping the output of the previous command, so you might want to ...
-3. You can output a `[PowerLine.BlockCache]::Column` to make the rest of the line right-justified.
+1. Prompts have one or more Lines which have one or two Columns, made up of Blocks.
+2. You can pass a number as the first value of a Prompt to cause the first `n` lines to be output overlapping the output.
+This risks overlapping the output of the previous command, but ...
+3. You can have a `$null` column to leave the left side empty.
 4. Blocks which occasionally have no output (like the two blocks with `"Cyan"` background in this example),
  will simply vanish when there's no output. They don't mess up the colors of the other blocks.
-5. The `[PowerLine.BlockCache]::Prompt` is used to anchor the location where the cursor should end up.
-You only need to do this if you want to have lines _after_ the prompt (which I don't recommend)
-or right-aligned text on the prompt line, as in this example (it dissapears when you start typing).
-6. You can assign static text, or a scriptblock to the "text" or "content" property of the blocks.
+5. The prompt is automatically anchored at the end of the last **left-aligned** column.
+ Anything right-aligned on that prompt line dissapears when you start typing in PSReadLine.
+6. You can assign static text, objects, or a scriptblock to the "text" or "content" property of the blocks.
 
 ### Future Plans
 
@@ -95,34 +97,45 @@ so I'd like to expose that functionality somehow ...
 
 ## Core classes summary:
 
-The PowerLine module provides several classes in a PowerLine namespace. Three classes for use in output, and two helper classes.
+The PowerLine module provides several classes in a PowerLine namespace. Five classes for use in output, and a helper class.
 
-* Block
+* Block and BlockFactory
+* Column
 * Line
 * Prompt
 
-The `PowerLine.Prompt` class is a collection of lines, and has a property `PrefixLines`
-to control how far _up_ to go before outputting. The `PowerLine.Line` class is just a collection of blocks.
-The `PowerLine.Block` class has the foreground/background colors (optionally), and also has a few important static string members:
+The `PowerLine.Prompt` class has a `Lines` property which is a collection of lines,
+and has a property `PrefixLines` to control how far _up_ to go before outputting.
+The `PowerLine.Line` class has a `Columns` property which is a collection of columns.
+The `Powerline.Column` class has a `Blocks` property which is a collection of block factories.
+The `Powerline.BlockFactory` class has foreground/background colors and
+  an `Object` property which can be a scriptblock or object or text.
+The `PowerLine.Block` class represents text that's ready for output.
+It also has foreground/background colors (optionally), and it's `Object` property always returns a string.
 
-* `RightSep` and `LeftSep`
-* `RightCap` and `LeftCap`
 
-These are the separators which are used between blocks. The "Cap" separators are used when the color is changing.
-By default they are the solid arrows you see in all the Powerline examples. The "Sep" separators are basically
-like < and > except that they go the full height of the line. There are a couple of other special characters there,
-but I'll leave that for you to explore.
+NOTE: the `Powerline.Prompt` class has a few important static members used for configuring the separators in output:
+
+* `ColorSeparator` and `Separator`
+* `ReverseColorSeparator` and `ReverseSeparator`
+
+These are the separators which are used between blocks. The ColorSeparators are used when the color is changing,
+by default they are solid half-blocks, the other separators are little arrows.
+
+To get the output like in the PowerLine scripts, you need to set them to PowerLine characters.
+You can do that by passing the `-PowerLineFont` switch to Set-PowerLinePrompt, or by manually setting the characters:
+
+```posh
+[PowerLine.Prompt]::ColorSeparator = [char]0xe0b0
+[PowerLine.Prompt]::ReverseColorSeparator = [char]0xe0b2
+[PowerLine.Prompt]::Separator = [char]0xe0b1
+[PowerLine.Prompt]::ReverseSeparator = [char]0xe0b3
+```
 
 
 ## Helper classes: ##
 
-* BlockCache
 * AnsiHelper
-
-The `PowerLine.BlockCache` class is actually a subclass of the `PowerLine.Block`,
-with the distinction that the `Content` property can only contain a text string, not a scriptblock.
-If you look in the source, there's also a `PowerLine.Cacher` class
-which is just used as a holder for an extension method to convert between them.
 
 The `AnsiHelper class has ANSI escape sequences and some helper methods. You shouldn't need to use it directly, but if you want to, there are 2 methods and 2 static hashtables and a nested EscapeCodes classes:
 
