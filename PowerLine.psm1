@@ -22,6 +22,7 @@ function Get-Elapsed {
         [Parameter()]
         [string]$Format = "{0:h\:mm\:ss\.ffff}"
     )
+    $null = $PSBoundParameters.Remove("Format")
     $LastCommand = Get-History -Count 1 @PSBoundParameters
     if(!$LastCommand) { return "" }
     $Duration = $LastCommand.EndExecutionTime - $LastCommand.StartExecutionTime
