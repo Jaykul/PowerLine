@@ -79,7 +79,7 @@ Set-GitPromptSettings -SeparatorText '' -BeforeText '' -BeforeChangesText '' -Af
 
 ```
 
-![Powerline Features](https://github.com/Jaykul/PowerLine/raw/media/powerline_features.png)
+![Powerline Features](https://github.com/Jaykul/PowerLine/raw/media/powerline_features_psgit.png)
 
 This example shows most of the major features:
 

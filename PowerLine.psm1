@@ -77,7 +77,7 @@ function New-PowerLineBlock {
         Object = $Object
     }
 
-    if($LastSuccess) {
+    if($script:LastSuccess) {
         if($PSBoundParameters.ContainsKey("ForegroundColor")) {
             $output.DefaultForegroundColor = $ForegroundColor
         }
