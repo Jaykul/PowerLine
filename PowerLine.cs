@@ -260,7 +260,7 @@ namespace PowerLine
             Object = blocks;
         }
 
-        internal Block[] GetBlocks()
+        public Block[] GetBlocks()
         {
             // There are four allowed values:
             // 1. A scriptblock, which outputs one of the other possibilities

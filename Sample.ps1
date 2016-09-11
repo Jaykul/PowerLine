@@ -10,7 +10,7 @@ $global:PowerLinePrompt = 1,
         # on the first line, two columns -- the first one is null (empty), the second is right-justified
         $null,
         @(
-            @{ bg = "DarkGray"; fg = "Black"; text = { Get-Elapsed } }
+            @{ text = { New-PowerLineBlock (Get-Elapsed) -ErrorBackgroundColor DarkRed -ErrorForegroundColor White -ForegroundColor Black -BackgroundColor DarkGray } }
             @{ bg = "Gray";     fg = "Black"; text = { Get-Date -f "T" } }
         )
     ),

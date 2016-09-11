@@ -44,7 +44,7 @@ $PowerLinePrompt = 1,
     (
         $null, # No left-aligned content on this line
         @(
-            @{ bg = "DarkGray"; fg = "White"; text = { Get-Elapsed } }
+            @{ text = { New-PowerLineBlock (Get-Elapsed) -ErrorBackgroundColor DarkRed -ErrorForegroundColor White -ForegroundColor Black -BackgroundColor DarkGray } }
             @{ bg = "Black";    fg = "White"; text = { Get-Date -f "T" } }
         )
     ),
@@ -67,6 +67,7 @@ Set-PowerLinePrompt -PowerLineFont
 ![Powerline Features](https://github.com/Jaykul/PowerLine/raw/media/powerline_features.png)
 
 This example shows most of the major features:
+
 1. Prompts have one or more Lines which have one or two Columns, made up of Blocks.
 2. You can pass a number as the first value of a Prompt to cause the first `n` lines to be output overlapping the output.
 This risks overlapping the output of the previous command, but ...
@@ -76,6 +77,8 @@ This risks overlapping the output of the previous command, but ...
 5. The prompt is automatically anchored at the end of the last **left-aligned** column.
  Anything right-aligned on that prompt line dissapears when you start typing in PSReadLine.
 6. You can assign static text, objects, or a scriptblock to the "text" or "content" property of the blocks.
+7. There is a special New-PowerLineBlock function which allows you to change the colors based on the success of the last command.
+ There is also a Test-Success function if you just want to output something conditionally if there's a failure
 
 ### Future Plans
 
@@ -108,10 +111,10 @@ The `PowerLine.Prompt` class has a `Lines` property which is a collection of lin
 and has a property `PrefixLines` to control how far _up_ to go before outputting.
 The `PowerLine.Line` class has a `Columns` property which is a collection of columns.
 The `Powerline.Column` class has a `Blocks` property which is a collection of block factories.
-The `Powerline.BlockFactory` class has foreground/background colors and
+The `Powerline.BlockFactory` class has _default_ foreground/background colors and
   an `Object` property which can be a scriptblock or object or text.
-The `PowerLine.Block` class represents text that's ready for output.
-It also has foreground/background colors (optionally), and it's `Object` property always returns a string.
+The `PowerLine.Block` class represents text that's ready for output -- you probably won't use this (use BlockFactory, as it supports scriptblocks).
+It has foreground/background colors (optionally), and it's `Object` property always returns a string.
 
 
 NOTE: the `Powerline.Prompt` class has a few important static members used for configuring the separators in output:

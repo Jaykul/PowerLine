@@ -14,11 +14,19 @@ if(!$PowerLinePrompt) {
 }
 
 function Get-Elapsed {
+    <#
+    .Synopsis
+        Get the time span elapsed during the execution of command (by default the previous command)
+    .Description
+        Calls Get-History to return a single command and returns the difference between the Start and End execution time
+    #>
     [CmdletBinding()]
     param(
+        # The command ID to get the execution time for (defaults to the previous command)
         [Parameter()]
         [int]$Id,
 
+        # A Timespan format pattern such as "{0:ss\.ffff}"
         [Parameter()]
         [string]$Format = "{0:h\:mm\:ss\.ffff}"
     )
@@ -30,23 +38,77 @@ function Get-Elapsed {
 }
 
 function Test-Success {
+    <#
+    .Synopsis
+        Get a value indicating whether the last command succeeded or not
+    #>
     [CmdletBinding()]
     param()
-    return $script:LastSuccess
+
+    $script:LastSuccess
+}
+
+function New-PowerLineBlock {
+    <#
+        .Synopsis
+            Create PowerLine.Blocks
+        .Description
+            Allows changing the foreground and background colors based on whether the last command was successful.
+    #>
+    [CmdletBinding()]
+    param(
+        # The foreground color to use when the last command succeeded
+        [ConsoleColor]$ForegroundColor,
+
+        # The background color to use when the last command succeeded
+        [ConsoleColor]$BackgroundColor,
+
+        # The foreground color to use when the last command failed
+        [ConsoleColor]$ErrorForegroundColor,
+
+        # The background color to use when the last command failed
+        [ConsoleColor]$ErrorBackgroundColor,
+
+        # The text, object, or scriptblock to show as output
+        [Parameter(Position=0,Mandatory=$true)]
+        $Object
+    )
+    $output = [PowerLine.BlockFactory]@{
+        Object = $Object
+    }
+
+    if($LastSuccess) {
+        if($PSBoundParameters.ContainsKey("ForegroundColor")) {
+            $output.DefaultForegroundColor = $ForegroundColor
+        }
+        if($PSBoundParameters.ContainsKey("BackgroundColor")) {
+            $output.DefaultBackgroundColor = $BackgroundColor
+        }
+    } else {
+        if($PSBoundParameters.ContainsKey("ErrorForegroundColor")) {
+            $output.DefaultForegroundColor = $ErrorForegroundColor
+        }
+        if($PSBoundParameters.ContainsKey("ErrorBackgroundColor")) {
+            $output.DefaultBackgroundColor = $ErrorBackgroundColor
+        }
+    }
+    $output.GetBlocks()
 }
 
 function Set-PowerLinePrompt {
     [CmdletBinding(DefaultParameterSetName="PowerLine")]
     param(
-        # Update the Window Title each time the prompt is run
+        # A script which outputs a string used to update the Window Title each time the prompt is run
         [scriptblock]$Title,
 
         # Keep the .Net Current Directory in sync with PowerShell's
         [switch]$CurrentDirectory,
 
+        # If true, set the [PowerLine.Prompt] static members to extended characters from PowerLine fonts
         [Parameter(ParameterSetName="PowerLine")]
         [switch]$PowerLineFont,
 
+        # If true, set the [PowerLine.Prompt] static members to characters available in Consolas and Courier New
         [Parameter(ParameterSetName="Reset")]
         [switch]$ResetSeparators
     )
@@ -85,11 +147,11 @@ function Set-PowerLinePrompt {
     $function:global:prompt =  {
 
         # FIRST, make a note if there was an error in the previous command
-        $script:LastSuccess = !$?
+        [bool]$script:LastSuccess = $?
 
         try {
             if($PowerLinePrompt.Title) {
-                $Host.UI.RawUI.WindowTitle = & $PowerLinePrompt.Title
+                $Host.UI.RawUI.WindowTitle = [System.Management.Automation.LanguagePrimitives]::ConvertTo( (& $PowerLinePrompt.Title), [string] )
             }
             if($PowerLinePrompt.SetCurrentDirectory) {
                 # Make sure Windows & .Net know where we are
@@ -107,6 +169,4 @@ function Set-PowerLinePrompt {
     }
 }
 
-
-
-Export-ModuleMember -Function Set-PowerLinePrompt, Get-Elapsed -Variable PowerLinePrompt
+Export-ModuleMember -Function Set-PowerLinePrompt, Get-Elapsed, Test-Success, New-PowerLineBlock -Variable PowerLinePrompt
