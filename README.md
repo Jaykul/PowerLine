@@ -30,13 +30,22 @@ or you can just pick one and download and install that.
 There are [screenshots of all of them](https://github.com/powerline/fonts/blob/master/samples/All.md)
 
 
-## Doing more with your prompt
-
-That first example is really simple, but if you're using the powerline prompt,
-it's really simple to create more complicated prompts:
+## Installing PowerLine
 
 ```posh
-#requires -module PowerLine
+Install-Module PowerLine
+```
+
+Note that version 2.0.0 is _not entirely compatible_ with version 1 due to some major refactoring of the core classes.
+
+## Doing more with your prompt
+
+That first example is extremely simple, but if you're using the powerline prompt,
+it's simple to create even more complicated prompts, with optional parts and more.
+Take this example, which is what I'm using on my own box, with [PSGit](https://github.com/PoshCode/PSGit)
+
+```posh
+#requires -Module @{ModuleName="PSGit"; ModuleVersion="2.0.4"}, @{ModuleName="PowerLine"; ModuleVersion="2.0.0"}
 using module PowerLine
 using namespace PowerLine
 
@@ -45,23 +54,29 @@ $PowerLinePrompt = 1,
         $null, # No left-aligned content on this line
         @(
             @{ text = { New-PowerLineBlock (Get-Elapsed) -ErrorBackgroundColor DarkRed -ErrorForegroundColor White -ForegroundColor Black -BackgroundColor DarkGray } }
-            @{ bg = "Black";    fg = "White"; text = { Get-Date -f "T" } }
+            @{ bg = "Gray";     fg = "Black"; text = { Get-Date -f "T" } }
         )
-    ),
-    (
-       @(
+    ),  @(
             @{ bg = "Blue";     fg = "White"; text = { $MyInvocation.HistoryId } }
             @{ bg = "Cyan";     fg = "White"; text = { [PowerLine.Prompt]::Gear * $NestedPromptLevel } }
             @{ bg = "Cyan";     fg = "White"; text = { if($pushd = (Get-Location -Stack).count) { "$([char]187)" + $pushd } } }
             @{ bg = "DarkBlue"; fg = "White"; text = { $pwd.Drive.Name } }
             @{ bg = "DarkBlue"; fg = "White"; text = { Split-Path $pwd -leaf } }
-       ),
-       @(
-            @{ bg = "DarkRed";  fg = "White"; text = $Env:USERNAME + "@" + $Env:COMPUTERNAME}
-       )
-    )
+            # PSGit is still in early stages, but it has PowerLine support
+            @{ text = { Get-GitStatusPowerline } }
+        )
 
-Set-PowerLinePrompt -PowerLineFont
+Set-PowerLinePrompt -CurrentDirectory -PowerlineFont:(!$SafeCharacters) -Title { "PowerShell - {0} ({1})" -f (Convert-Path $pwd),  $pwd.Provider.Name }
+
+# As a bonus, here are the settings I use for my PSGit prompt:
+Set-GitPromptSettings -SeparatorText '' -BeforeText '' -BeforeChangesText '' -AfterChangesText '' -AfterNoChangesText '' `
+                      -BranchText "$([PowerLine.Prompt]::Branch) " -BranchForeground White -BranchBackground Cyan `
+                      -BehindByText '▼' -BehindByForeground White -BehindByBackground DarkCyan `
+                      -AheadByText '▲' -AheadByForeground White -AheadByBackground DarkCyan `
+                      -StagedChangesForeground White -StagedChangesBackground DarkBlue `
+                      -UnStagedChangesForeground White -UnStagedChangesBackground Blue
+
+
 ```
 
 ![Powerline Features](https://github.com/Jaykul/PowerLine/raw/media/powerline_features.png)
