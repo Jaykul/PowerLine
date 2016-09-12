@@ -68,7 +68,9 @@ function New-PowerLineBlock {
 
             Tests elevation fist, and then whether the last command was successful, so if you pass separate colors for each, the Elevated*Color will be used when PowerShell is running as administrator and there is no error. The Error*Color will be used whenever there's an error, whether it's elevated or not.
         .Example
+            New-PowerLineBlock (Get-Elapsed) -ForegroundColor White -BackgroundColor DarkBlue -ErrorBackground DarkRed -ElevatedForegroundColor Yellow
 
+            This example shows the time elapsed executing the last command in White on a DarkBlue background, but switches the text to yellow if elevated, and the background to red on error.
     #>
     [CmdletBinding(DefaultParameterSetName="Error")]
     param(
@@ -106,7 +108,7 @@ function New-PowerLineBlock {
     }
 
     # If it's elevated, and they passed the elevated color ...
-    if(!(Test-Elevation)) {
+    if(Test-Elevation) {
         if($PSBoundParameters.ContainsKey("ElevatedForegroundColor")) {
             $output.DefaultForegroundColor = $ElevatedForegroundColor
         }
@@ -202,4 +204,4 @@ function Set-PowerLinePrompt {
     }
 }
 
-Export-ModuleMember -Function Set-PowerLinePrompt, Get-Elapsed, Test-Success, New-PowerLineBlock -Variable PowerLinePrompt
+Export-ModuleMember -Function Set-PowerLinePrompt, Get-Elapsed, Test-Success, Test-Elevation, New-PowerLineBlock -Variable PowerLinePrompt
