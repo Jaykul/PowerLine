@@ -92,8 +92,11 @@ This risks overlapping the output of the previous command, but ...
 5. The prompt is automatically anchored at the end of the last **left-aligned** column.
  Anything right-aligned on that prompt line dissapears when you start typing in PSReadLine.
 6. You can assign static text, objects, or a scriptblock to the "text" or "content" property of the blocks.
-7. There is a special New-PowerLineBlock function which allows you to change the colors based on the success of the last command.
- There is also a Test-Success function if you just want to output something conditionally if there's a failure
+
+## New-PowerLineBlock
+
+There is a `New-PowerLineBlock` function which allows you to change the colors based on elevation, or the success of the last command.
+There are also `Test-Success` and `Test-Elevation` function if you just want to output something conditionally, or deal with it on your own.
 
 ### Future Plans
 
