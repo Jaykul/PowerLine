@@ -175,8 +175,8 @@ function Set-PowerLinePrompt {
         [PowerLine.Prompt]::ReverseColorSeparator = [char]0xe0b2
         [PowerLine.Prompt]::Separator = [char]0xe0b1
         [PowerLine.Prompt]::ReverseSeparator = [char]0xe0b3
-        [PowerLine.Prompt]::Branch   = [char]0x26EF
-        [PowerLine.Prompt]::Gear     = [char]0xE0A0
+        [PowerLine.Prompt]::Branch   = [char]0xE0A0
+        [PowerLine.Prompt]::Gear     = [char]0x26EF
     }
 
     $function:global:prompt =  {
