@@ -1,8 +1,12 @@
 ﻿#!/usr/bin/env powershell
 using namespace System.Collections.Generic
 
-Add-Type -Path (Join-Path $PSScriptRoot PowerLine.cs)
-
+# A convoluted way of loading the right assembly
+# On PowerShell Core the assembly is loaded from disk
+# Otherwise that fails, and we compile it here
+if(!("PowerLine.Prompt" -as [Type])) {
+    Add-Type -Path (Join-Path $PSScriptRoot PowerLine.cs)
+}
 
 if(!$PowerLinePrompt) {
     [PowerLine.Prompt]$Script:PowerLinePrompt = @(,@(

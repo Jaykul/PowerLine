@@ -135,11 +135,11 @@ namespace PowerLine
             foreach (string key in values.Keys)
             {
                 var pattern = "^" + Regex.Escape(key);
-                if ("bg".Equals(key, System.StringComparison.InvariantCultureIgnoreCase) || Regex.IsMatch("BackgroundColor", pattern, RegexOptions.IgnoreCase))
+                if ("bg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("BackgroundColor", pattern, RegexOptions.IgnoreCase))
                 {
                     BackgroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), values[key].ToString(), true);
                 }
-                else if ("fg".Equals(key, System.StringComparison.InvariantCultureIgnoreCase) || Regex.IsMatch("ForegroundColor", pattern, RegexOptions.IgnoreCase))
+                else if ("fg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("ForegroundColor", pattern, RegexOptions.IgnoreCase))
                 {
                     ForegroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), values[key].ToString(), true);
                 }
@@ -227,11 +227,11 @@ namespace PowerLine
             foreach (string key in values.Keys)
             {
                 var pattern = "^" + Regex.Escape(key);
-                if ("bg".Equals(key, System.StringComparison.InvariantCultureIgnoreCase) || Regex.IsMatch("BackgroundColor", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("DefaultBackgroundColor", pattern, RegexOptions.IgnoreCase))
+                if ("bg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("BackgroundColor", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("DefaultBackgroundColor", pattern, RegexOptions.IgnoreCase))
                 {
                     DefaultBackgroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), values[key].ToString(), true);
                 }
-                else if ("fg".Equals(key, System.StringComparison.InvariantCultureIgnoreCase) || Regex.IsMatch("ForegroundColor", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("DefaultForegroundColor", pattern, RegexOptions.IgnoreCase))
+                else if ("fg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("ForegroundColor", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("DefaultForegroundColor", pattern, RegexOptions.IgnoreCase))
                 {
                     DefaultForegroundColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), values[key].ToString(), true);
                 }
