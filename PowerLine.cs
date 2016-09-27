@@ -54,15 +54,16 @@ namespace PowerLine
             output.Append(value);
             if (clear)
             {
-                output.Append(AnsiHelper.Background["Clear"]);
-                output.Append(AnsiHelper.Foreground["Clear"]);
+                output.Append(Background["Clear"]);
+                output.Append(Foreground["Clear"]);
             }
             return output.ToString();
         }
 
         public static string GetString(object @object)
         {
-            return (string)LanguagePrimitives.ConvertTo(@object is ScriptBlock ? ((ScriptBlock)@object).Invoke() : @object, typeof(string));
+            var scriptBlock = @object as ScriptBlock;
+            return (string)LanguagePrimitives.ConvertTo(scriptBlock != null ? scriptBlock.Invoke() : @object, typeof(string));
         }
 
         static AnsiHelper()
@@ -74,7 +75,7 @@ namespace PowerLine
 
         public struct EscapeCodes
         {
-            public static readonly string ESC = "\u001B[";
+            public static readonly string Esc = "\u001B[";
             public static readonly string Clear = "\u001B[0m";
             public static readonly string PromptLocation = "\u001B[s";
             public static readonly string Recall = "\u001B[u";
@@ -87,7 +88,7 @@ namespace PowerLine
         /// Gets or sets the object. The Object will be converted to string when it's set, and this property always returns a string.
         /// </summary>
         /// <value>A string</value>
-        public virtual object Object
+        public object Object
         {
             get
             {
@@ -104,7 +105,7 @@ namespace PowerLine
                 }
                 else
                 {
-                    // The Length is measured without escape sequences (ESC + non-letters + any letter)
+                    // The Length is measured without escape sequences (Esc + non-letters + any letter)
                     Length = _escapeCode.Replace(_text, "").Length;
                 }
             }
@@ -114,17 +115,17 @@ namespace PowerLine
         /// <summary>
         /// Gets or Sets the background color for the block
         /// </summary>
-        public virtual ConsoleColor? BackgroundColor { get; set; }
+        public ConsoleColor? BackgroundColor { get; set; }
 
         /// <summary>
         /// Gets or Sets the foreground color for the block
         /// </summary>
-        public virtual ConsoleColor? ForegroundColor { get; set; }
+        public ConsoleColor? ForegroundColor { get; set; }
 
         /// <summary>
         /// Gets the length of the text representation (without ANSI escape sequences).
         /// </summary>
-        public virtual int Length { get; private set; }
+        public int Length { get; private set; }
 
         /// <summary>
         /// This constructor is here so we can allow partial matches to the property names.
@@ -158,9 +159,9 @@ namespace PowerLine
             }
         }
         // Make sure we can output plain text
-        public Block(string Text) : this()
+        public Block(string text) : this()
         {
-            Object = Text;
+            Object = text;
         }
 
         // Make sure we support the default ctor
@@ -187,13 +188,13 @@ namespace PowerLine
 
             var other = obj as Block;
 
-            return Object == other.Object && ForegroundColor == other.ForegroundColor && BackgroundColor == other.BackgroundColor;
+            return other != null && (Object == other.Object && ForegroundColor == other.ForegroundColor && BackgroundColor == other.BackgroundColor);
         }
 
         // override object.GetHashCode
         public override int GetHashCode()
         {
-            return Object.GetHashCode() + BackgroundColor.GetHashCode() + ForegroundColor.GetHashCode();
+            return Object.GetHashCode();
         }
     }
 
@@ -205,18 +206,18 @@ namespace PowerLine
         /// <summary>
         /// Gets or Sets the background color for the block
         /// </summary>
-        public virtual ConsoleColor? DefaultBackgroundColor { get; set; }
+        public ConsoleColor? DefaultBackgroundColor { get; set; }
 
         /// <summary>
         /// Gets or Sets the foreground color for the block
         /// </summary>
-        public virtual ConsoleColor? DefaultForegroundColor { get; set; }
+        public ConsoleColor? DefaultForegroundColor { get; set; }
 
         /// <summary>
         /// Gets or Sets the object to be rendered.
         /// Can be any object, but with particular support for nested lists of objects, blocks, or ScriptBlocks which output them.
         /// </summary>
-        public virtual object Object { get; set; }
+        public object Object { get; set; }
 
         /// <summary>
         /// This constructor is here so we can allow partial matches to the property names.
@@ -283,7 +284,7 @@ namespace PowerLine
                 {
                     block.BackgroundColor = block.BackgroundColor ?? DefaultBackgroundColor;
                     block.ForegroundColor = block.ForegroundColor ?? DefaultForegroundColor;
-                };
+                }
             }
             catch
             {
@@ -305,7 +306,7 @@ namespace PowerLine
         /// <summary>
         /// Gets the blocks
         /// </summary>
-        public virtual List<BlockFactory> Blocks { get; private set; }
+        public List<BlockFactory> Blocks { get; private set; }
 
         public Column()
         {
@@ -329,7 +330,6 @@ namespace PowerLine
             foreach (object block in blocks)
             {
                 Blocks.AddRange(LanguagePrimitives.ConvertTo<BlockFactory[]>(block));
-                continue;
             }
         }
 
@@ -346,9 +346,9 @@ namespace PowerLine
             // Calculate all the text and remove empty blocks
             ValidBlocks = Blocks.SelectMany(factory => factory.GetBlocks()).Where(e => e.Length >= 0).ToArray();
             Length = -1;
-            Block block;
             if (ValidBlocks.Any())
             {
+                Block block;
                 StartBackgroundColor = (block = ValidBlocks.First(b => b.BackgroundColor != null)) == null ? null : block.BackgroundColor;
                 EndBackgroundColor = (block = ValidBlocks.Last(b => b.BackgroundColor != null)) == null ? null : block.BackgroundColor;
                 Length = ValidBlocks.Sum(b => b.Length) + (ValidBlocks.Length - 1);
@@ -360,12 +360,12 @@ namespace PowerLine
         {
             // Initialize variables ...
             var output = new StringBuilder();
-            Block[] ValidBlocks = PreCalculateValues();
+            PreCalculateValues();
 
             for (int l = 0; l < ValidBlocks.Length; l++)
             {
                 var block = ValidBlocks[l];
-                output.Append(block.ToString());
+                output.Append(block);
 
                 // Write a separator between blocks, unless the next one has no (non-escape) text
                 if (l < ValidBlocks.Length - 1 && ValidBlocks[l + 1].Length > 0)
@@ -488,13 +488,13 @@ namespace PowerLine
 
         public string ToString(int width)
         {
-            var Columns = PreCalculateValues();
+            var columns = PreCalculateValues();
 
             var output = new StringBuilder();
             // Output each block with appropriate separators and caps
-            for (int l = 0; l < Columns.Count;)
+            for (int l = 0; l < columns.Count;)
             {
-                var column = Columns[l];
+                var column = columns[l];
                 // Use null columns as spacers
                 if (column != null && column.Length > 0)
                 {
@@ -508,21 +508,21 @@ namespace PowerLine
 
                 // CURRENTLY we only support two columns, so ...
                 // if there are more columns, the next one is right-aligned
-                if (Columns.Count > ++l)
+                if (columns.Count > ++l)
                 {
-                    column = Columns[l];
+                    column = columns[l];
                     // Use null columns as spacers
                     if (column != null && column.Length > 0)
                     {
                         // Move to the start location for the next column
-                        output.Append(AnsiHelper.EscapeCodes.ESC + (width - column.Length) + "G");
+                        output.Append(AnsiHelper.EscapeCodes.Esc + (width - column.Length) + "G");
 
                         output.Append(AnsiHelper.WriteAnsi(column.StartBackgroundColor, null, Prompt.ReverseColorSeparator));
                         output.Append(column.ToString(Prompt.ReverseSeparator, Prompt.ReverseColorSeparator, true));
                     }
                 }
 
-                if (Columns.Count > ++l)
+                if (columns.Count > ++l)
                 {
                     // Because we only support two columns, if there are still more columns, they must go on the next line
                     output.Append("\n");
@@ -607,7 +607,7 @@ namespace PowerLine
             // Move up to previous line(s)
             if (PrefixLines != 0)
             {
-                output.Append(AnsiHelper.EscapeCodes.ESC + Math.Abs(PrefixLines) + "A");
+                output.Append(AnsiHelper.EscapeCodes.Esc + Math.Abs(PrefixLines) + "A");
             }
 
             output.Append(string.Join("\n", Lines.Select(l => l.ToString(width))));
