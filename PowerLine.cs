@@ -19,20 +19,20 @@ namespace PowerLine
         }
         public static Dictionary<string, string> Foreground = new Dictionary<string, string>
             {
-                {"Clear",       "\u001B[39m"},
-                {"Black",       "\u001B[30m"}, { "DarkGray", "\u001B[90m"},
-                {"DarkRed",     "\u001B[31m"}, { "Red",      "\u001B[91m"},
-                {"DarkGreen",   "\u001B[32m"}, { "Green",    "\u001B[92m"},
-                {"DarkYellow",  "\u001B[33m"}, { "Yellow",   "\u001B[93m"},
-                {"DarkBlue",    "\u001B[34m"}, { "Blue",     "\u001B[94m"},
-                {"DarkMagenta", "\u001B[35m"}, { "Magenta",  "\u001B[95m"},
-                {"DarkCyan",    "\u001B[36m"}, { "Cyan",     "\u001B[96m"},
-                {"Gray",        "\u001B[37m"}, { "White",    "\u001B[97m"}
+                {"Clear",       "\u001B[39m"}, {"Default",  "\u001B[97m"},
+                {"Black",       "\u001B[30m"}, {"DarkGray", "\u001B[90m"},
+                {"DarkRed",     "\u001B[31m"}, {"Red",      "\u001B[91m"},
+                {"DarkGreen",   "\u001B[32m"}, {"Green",    "\u001B[92m"},
+                {"DarkYellow",  "\u001B[33m"}, {"Yellow",   "\u001B[93m"},
+                {"DarkBlue",    "\u001B[34m"}, {"Blue",     "\u001B[94m"},
+                {"DarkMagenta", "\u001B[35m"}, {"Magenta",  "\u001B[95m"},
+                {"DarkCyan",    "\u001B[36m"}, {"Cyan",     "\u001B[96m"},
+                {"Gray",        "\u001B[37m"}, {"White",    "\u001B[97m"}
             };
 
         public static Dictionary<string, string> Background = new Dictionary<string, string>
             {
-                {"Clear",       "\u001B[49m"},
+                {"Clear",       "\u001B[49m"}, {"Default",  "\u001B[40m"},
                 {"Black",       "\u001B[40m"}, {"DarkGray", "\u001B[100m"},
                 {"DarkRed",     "\u001B[41m"}, {"Red",      "\u001B[101m"},
                 {"DarkGreen",   "\u001B[42m"}, {"Green",    "\u001B[102m"},
@@ -40,7 +40,7 @@ namespace PowerLine
                 {"DarkBlue",    "\u001B[44m"}, {"Blue",     "\u001B[104m"},
                 {"DarkMagenta", "\u001B[45m"}, {"Magenta",  "\u001B[105m"},
                 {"DarkCyan",    "\u001B[46m"}, {"Cyan",     "\u001B[106m"},
-                {"Gray",        "\u001B[47m"}, {"White",    "\u001B[107m"},
+                {"Gray",        "\u001B[47m"}, {"White",    "\u001B[107m"}
             };
 
 
@@ -69,8 +69,12 @@ namespace PowerLine
         static AnsiHelper()
         {
             Console.ResetColor();
-            Foreground.Add("Default", Foreground[Console.ForegroundColor >= 0 ? Console.ForegroundColor.ToString() : "White"]);
-            Background.Add("Default", Background[Console.BackgroundColor >= 0 ? Console.BackgroundColor.ToString() : "Black"]);
+
+            var color = Console.ForegroundColor >= 0 ? Console.ForegroundColor.ToString() : "White";
+            Foreground["Default"] = Foreground[color];
+
+            color = Console.BackgroundColor >= 0 ? Console.BackgroundColor.ToString() : "White";
+            Background["Default"] = Background[color];
         }
 
         public struct EscapeCodes
@@ -349,8 +353,8 @@ namespace PowerLine
             if (ValidBlocks.Any())
             {
                 Block block;
-                StartBackgroundColor = (block = ValidBlocks.First(b => b.BackgroundColor != null)) == null ? null : block.BackgroundColor;
-                EndBackgroundColor = (block = ValidBlocks.Last(b => b.BackgroundColor != null)) == null ? null : block.BackgroundColor;
+                StartBackgroundColor = (block = ValidBlocks.FirstOrDefault(b => b.BackgroundColor != null)) == null ? null : block.BackgroundColor;
+                EndBackgroundColor = (block = ValidBlocks.LastOrDefault(b => b.BackgroundColor != null)) == null ? null : block.BackgroundColor;
                 Length = ValidBlocks.Sum(b => b.Length) + (ValidBlocks.Length - 1);
             }
             return ValidBlocks;
