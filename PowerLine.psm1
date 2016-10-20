@@ -8,6 +8,8 @@ if(!("PowerLine.Prompt" -as [Type])) {
     Add-Type -Path (Join-Path $PSScriptRoot PowerLine.cs)
 }
 
+. (Join-Path $PSScriptRoot Write-AnsiHost.ps1)
+
 if(!$PowerLinePrompt) {
     [PowerLine.Prompt]$Script:PowerLinePrompt = @(,@(
         @{ bg = "Cyan";     fg = "White"; text = { $MyInvocation.HistoryId } },
@@ -261,13 +263,13 @@ function Set-PowerLinePrompt {
             }
         } catch {}
 
+        $prompt = $PowerLinePrompt.ToString($Host.UI.RawUI.BufferSize.Width)
         if($PowerLinePrompt.UseAnsiEscapes) {
-            $PowerLinePrompt.ToString($Host.UI.RawUI.BufferSize.Width)
+            $prompt
         } else {
-            Write-Host "No PowerLine for you! `$Host.UI.SupportsVirtualTerminal is false, and `$Env:ConEmuANSI` is not 'ON'" -ForegroundColor Red -BackgroundColor Black
-            return "> "
+            Write-AnsiHost -Text $prompt
         }
     }
 }
 
-Export-ModuleMember -Function Set-PowerLinePrompt, Get-Elapsed, Get-ShortenedPath, Test-Success, Test-Elevation, New-PowerLineBlock -Variable PowerLinePrompt
+Export-ModuleMember -Function Set-PowerLinePrompt, Get-Elapsed, Get-ShortenedPath, Test-Success, Test-Elevation, New-PowerLineBlock, Write-AnsiHost -Variable PowerLinePrompt

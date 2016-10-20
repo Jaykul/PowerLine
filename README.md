@@ -98,16 +98,34 @@ This risks overlapping the output of the previous command, but ...
 There is a `New-PowerLineBlock` function which allows you to change the colors based on elevation, or the success of the last command.
 There are also `Test-Success` and `Test-Elevation` function if you just want to output something conditionally, or deal with it on your own.
 
-### Future Plans
+## Write-AnsiHost
+
+The `Write-AnsiHost` function provides support for ANSI VT escape sequences
+in Hosts that do not have native support. 
+The current implementation supports the color and cursor movement escape sequences.
+This function is used internally to provide support for hosts that do not support virtual terminals
+including the console prior to Windows 10 AU, Windows PowerShell ISE, and the integrated terminal in Visual Studio Code.
+
+There are known limitations for each of the downlevel hosts.
+
+### Console Prior to Windows 10
+* Consecutive calls to Write-Host with the NoNewline parameter will overlap the output of the prior call by a few pixels.
+
+### Windows PowerShell ISE
+* Prompt colors only support the default Windows console colors which don't match the provided color themes.
+* `PrefixLines` is not supported due to ISE's limited support of $Host.UI.RawUI.
+* The prompt is not anchored at the end of the last **left-aligned** column if the line also contains a **right-aligned** column.
+ This is also due to ISE's limited support of $Host.UI.RawUI.
+
+### Visual Studio Code (integrated terminal)
+* The `-PowerLineFont` switch is not supported due to issues displaying Unicode characters.
+
+## Future Plans
 
 If you have any questions, [please ask](https://github.com/jaykul/PowerLine/issues),
 and feel free to send me pull requests with additional escape sequences, or whatever.
 
 I would love help with a couple of things in particular:
-
-Currently my methods require the use of a `[ConsoleColor]`, and since those colors
-are also supported by the old-fashioned `Write-Host` command, I'm thinking about
-providing a `Write-PowerLine` function for compatibility with older versions of Windows and PowerShell.
 
 I expect that the next major Windows update to include full xterm color support,
 which ConEmu (and terminals on Linux and OSX) already support, so I'm thinking about
