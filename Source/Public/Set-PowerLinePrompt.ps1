@@ -39,6 +39,10 @@ function Set-PowerLinePrompt {
         # If true, override the default testing for ANSI consoles and force the use of Escape Sequences rather than Write-Host
         [Parameter()]
         [switch]$UseAnsiEscapes = $($Host.UI.SupportsVirtualTerminal -or $Env:ConEmuANSI -eq "ON")
+
+        # If true, adds ENABLE_VIRTUAL_TERMINAL_PROCESSING to the console output mode. Useful on PowerShell versions that don't restore the console 
+        [Parameter()]
+        [switch]$RestoreVirtualTerminal
     )
     if($null -eq $script:OldPrompt) {
         $script:OldPrompt = $function:global:prompt
@@ -54,6 +58,7 @@ function Set-PowerLinePrompt {
     }
 
     $global:PowerLinePrompt.UseAnsiEscapes = $UseAnsiEscapes
+    $global:PowerLinePrompt.RestoreVirtualTerminal = $RestoreVirtualTerminal 
 
 
     if($ResetSeparators -or ($PSBoundParameters.ContainsKey("PowerLineFont") -and !$PowerLineFont) ) {
@@ -91,6 +96,9 @@ function Set-PowerLinePrompt {
             }
         } catch {}
 
+        if ($PowerLinePrompt.RestoreVirtualTerminal) {
+                [PowerLine.ConsoleMode]::RestoreVirtualTerminal()
+        }
         if($PowerLinePrompt.UseAnsiEscapes) {
             $PowerLinePrompt.ToString($Host.UI.RawUI.BufferSize.Width)
         } else {

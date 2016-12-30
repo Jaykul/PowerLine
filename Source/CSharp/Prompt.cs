@@ -23,6 +23,7 @@ namespace PowerLine
         public ScriptBlock Title { get; set; }
         public bool SetCurrentDirectory { get; set; }
         public bool UseAnsiEscapes { get; set; }
+        public bool RestoreVirtualTerminal { get; set; }
         public int PrefixLines { get; set; }
 
         public Prompt()

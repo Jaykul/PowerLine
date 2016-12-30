@@ -4,7 +4,7 @@
 RootModule = 'PowerLine.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.1.2'
+ModuleVersion = '2.2.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -70,7 +70,8 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
-        Add -UseAnsiEscapes switch for controlling the use of VT escape sequences (in preparation for adding a Write-Host adapter)
+        2.2.0: Add -RestoreVirtualTerminal switch for controlling if the prompt should reenable VT processing after each command
+        2.1.0: Add -UseAnsiEscapes switch for controlling the use of VT escape sequences (in preparation for adding a Write-Host adapter)
         Add pre-compiled assembly for .Net Core
         '
     } # End of PSData hashtable
