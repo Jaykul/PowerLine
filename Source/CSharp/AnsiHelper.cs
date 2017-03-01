@@ -15,11 +15,11 @@ namespace PowerLine
             string colorCode = color == null ? "Default" : color.ToString();
 
             return forBackground ? Background[colorCode] : Foreground[colorCode];
-
         }
+
         public static Dictionary<string, string> Foreground = new Dictionary<string, string>
             {
-                {"Clear",       "\u001B[39m"},
+                {"Clear",       "\u001B[39m"}, { "Default",  "\u001B[97m"},
                 {"Black",       "\u001B[30m"}, { "DarkGray", "\u001B[90m"},
                 {"DarkRed",     "\u001B[31m"}, { "Red",      "\u001B[91m"},
                 {"DarkGreen",   "\u001B[32m"}, { "Green",    "\u001B[92m"},
@@ -32,7 +32,7 @@ namespace PowerLine
 
         public static Dictionary<string, string> Background = new Dictionary<string, string>
             {
-                {"Clear",       "\u001B[49m"},
+                {"Clear",       "\u001B[49m"}, {"Default",  "\u001B[104m"},
                 {"Black",       "\u001B[40m"}, {"DarkGray", "\u001B[100m"},
                 {"DarkRed",     "\u001B[41m"}, {"Red",      "\u001B[101m"},
                 {"DarkGreen",   "\u001B[42m"}, {"Green",    "\u001B[102m"},
@@ -40,7 +40,7 @@ namespace PowerLine
                 {"DarkBlue",    "\u001B[44m"}, {"Blue",     "\u001B[104m"},
                 {"DarkMagenta", "\u001B[45m"}, {"Magenta",  "\u001B[105m"},
                 {"DarkCyan",    "\u001B[46m"}, {"Cyan",     "\u001B[106m"},
-                {"Gray",        "\u001B[47m"}, {"White",    "\u001B[107m"},
+                {"Gray",        "\u001B[47m"}, {"White",    "\u001B[107m"}
             };
 
 
@@ -69,8 +69,8 @@ namespace PowerLine
         static AnsiHelper()
         {
             Console.ResetColor();
-            Foreground.Add("Default", Foreground[Console.ForegroundColor.ToString()]);
-            Background.Add("Default", Background[Console.BackgroundColor.ToString()]);
+            Foreground["Default"] = Foreground[Console.ForegroundColor >= 0 ? Console.ForegroundColor.ToString() : "White"]);
+            Background["Default"] = Background[Console.BackgroundColor >= 0 ? Console.BackgroundColor.ToString() : "Black"]);
         }
 
         public struct EscapeCodes

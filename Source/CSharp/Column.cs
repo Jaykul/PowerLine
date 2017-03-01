@@ -56,8 +56,8 @@ namespace PowerLine
             if (ValidBlocks.Any())
             {
                 Block block;
-                StartBackgroundColor = (block = ValidBlocks.First(b => b.BackgroundColor != null)) == null ? null : block.BackgroundColor;
-                EndBackgroundColor = (block = ValidBlocks.Last(b => b.BackgroundColor != null)) == null ? null : block.BackgroundColor;
+                StartBackgroundColor = (block = ValidBlocks.FirstOrDefault(b => b.BackgroundColor != null)) == null ? null : block.BackgroundColor;
+                EndBackgroundColor = (block = ValidBlocks.LastOrDefault(b => b.BackgroundColor != null)) == null ? null : block.BackgroundColor;
                 Length = ValidBlocks.Sum(b => b.Length) + (ValidBlocks.Length - 1);
             }
             return ValidBlocks;
