@@ -2,3 +2,4 @@ obj/
 bin/
 lib/
 .vs/
+project.lock.json

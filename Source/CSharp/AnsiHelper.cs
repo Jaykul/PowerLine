@@ -69,8 +69,8 @@ namespace PowerLine
         static AnsiHelper()
         {
             Console.ResetColor();
-            Foreground["Default"] = Foreground[Console.ForegroundColor >= 0 ? Console.ForegroundColor.ToString() : "White"]);
-            Background["Default"] = Background[Console.BackgroundColor >= 0 ? Console.BackgroundColor.ToString() : "Black"]);
+            Foreground["Default"] = Foreground[Console.ForegroundColor >= 0 ? Console.ForegroundColor.ToString() : "White"];
+            Background["Default"] = Background[Console.BackgroundColor >= 0 ? Console.BackgroundColor.ToString() : "Black"];
         }
 
         public struct EscapeCodes
