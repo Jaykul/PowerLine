@@ -36,10 +36,10 @@ TypesToProcess = @("PowerLine.types.ps1xml")
 # Format files (.ps1xml) to be loaded when importing this module
 # FormatsToProcess = @()
 
-RequiredAssemblies = "lib\PowerLine.dll"
+# RequiredAssemblies = "lib\PowerLine.dll"
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Get-Elapsed', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation', 'New-PowerLineBlock', 'Set-PowerLinePrompt'
+FunctionsToExport = 'Set-PowerLinePrompt', 'Add-PowerLineBlock', 'New-PowerLineBlock', 'Get-Elapsed', 'Get-SegmentedPath', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 # CmdletsToExport = '*'
