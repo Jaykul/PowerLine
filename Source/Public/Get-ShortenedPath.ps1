@@ -11,7 +11,11 @@ function Get-ShortenedPath {
 
         [Parameter()]
         [int]
-        $MaximumLength = [int]::MaxValue
+        $MaximumLength = [int]::MaxValue,
+
+        [Parameter()]
+        [switch]
+        $VimTabStyle        
     )
 
     if ($MaximumLength -le 0) {
@@ -27,6 +31,14 @@ function Get-ShortenedPath {
         if ($Path.Length -gt 3) {
             $Path = "..." + $Path.Substring(3)
         }
+    }
+
+    # Credit: http://www.winterdom.com/powershell/2008/08/13/mypowershellprompt.html
+    if ($VimTabStyle) {
+        # Remove prefix for UNC paths
+        $Path = $Path -replace '^[^:]+::', ''
+        # handle paths starting with \\ and . correctly
+        $Path = ($Path -replace '\\(\.?)([^\\])[^\\]*(?=\\)','\$1$2')
     }
 
     $Path
