@@ -1,3 +1,4 @@
+using PoshCode.Pansies;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -50,15 +51,13 @@ namespace PowerLine
                 lines = lines.Skip(1).ToArray();
             }
 
-            Line[] lns;
-            if (LanguagePrimitives.TryConvertTo(lines, out lns))
+            if (LanguagePrimitives.TryConvertTo(lines, out Line[] lns))
             {
                 Lines.AddRange(lns);
                 return;
             }
 
-            Line ln;
-            if (LanguagePrimitives.TryConvertTo(lines, out ln))
+            if (LanguagePrimitives.TryConvertTo(lines, out Line ln))
             {
                 Lines.Add(ln);
                 return;
@@ -83,13 +82,15 @@ namespace PowerLine
             // Move up to previous line(s)
             if (PrefixLines != 0)
             {
-                output.Append(AnsiHelper.EscapeCodes.Esc + Math.Abs(PrefixLines) + "A");
+                output.Append(Entities.EscapeSequences["Esc"] + Math.Abs(PrefixLines) + "A");
             }
 
             output.Append(string.Join("\n", Lines.Select(l => l.ToString(width))));
-            output.Append(AnsiHelper.Foreground["Default"]);
-            output.Append(AnsiHelper.Background["Default"]);
-            output.Append(AnsiHelper.EscapeCodes.Recall);
+
+            // reset, aagain?
+            //output.Append(AnsiHelper.Foreground["Default"]);
+            //output.Append(AnsiHelper.Background["Default"]);
+            output.Append(Entities.EscapeSequences["Recall"]);
 
             return output.ToString();
         }

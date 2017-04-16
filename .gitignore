@@ -1,5 +1,13 @@
-obj/
-bin/
-lib/
-.vs/
-project.lock.json
+# ignore packages (this is for nuget stuff)
+/packages/*
+# ignore output (because we put stuff there)
+/output/*
+# Ignore version number folders (these are our intermediate "output" directories for testing)
+/[0-9]*/
+# ignore binary output files and folders
+/bin/*
+/obj/*
+/lib/*
+# ignore visual studio artifacts
+*.suo
+/.vs/

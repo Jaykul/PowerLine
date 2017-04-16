@@ -15,6 +15,7 @@ function Add-PowerLineBlock {
     param(
         # The text, object, or scriptblock to show as output
         [Parameter(Position=0, Mandatory=$true)]
+        [Alias("Text")]
         $Object,
 
         # The foreground color to use when the last command succeeded
@@ -56,21 +57,21 @@ function Add-PowerLineBlock {
     $null = $Parameters.Remove("Column")
     $null = $Parameters.Remove("InsertAt")
 
-    $blocks = [PowerLine.BlockFactory]$Parameters
+    $blocks = [PowerLine.TextFactory]$Parameters
 
-    if($Line -gt ($PowerLinePrompt.Lines.Count - 1)) {
-        $null = $PowerLinePrompt.Add((New-Object PowerLine.Line))
+    if($Line -gt ($global:PowerLinePrompt.Lines.Count - 1)) {
+        $null = $global:PowerLinePrompt.Add((New-Object PowerLine.Line))
         $Line = -1
     }
 
     [int]$Column = if($Column -eq "Left") { 0 } else { 1 }
-    if($Column -gt ($PowerLinePrompt.Lines[$Line].Columns.Count - 1)) {
-        $null = $PowerLinePrompt.Lines[$Line].Columns.Add((New-Object PowerLine.Column))
+    if($Column -gt ($global:PowerLinePrompt.Lines[$Line].Columns.Count - 1)) {
+        $null = $global:PowerLinePrompt.Lines[$Line].Columns.Add((New-Object PowerLine.Column))
     }
 
-    if($InsertAt -lt 0 -or $InsertAt -gt $PowerLinePrompt.Lines[$Line].Columns[$Column].Blocks.Count) {
-        $PowerLinePrompt.Lines[$Line].Columns[$Column].Blocks.Add($blocks)
+    if($InsertAt -lt 0 -or $InsertAt -gt $global:PowerLinePrompt.Lines[$Line].Columns[$Column].Blocks.Count) {
+        $global:PowerLinePrompt.Lines[$Line].Columns[$Column].Blocks.Add($blocks)
     } else {
-        $PowerLinePrompt.Lines[$Line].Columns[$Column].Blocks.Insert($InsertAt,$blocks)
+        $global:PowerLinePrompt.Lines[$Line].Columns[$Column].Blocks.Insert($InsertAt,$blocks)
     }
 }

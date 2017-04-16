@@ -1,3 +1,4 @@
+using PoshCode.Pansies;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,49 +14,49 @@ namespace PowerLine
         /// <summary>
         /// Gets the blocks
         /// </summary>
-        public List<BlockFactory> Blocks { get; private set; }
+        public List<TextFactory> Blocks { get; private set; }
 
         public Column()
         {
-            Blocks = new List<BlockFactory>();
+            Blocks = new List<TextFactory>();
             Length = -1;
         }
 
-        public Column(params BlockFactory[] blocks) : this()
+        public Column(params TextFactory[] blocks) : this()
         {
             Blocks.AddRange(blocks);
         }
 
-        public Column(params Block[] blocks) : this()
+        public Column(params Text[] blocks) : this()
         {
-            // Convert BlockBase to BlockFactory
-            Blocks.AddRange(blocks.Select(b => new BlockFactory(b)));
+            // Convert BlockBase to TextFactory
+            Blocks.AddRange(blocks.Select(b => new TextFactory(b)));
         }
 
         public Column(params object[] blocks) : this()
         {
             foreach (object block in blocks)
             {
-                Blocks.AddRange(LanguagePrimitives.ConvertTo<BlockFactory[]>(block));
+                Blocks.AddRange(LanguagePrimitives.ConvertTo<TextFactory[]>(block));
             }
         }
 
-        public ConsoleColor? StartBackgroundColor { get; private set; }
+        public Color StartBackgroundColor { get; private set; }
 
-        public ConsoleColor? EndBackgroundColor { get; private set; }
+        public Color EndBackgroundColor { get; private set; }
 
         public int Length { get; private set; }
 
-        private Block[] ValidBlocks { get; set; }
+        private Text[] ValidBlocks { get; set; }
 
-        public Block[] PreCalculateValues()
+        public Text[] PreCalculateValues()
         {
             // Calculate all the text and remove empty blocks
-            ValidBlocks = Blocks.SelectMany(factory => factory.GetBlocks()).Where(e => e.Length >= 0).ToArray();
+            ValidBlocks = Blocks.SelectMany(factory => factory.GetText()).Where(e => e.Length >= 0).ToArray();
             Length = -1;
             if (ValidBlocks.Any())
             {
-                Block block;
+                Text block;
                 StartBackgroundColor = (block = ValidBlocks.FirstOrDefault(b => b.BackgroundColor != null)) == null ? null : block.BackgroundColor;
                 EndBackgroundColor = (block = ValidBlocks.LastOrDefault(b => b.BackgroundColor != null)) == null ? null : block.BackgroundColor;
                 Length = ValidBlocks.Sum(b => b.Length) + (ValidBlocks.Length - 1);
@@ -87,18 +88,19 @@ namespace PowerLine
                     {
                         if (rightJustified)
                         {
-                            output.Append(AnsiHelper.WriteAnsi(ValidBlocks[l + 1].BackgroundColor, block.BackgroundColor, colorSeparator));
+                            output.Append(Text.GetString(ValidBlocks[l + 1].BackgroundColor, block.BackgroundColor, colorSeparator));
                         }
                         else
                         {
-                            output.Append(AnsiHelper.WriteAnsi(block.BackgroundColor, ValidBlocks[l + 1].BackgroundColor, colorSeparator));
+                            output.Append(Text.GetString(block.BackgroundColor, ValidBlocks[l + 1].BackgroundColor, colorSeparator));
                         }
                     }
                 }
             }
-            // clear colors at the end of each column
-            output.Append(AnsiHelper.Foreground["Default"]);
-            output.Append(AnsiHelper.Background["Default"]);
+            // clear background colors at the end of each column
+            output.Append("\u001B[49m");
+            // clear foreground colors at the end of each column
+            output.Append("\u001B[39m");
             return output.ToString();
         }
 

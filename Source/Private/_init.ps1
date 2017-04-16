@@ -1,11 +1,13 @@
 #!/usr/bin/env powershell
 using namespace System.Collections.Generic
+using namespace PoshCode.Pansies
 
-# A convoluted way of loading the right assembly
-# On PowerShell Core the assembly is loaded from disk
-# Otherwise that fails, and we compile it here
-if(!("PowerLine.Prompt" -as [Type])) {
-    Add-Type -Path $PowerLineRoot\CSharp\*.cs
+$script:PowerLineRoot = $PSScriptRoot
+
+if($PSVersionTable.PSVersion -lt "6.0") {
+    Add-Type -Path $PSScriptRoot\lib\net452\PowerLine.dll
+} else {
+    Add-Type -Path $PSScriptRoot\lib\netstandard1.0\PowerLine.dll
 }
 
 if(!$PowerLinePrompt) {

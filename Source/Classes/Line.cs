@@ -1,3 +1,4 @@
+using PoshCode.Pansies;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -24,16 +25,14 @@ namespace PowerLine
 
         public Line(object[] columns) : this()
         {
-            Column[] cols;
-            if (LanguagePrimitives.TryConvertTo(columns, out cols))
+            if (LanguagePrimitives.TryConvertTo(columns, out Column[] cols))
             {
                 Columns.AddRange(cols);
                 return;
             }
 
             // Console.WriteLine("Fallback to single column");
-            Column column;
-            if (LanguagePrimitives.TryConvertTo(columns, out column))
+            if (LanguagePrimitives.TryConvertTo(columns, out Column column))
             {
                 Columns.Add(column);
                 return;
@@ -56,16 +55,14 @@ namespace PowerLine
 
                 // Console.WriteLine("Fallback to block factories");
                 // This should let us skip explicitly having columns
-                BlockFactory[] factories;
-                if (LanguagePrimitives.TryConvertTo(columns, out factories))
+                if (LanguagePrimitives.TryConvertTo(columns, out TextFactory[] factories))
                 {
                     Columns.Add(new Column(factories));
                     continue;
                 }
 
                 // Console.WriteLine("Fallback to a single block factory");
-                BlockFactory factory;
-                if (LanguagePrimitives.TryConvertTo(columns, out factory))
+                if (LanguagePrimitives.TryConvertTo(columns, out TextFactory factory))
                 {
                     Columns.Add(new Column(factory));
                     continue;
@@ -106,11 +103,11 @@ namespace PowerLine
                 {
                     string text = column.ToString(Prompt.Separator, Prompt.ColorSeparator);
                     output.Append(text);
-                    output.Append(AnsiHelper.WriteAnsi(column.EndBackgroundColor, null, Prompt.ColorSeparator));
+                    output.Append(Text.GetString(column.EndBackgroundColor, null, Prompt.ColorSeparator));
                 }
 
                 // Force the prompt location to the end of the first column
-                output.Append(AnsiHelper.EscapeCodes.PromptLocation);
+                output.Append(Entities.EscapeSequences["Store"]);
 
                 // CURRENTLY we only support two columns, so ...
                 // if there are more columns, the next one is right-aligned
@@ -121,9 +118,9 @@ namespace PowerLine
                     if (column != null && column.Length > 0)
                     {
                         // Move to the start location for the next column
-                        output.Append(AnsiHelper.EscapeCodes.Esc + (width - column.Length) + "G");
+                        output.Append(Entities.EscapeSequences["Esc"] + (width - column.Length) + "G");
 
-                        output.Append(AnsiHelper.WriteAnsi(column.StartBackgroundColor, null, Prompt.ReverseColorSeparator));
+                        output.Append(Text.GetString(column.StartBackgroundColor, null, Prompt.ReverseColorSeparator));
                         output.Append(column.ToString(Prompt.ReverseSeparator, Prompt.ReverseColorSeparator, true));
                     }
                 }
@@ -134,6 +131,8 @@ namespace PowerLine
                     output.Append("\n");
                 }
             }
+            // clear
+            output.Append(Entities.EscapeSequences["Clear"]);
 
             return output.ToString();
         }

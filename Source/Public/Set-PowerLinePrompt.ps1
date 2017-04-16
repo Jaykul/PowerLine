@@ -38,9 +38,9 @@ function Set-PowerLinePrompt {
 
         # If true, override the default testing for ANSI consoles and force the use of Escape Sequences rather than Write-Host
         [Parameter()]
-        [switch]$UseAnsiEscapes = $($Host.UI.SupportsVirtualTerminal -or $Env:ConEmuANSI -eq "ON")
+        [switch]$UseAnsiEscapes = $($Host.UI.SupportsVirtualTerminal -or $Env:ConEmuANSI -eq "ON"),
 
-        # If true, adds ENABLE_VIRTUAL_TERMINAL_PROCESSING to the console output mode. Useful on PowerShell versions that don't restore the console 
+        # If true, adds ENABLE_VIRTUAL_TERMINAL_PROCESSING to the console output mode. Useful on PowerShell versions that don't restore the console
         [Parameter()]
         [switch]$RestoreVirtualTerminal
     )
@@ -58,7 +58,7 @@ function Set-PowerLinePrompt {
     }
 
     $global:PowerLinePrompt.UseAnsiEscapes = $UseAnsiEscapes
-    $global:PowerLinePrompt.RestoreVirtualTerminal = $RestoreVirtualTerminal 
+    $global:PowerLinePrompt.RestoreVirtualTerminal = $RestoreVirtualTerminal
 
 
     if($ResetSeparators -or ($PSBoundParameters.ContainsKey("PowerLineFont") -and !$PowerLineFont) ) {
@@ -86,24 +86,19 @@ function Set-PowerLinePrompt {
         [bool]$script:LastSuccess = $?
 
         try {
-            if($PowerLinePrompt.Title) {
-                $Host.UI.RawUI.WindowTitle = [System.Management.Automation.LanguagePrimitives]::ConvertTo( (& $PowerLinePrompt.Title), [string] )
+            if($global:PowerLinePrompt.Title) {
+                $Host.UI.RawUI.WindowTitle = [System.Management.Automation.LanguagePrimitives]::ConvertTo( (& $global:PowerLinePrompt.Title), [string] )
             }
-            if($PowerLinePrompt.SetCurrentDirectory) {
+            if($global:PowerLinePrompt.SetCurrentDirectory) {
                 # Make sure Windows & .Net know where we are
                 # They can only handle the FileSystem, and not in .Net Core
                 [System.IO.Directory]::SetCurrentDirectory( (Get-Location -PSProvider FileSystem).ProviderPath )
             }
         } catch {}
 
-        if ($PowerLinePrompt.RestoreVirtualTerminal) {
+        if ($global:PowerLinePrompt.RestoreVirtualTerminal) {
                 [PowerLine.ConsoleMode]::RestoreVirtualTerminal()
         }
-        if($PowerLinePrompt.UseAnsiEscapes) {
-            $PowerLinePrompt.ToString($Host.UI.RawUI.BufferSize.Width)
-        } else {
-            Write-Host "No PowerLine for you! `$Host.UI.SupportsVirtualTerminal is false, and `$Env:ConEmuANSI` is not 'ON'" -ForegroundColor Red -BackgroundColor Black
-            return "> "
-        }
+        $global:PowerLinePrompt.ToString($Host.UI.RawUI.BufferSize.Width)
     }
 }
