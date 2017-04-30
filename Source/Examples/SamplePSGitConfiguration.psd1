@@ -10,13 +10,13 @@
     Object = '▼'
   })
   After = (PSObject @{
-    Background = (ConsoleColor Black)
-    Foreground = (ConsoleColor White)
+    Background = (RgbColor Black)
+    Foreground = (RgbColor White)
     Object = ''
   })
   Before = (PSObject @{
-    Background = (ConsoleColor Black)
-    Foreground = (ConsoleColor White)
+    Background = (RgbColor Black)
+    Foreground = (RgbColor White)
     Object = ''
   })
   UnstagedChanges = (PSObject @{
@@ -30,8 +30,8 @@
     Object = ''
   })
   Index = (PSObject @{
-    Background = (ConsoleColor Black)
-    Foreground = (ConsoleColor Green)
+    Background = (RgbColor Black)
+    Foreground = (RgbColor Green)
   })
   BeforeChanges = (PSObject @{
     Background = 'Cyan'
@@ -39,8 +39,8 @@
     Object = ''
   })
   Working = (PSObject @{
-    Background = (ConsoleColor Black)
-    Foreground = (ConsoleColor Green)
+    Background = (RgbColor Black)
+    Foreground = (RgbColor Green)
   })
   StagedChanges = (PSObject @{
     Background = 'Cyan'

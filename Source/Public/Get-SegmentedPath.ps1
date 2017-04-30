@@ -23,22 +23,22 @@ function Get-SegmentedPath {
         $LengthLimit = 0,
 
         # The foreground color to use when the last command succeeded
-        [ConsoleColor]$ForegroundColor,
+        [RgbColor]$ForegroundColor,
 
         # The background color to use when the last command succeeded
-        [ConsoleColor]$BackgroundColor,
+        [RgbColor]$BackgroundColor,
 
         # The foreground color to use when the process is elevated (running as administrator)
-        [ConsoleColor]$ElevatedForegroundColor,
+        [RgbColor]$ElevatedForegroundColor,
 
         # The background color to use when the process is elevated (running as administrator)
-        [ConsoleColor]$ElevatedBackgroundColor,
+        [RgbColor]$ElevatedBackgroundColor,
 
         # The foreground color to use when the last command failed
-        [ConsoleColor]$ErrorForegroundColor,
+        [RgbColor]$ErrorForegroundColor,
 
         # The background color to use when the last command failed
-        [ConsoleColor]$ErrorBackgroundColor
+        [RgbColor]$ErrorBackgroundColor
     )
 
     $buffer = @()

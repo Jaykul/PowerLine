@@ -105,7 +105,7 @@ and feel free to send me pull requests with additional escape sequences, or what
 
 I would love help with a couple of things in particular:
 
-Currently my methods require the use of a `[ConsoleColor]`, and since those colors
+Currently my methods require the use of a `[RgbColor]`, and since those colors
 are also supported by the old-fashioned `Write-Host` command, I'm thinking about
 providing a `Write-PowerLine` function for compatibility with older versions of Windows and PowerShell.
 
@@ -163,7 +163,7 @@ The `AnsiHelper class has ANSI escape sequences and some helper methods. You sho
 #### GetCode
 
 ```posh
-[PowerLine.AnsiHelper]::GetCode( [ConsoleColor]$Color, [bool]$ForBackground )
+[PowerLine.AnsiHelper]::GetCode( [RgbColor]$Color, [bool]$ForBackground )
 ```
 
 You call this with a color to get the ANSI escape sequence for it. Optionally, pass $true to get back background color code. You would need to use the output of that in text output to the console for it to do anything.
@@ -171,7 +171,7 @@ You call this with a color to get the ANSI escape sequence for it. Optionally, p
 #### WriteAnsi
 
 ```posh
-[PowerLine.AnsiHelper]::WriteAnsi( [ConsoleColor]$foreground, [ConsoleColor]$background, [object]$value, [bool]$clear )
+[PowerLine.AnsiHelper]::WriteAnsi( [RgbColor]$foreground, [RgbColor]$background, [object]$value, [bool]$clear )
 ```
 
 This method takes a foreground and background color, an object to output,

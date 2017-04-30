@@ -18,13 +18,13 @@ namespace PowerLine
         /// Gets or Sets the background color for the block
         /// </summary>
         [Alias("BackgroundColor", "Bg")]
-        public Color DefaultBackgroundColor { get; set; }
+        public RgbColor DefaultBackgroundColor { get; set; }
 
         /// <summary>
         /// Gets or Sets the foreground color for the block
         /// </summary>
         [Alias("ForegroundColor", "Fg")]
-        public Color DefaultForegroundColor { get; set; }
+        public RgbColor DefaultForegroundColor { get; set; }
 
         /// <summary>
         /// Gets or Sets the object to be rendered.
@@ -44,11 +44,11 @@ namespace PowerLine
                 var pattern = "^" + Regex.Escape(key);
                 if ("bg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("BackgroundColor", pattern, RegexOptions.IgnoreCase))
                 {
-                    DefaultBackgroundColor = Color.ConvertFrom(values[key]);
+                    DefaultBackgroundColor = RgbColor.ConvertFrom(values[key]);
                 }
                 else if ("fg".Equals(key, StringComparison.OrdinalIgnoreCase) || Regex.IsMatch("ForegroundColor", pattern, RegexOptions.IgnoreCase))
                 {
-                    DefaultForegroundColor = Color.ConvertFrom(values[key]);
+                    DefaultForegroundColor = RgbColor.ConvertFrom(values[key]);
                 }
                 else if (Regex.IsMatch("text", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("Content", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("Object", pattern, RegexOptions.IgnoreCase))
                 {

@@ -23,28 +23,28 @@ function New-TextFactory {
         # The foreground color to use when the last command succeeded
         [Alias("Foreground", "Fg")]
         [Parameter(ValueFromPipelineByPropertyName)]
-        [PoshCode.Pansies.Color]$ForegroundColor,
+        [RgbColor]$ForegroundColor,
 
         # The background color to use when the last command succeeded
         [Alias("Background", "Bg")]
         [Parameter(ValueFromPipelineByPropertyName)]
-        [PoshCode.Pansies.Color]$BackgroundColor,
+        [RgbColor]$BackgroundColor,
 
         # The foreground color to use when the process is elevated (running as administrator)
         [Parameter(ValueFromPipelineByPropertyName)]
-        [PoshCode.Pansies.Color]$ElevatedForegroundColor,
+        [RgbColor]$ElevatedForegroundColor,
 
         # The background color to use when the process is elevated (running as administrator)
         [Parameter(ValueFromPipelineByPropertyName)]
-        [PoshCode.Pansies.Color]$ElevatedBackgroundColor,
+        [RgbColor]$ElevatedBackgroundColor,
 
         # The foreground color to use when the last command failed
         [Parameter(ValueFromPipelineByPropertyName)]
-        [PoshCode.Pansies.Color]$ErrorForegroundColor,
+        [RgbColor]$ErrorForegroundColor,
 
         # The background color to use when the last command failed
         [Parameter(ValueFromPipelineByPropertyName)]
-        [PoshCode.Pansies.Color]$ErrorBackgroundColor
+        [RgbColor]$ErrorBackgroundColor
     )
     $output = [PowerLine.TextFactory]@{
         Object = $Object

@@ -4,7 +4,7 @@
 RootModule = 'PowerLine.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.2.2'
+ModuleVersion = '2.2.5'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -36,6 +36,7 @@ TypesToProcess = @("PowerLine.types.ps1xml")
 # Format files (.ps1xml) to be loaded when importing this module
 # FormatsToProcess = @()
 
+RequiredModules = @("Pansies")
 # RequiredAssemblies = "lib\PowerLine.dll"
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.

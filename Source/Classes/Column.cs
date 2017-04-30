@@ -41,9 +41,9 @@ namespace PowerLine
             }
         }
 
-        public Color StartBackgroundColor { get; private set; }
+        public RgbColor StartBackgroundColor { get; private set; }
 
-        public Color EndBackgroundColor { get; private set; }
+        public RgbColor EndBackgroundColor { get; private set; }
 
         public int Length { get; private set; }
 
