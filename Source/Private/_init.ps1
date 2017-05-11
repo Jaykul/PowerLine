@@ -5,9 +5,9 @@ using namespace PoshCode.Pansies
 $script:PowerLineRoot = $PSScriptRoot
 
 if($PSVersionTable.PSVersion -lt "6.0") {
-    Add-Type -Path $PSScriptRoot\lib\net452\PowerLine.dll
+    Add-Type -Path $PSScriptRoot\lib\net451\PowerLine.dll
 } else {
-    Add-Type -Path $PSScriptRoot\lib\netstandard1.0\PowerLine.dll
+    Add-Type -Path $PSScriptRoot\lib\netstandard1.6\PowerLine.dll
 }
 
 if(!$PowerLinePrompt) {

@@ -80,8 +80,6 @@ function Set-PowerLinePrompt {
         [PowerLine.Prompt]::Gear     = [char]0x26EF
     }
 
-    $script:windowsHelper = [PoshCode.Pansies.Console.WindowsHelper]::new()
-
     $function:global:prompt =  {
 
         # FIRST, make a note if there was an error in the previous command
@@ -99,7 +97,7 @@ function Set-PowerLinePrompt {
         } catch {}
 
         if ($global:PowerLinePrompt.RestoreVirtualTerminal) {
-            $script:windowsHelper.EnableVirtualTerminalProcessing()
+            [PoshCode.Pansies.Console.WindowsHelper]::EnableVirtualTerminalProcessing()
         }
         $global:PowerLinePrompt.ToString($Host.UI.RawUI.BufferSize.Width)
     }
