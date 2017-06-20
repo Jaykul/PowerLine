@@ -23,22 +23,22 @@ function Get-SegmentedPath {
         $LengthLimit = 0,
 
         # The foreground color to use when the last command succeeded
-        [RgbColor]$ForegroundColor,
+        [PoshCode.Pansies.RgbColor]$ForegroundColor,
 
         # The background color to use when the last command succeeded
-        [RgbColor]$BackgroundColor,
+        [PoshCode.Pansies.RgbColor]$BackgroundColor,
 
         # The foreground color to use when the process is elevated (running as administrator)
-        [RgbColor]$ElevatedForegroundColor,
+        [PoshCode.Pansies.RgbColor]$ElevatedForegroundColor,
 
         # The background color to use when the process is elevated (running as administrator)
-        [RgbColor]$ElevatedBackgroundColor,
+        [PoshCode.Pansies.RgbColor]$ElevatedBackgroundColor,
 
         # The foreground color to use when the last command failed
-        [RgbColor]$ErrorForegroundColor,
+        [PoshCode.Pansies.RgbColor]$ErrorForegroundColor,
 
         # The background color to use when the last command failed
-        [RgbColor]$ErrorBackgroundColor
+        [PoshCode.Pansies.RgbColor]$ErrorBackgroundColor
     )
 
     $buffer = @()
