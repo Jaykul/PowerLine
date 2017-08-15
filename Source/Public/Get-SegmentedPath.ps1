@@ -83,7 +83,6 @@ function Get-SegmentedPath {
     [Array]::Reverse($buffer)
 
     foreach($output in $buffer) {
-
         # Always set the defaults first, if they're provided
         if($PSBoundParameters.ContainsKey("ForegroundColor")) {
             $output.ForegroundColor = $ForegroundColor
@@ -112,5 +111,5 @@ function Get-SegmentedPath {
             }
         }
     }
-    $buffer
+    [PoshCode.Pansies.Text[]]$buffer
 }

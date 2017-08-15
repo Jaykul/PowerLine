@@ -1,77 +1,51 @@
 function Add-PowerLineBlock {
     <#
         .Synopsis
-            Insert a PowerLine block into the $PowerLinePrompt
+            Insert text or a ScriptBlock into the $Prompt
         .Description
-            Allows changing the foreground and background colors based on elevation or success.
-
-            Tests elevation fist, and then whether the last command was successful, so if you pass separate colors for each, the Elevated*Color will be used when PowerShell is running as administrator and there is no error. The Error*Color will be used whenever there's an error, whether it's elevated or not.
+            This function exists primarily to ensure that modules are able to modify the prompt easily without repeating themselves.
         .Example
-            New-PowerLineBlock (Get-Elapsed) -ForegroundColor White -BackgroundColor DarkBlue -ErrorBackground DarkRed -ElevatedForegroundColor Yellow
+            Add-PowerLineBlock { "`nI &hearts; PS" }
 
-            This example shows the time elapsed executing the last command in White on a DarkBlue background, but switches the text to yellow if elevated, and the background to red on error.
+            Adds the classic "I ♥ PS" to your prompt on a new line. We actually recommend having a simple line in pure 16-color mode on the last line of your prompt, to ensures that PSReadLine won't mess up your colors. PSReadline overwrites your prompt line when you type -- and it can only handle 16 color mode.
+        .Example
+            Add-PowerLineBlock {
+                New-PromptText { Get-Elapsed } -ForegroundColor White -BackgroundColor DarkBlue -ErrorBackground DarkRed -ElevatedForegroundColor Yellow
+            } -Index -2
+
+            # This example uses Add-PowerLineBlock to insert a block into the prommpt _before_ the last block
+            # It calls Get-Elapsed to show the duration of the last command as the text of the block
+            # It uses New-PromptText to control the color so that it's highlighted in red if there is an error, but otherwise in dark blue (or yellow if it's an elevated host).
     #>
     [CmdletBinding(DefaultParameterSetName="Error")]
     param(
         # The text, object, or scriptblock to show as output
-        [Parameter(Position=0, Mandatory=$true)]
+        [Parameter(Position=0, Mandatory, ValueFromPipeline)]
         [Alias("Text")]
-        $Object,
+        $InputObject,
 
-        # The foreground color to use when the last command succeeded
-        [RgbColor]$ForegroundColor,
+        # The position to insert the InputObject at, Defaults to -1 (to append at the end).
+        [int]$Index = -1,
 
-        # The background color to use when the last command succeeded
-        [RgbColor]$BackgroundColor,
-
-        # The foreground color to use when the process is elevated (running as administrator)
-        [RgbColor]$ElevatedForegroundColor,
-
-        # The background color to use when the process is elevated (running as administrator)
-        [RgbColor]$ElevatedBackgroundColor,
-
-        # The foreground color to use when the last command failed
-        [RgbColor]$ErrorForegroundColor,
-
-        # The background color to use when the last command failed
-        [RgbColor]$ErrorBackgroundColor,
-
-        # The line to insert the block to. Index starts at 0.
-        # If the number is out of range, a new line will be added to the prompt
-        # Defaults to -1 (the last line).
-        [int]$Line = -1,
-
-        # The column to insert the block to (Left or Right aligned).
-        # Defaults to the Left column
-        [ValidateSet("Left","Right")]
-        [string]$Column = "Left",
-
-        # The position in column to insert the block to. The left-aligned column is 0, the right-aligned column is 1.
-        # Defaults to append at the end.
-        [ValidateSet(-1,0,1)]
-        [int]$InsertAt = -1
+        # If set, adds the input to the prompt without checking if it's already there
+        [Switch]$Force
     )
-    $Parameters = @{} + $PSBoundParameters
-    # Remove the position parameters:
-    $null = $Parameters.Remove("Line")
-    $null = $Parameters.Remove("Column")
-    $null = $Parameters.Remove("InsertAt")
-
-    $blocks = [PowerLine.TextFactory]$Parameters
-
-    if($Line -gt ($global:PowerLinePrompt.Lines.Count - 1)) {
-        $null = $global:PowerLinePrompt.Add((New-Object PowerLine.Line))
-        $Line = -1
-    }
-
-    [int]$Column = if($Column -eq "Left") { 0 } else { 1 }
-    if($Column -gt ($global:PowerLinePrompt.Lines[$Line].Columns.Count - 1)) {
-        $null = $global:PowerLinePrompt.Lines[$Line].Columns.Add((New-Object PowerLine.Column))
-    }
-
-    if($InsertAt -lt 0 -or $InsertAt -gt $global:PowerLinePrompt.Lines[$Line].Columns[$Column].Blocks.Count) {
-        $global:PowerLinePrompt.Lines[$Line].Columns[$Column].Blocks.Add($blocks)
-    } else {
-        $global:PowerLinePrompt.Lines[$Line].Columns[$Column].Blocks.Insert($InsertAt,$blocks)
+    process {
+        Write-Debug "Add-PowerLineBlock $InputObject"
+        if($Force -or !$Prompt.Contains($InputObject)) {
+            if($Index -eq -1 -or $Index -gt $Prompt.Count) {
+                Write-Verbose "Appending '$InputObject' to the end of the prompt"
+                $Prompt.Add($InputObject)
+            } elseif($Index -lt 0) {
+                $Index = $Prompt.Count - $Index
+                Write-Verbose "Inserting '$InputObject' at $Index of the prompt"
+                $Prompt.Insert($Index, $InputObject)
+            } else {
+                Write-Verbose "Inserting '$InputObject' at $Index of the prompt"
+                $Prompt.Insert($Index, $InputObject)
+            }
+        } else {
+            Write-Verbose "Prompt already contained the InputObject block"
+        }
     }
 }
