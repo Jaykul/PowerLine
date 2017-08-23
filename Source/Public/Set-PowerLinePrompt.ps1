@@ -42,7 +42,9 @@ function Set-PowerLinePrompt {
 
         # If true, adds ENABLE_VIRTUAL_TERMINAL_PROCESSING to the console output mode. Useful on PowerShell versions that don't restore the console
         [Parameter()]
-        [switch]$RestoreVirtualTerminal
+        [switch]$RestoreVirtualTerminal,
+
+        [switch]$Newline
     )
     if ($null -eq $script:OldPrompt) {
         $script:OldPrompt = $function:global:prompt
@@ -61,6 +63,21 @@ function Set-PowerLinePrompt {
     }
     if ($PSBoundParameters.ContainsKey("CurrentDirectory")) {
         $Local:PowerLinePrompt['SetCurrentDirectory'] = $CurrentDirectory
+    }
+    if($Newline) {
+        $Script:DefaultAddIndex = $Insert = $Prompt.Count
+        @(
+            { "`t" }
+            { Get-Elapsed }
+            { Get-Date -f "T" }
+            { "`n" }
+            { New-PromptText {
+                "I $(New-PromptText -Fg Red -ErrorForegroundColor White "&hearts;`e[30m") PS"
+              } -BackgroundColor White -ErrorBackgroundColor Red -ForegroundColor Black }
+        ) | Add-PowerLineBlock
+        $Script:DefaultAddIndex = $Insert
+    } else {
+        $Script:DefaultAddIndex = -1
     }
 
     $Script:PowerLinePrompt = [PSCustomObject]$Local:PowerLinePrompt

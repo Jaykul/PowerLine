@@ -27,12 +27,21 @@ function Add-PowerLineBlock {
         # The position to insert the InputObject at, Defaults to -1 (to append at the end).
         [int]$Index = -1,
 
+        [Switch]$AutoRemove,
+
         # If set, adds the input to the prompt without checking if it's already there
         [Switch]$Force
     )
     process {
         Write-Debug "Add-PowerLineBlock $InputObject"
-        if($Force -or !$Prompt.Contains($InputObject)) {
+        if(!$PSBoundParameters.ContainsKey("Index")) {
+            $Index = $Script:DefaultAddIndex++
+        }
+
+
+        $Skip = @($Prompt).ForEach{$_.ToString().Trim()} -eq $InputObject.ToString().Trim()
+
+        if($Force -or !$Skip) {
             if($Index -eq -1 -or $Index -gt $Prompt.Count) {
                 Write-Verbose "Appending '$InputObject' to the end of the prompt"
                 $Prompt.Add($InputObject)
@@ -46,6 +55,14 @@ function Add-PowerLineBlock {
             }
         } else {
             Write-Verbose "Prompt already contained the InputObject block"
+        }
+
+        if($AutoRemove) {
+            if(($CallStack = Get-PSCallStack).Count -ge 2) {
+                if($Module = $CallStack[1].InvocationInfo.MyCommand.Module) {
+                    $Module.OnRemove = { Remove-PowerLineBlock $InputObject }.GetNewClosure()
+                }
+            }
         }
     }
 }

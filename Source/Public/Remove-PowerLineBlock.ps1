@@ -19,6 +19,13 @@ function Remove-PowerLineBlock {
         $InputObject
     )
     process {
-        $Prompt.Remove($InputObject)
+
+        $Index = @($Global:Prompt).ForEach{$_.ToString().Trim()}.IndexOf($InputObject.ToString().Trim())
+        if($Index -ge 0) {
+            $null = $Global:Prompt.RemoveAt($Index)
+        }
+        if($Index -lt $Script:DefaultAddIndex) {
+            $Script:DefaultAddIndex--
+        }
     }
 }
