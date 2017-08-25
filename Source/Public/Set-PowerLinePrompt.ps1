@@ -72,7 +72,7 @@ function Set-PowerLinePrompt {
             { Get-Date -f "T" }
             { "`n" }
             { New-PromptText {
-                "I $(New-PromptText -Fg Red -ErrorForegroundColor White "&hearts;`e[30m") PS"
+                "I $(New-PromptText -Fg Red -ErrorForegroundColor White "&hearts;$([char]27)[30m") PS"
               } -BackgroundColor White -ErrorBackgroundColor Red -ForegroundColor Black }
         ) | Add-PowerLineBlock
         $Script:DefaultAddIndex = $Insert
