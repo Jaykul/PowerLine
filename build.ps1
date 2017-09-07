@@ -21,6 +21,7 @@ try {
         }
 
     Get-ChildItem Source\Private, Source\Public -Filter *.ps1 -Recurse |
+        Sort-Object Directory, Name |
         Get-Content |
         Set-Content "$($folder.FullName)\${ModuleName}.psm1"
     Write-Host "  PowerLine -> $($folder.FullName)\${ModuleName}.psm1"
