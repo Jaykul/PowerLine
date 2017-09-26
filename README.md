@@ -72,7 +72,7 @@ by doing something like: `$Prompt = $Prompt[0,1,3,2]`
 
 ## For power users:
 
-The best part, in my opinion, is that we can then make your prompt look cooler. You can go from simple to elegant with a single command from the PowerLine module, and then you can tweak the colors by setting the $PowerLineColors variable to a list of colors, perhaps using `Get-Gradient -Flatten`...
+The best part, in my opinion, is that we can then make your prompt look cooler. You can go from simple to elegant with a single command from the PowerLine module, and then you can tweak the colors by setting the $Prompt.Colors variable to a list of colors, perhaps using `Get-Gradient -Flatten`...
 
 ```posh
 Set-PowerLinePrompt -Newline -PowerLineFont

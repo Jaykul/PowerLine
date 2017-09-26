@@ -30,7 +30,3 @@ $script:PowerLineRoot = $PSScriptRoot
 } else {
     { $MyInvocation.HistoryId }, { Get-SegmentedPath }
 }
-
-if(!(Test-Path Variable:PowerLineColors)) {
-    [RgbColor[]]$Script:PowerLineColors = "xt39","xt75","xt32","xt26","xt33","xt12","xt20","xt19"
-}

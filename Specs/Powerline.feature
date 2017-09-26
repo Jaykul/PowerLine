@@ -10,13 +10,13 @@ Feature: PowerLine Prompt
     Background:
         Given I have imported PowerLine
 
-    Scenario: PowerLine exports a $Prompt variable ArrayList of scripts
+    Scenario: PowerLine exports a $Prompt variable List of scripts
         When I have imported PowerLine
-        Then the $Prompt variable is an ArrayList
+        Then the $Prompt variable is a List of ScritpBlock
 
-    Scenario: PowerLine exports a $PowerLineColors array of RgbColors
+    Scenario: PowerLine exports a $Prompt.Colors List of RgbColors
         When I have imported PowerLine
-        Then the $PowerLineColors variable is an RgbColor[]
+        Then the $Prompt.Colors variable is a List of RgbColor
 
     Scenario: PowerLine defines a prompt function
         When I have imported PowerLine

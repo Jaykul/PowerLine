@@ -23,36 +23,35 @@ function prompt {
         [PoshCode.Pansies.Console.WindowsHelper]::EnableVirtualTerminalProcessing()
     }
 
-    # Evaluate any scriptblocks in the prompt
+    # Evaluate all the scriptblocks in $prompt
     $UniqueColorsCount = 0
     $PromptText = @(
         foreach ($block in $Prompt) {
-            [PoshCode.Pansies.Text[]]$buffer = if ($block -is [scriptblock]) {
-                $block = & $block
+            $block = & $block
+            $buffer = $(
                 if($block -as [PoshCode.Pansies.Text[]]) {
-                    $block
+                    [PoshCode.Pansies.Text[]]$block
                 } else {
-                    [string[]]$block
+                    [PoshCode.Pansies.Text[]][string[]]$block
                 }
-            } else {
-                $block
-            }
+            ).Where{ ![string]::IsNullOrEmpty($_.Object) }
+
             # Each $buffer gets a color, if it needs one (it's not whitespace)
-            $UniqueColorsCount += [bool]$buffer.Where({![string]::IsNullOrWhiteSpace($_.Object) -and $_.BackgroundColor -eq $null -and $_.ForegroundColor -eq $null },1)
+            $UniqueColorsCount += [bool]$buffer.Where({![string]::IsNullOrWhiteSpace($_.Object) -and $_.BackgroundColor -eq $null -and $_.ForegroundColor -eq $null }, 1)
             , $buffer
         }
-    ).Where( {$_.Object})
+    ).Where{ $_.Object }
 
     # Based on the number of text blocks, get a color gradient or the user's color choices
-    [PoshCode.Pansies.RgbColor[]]$Colors = @()
-    if ($PowerLineColors.Count -ge $UniqueColorsCount) {
-        $Colors = $PowerLineColors
-    } elseif ($PowerLineColors.Count -gt 2) {
-        $Colors = $PowerLineColors[0..($PowerLineColors.Count - 3)]
-        $Colors += @(Get-Gradient ($PowerLineColors[-2]) ($PowerLineColors[-1]) ($UniqueColorsCount - $Colors.Count) -Flatten)
-    } else {
-        $Colors = @($PowerLineColors) * $UniqueColorsCount
-    }
+    [PoshCode.Pansies.RgbColor[]]$Colors = @(
+        if ($Prompt.Colors.Count -ge $UniqueColorsCount) {
+            $Prompt.Colors
+        } elseif ($Prompt.Colors.Count -eq 2) {
+            Get-Gradient ($Prompt.Colors[0]) ($Prompt.Colors[1]) -Count $UniqueColorsCount -Flatten
+        } else {
+            $Prompt.Colors * ([Math]::Ceiling($UniqueColorsCount/$Prompt.Colors.Count))
+        }
+    )
 
     # Loop through the text blocks and set colors
     $ColorIndex = 0
@@ -68,10 +67,7 @@ function prompt {
 
         foreach ($b in @($block)) {
             if ($b.BackgroundColor -ne $null -and $b.ForegroundColor -eq $null) {
-                # Invert the foreground and push it to nearly black/white
-                $Foreground = $b.BackgroundColor.ToHunterLab()
-                $Foreground.L = (10, 90)[(100 - $Foreground.L) -gt 50]
-                $b.ForegroundColor = $Foreground
+                $b.ForegroundColor = Get-Complement $b.BackgroundColor -ForceContrast
             }
         }
     }
@@ -90,7 +86,7 @@ function prompt {
         $string = $block.ToString()
         #Write-Debug "STEP $b of $($Buffer.Count) [$(($String -replace "\u001B.*?\p{L}").Length)] $($String -replace "\u001B.*?\p{L}" -replace "`n","{newline}" -replace "`t","{tab}")"
 
-        ## This adds support for `t to split into (2) columns:
+        ## Allow `t to split into (2) columns:
         if ($string -eq "`t") {
             if($LastBackground) {
                 ## Before the (column) break, add a cap
@@ -107,6 +103,7 @@ function prompt {
             $ColorSeparator = "&ReverseColorSeparator;"
             $Separator = "&ReverseSeparator;"
             $LastBackground = $Host.UI.RawUI.BackgroundColor
+        ## Allow `n to create multi-line prompts
         } elseif ($string -in "`n", "`r`n") {
             if($RightAligned) {
                 ## This is a VERY simplistic test for escape sequences
@@ -114,6 +111,7 @@ function prompt {
                 $Align = $BufferWidth - $lineLength
                 #Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long so we're aligning to $($Align)"
                 $result += [PoshCode.Pansies.Text]::new("&Esc;$($Align)G ")
+                $RightAligned = $False
             } else {
                 $line += [PoshCode.Pansies.Text]@{
                     Object          = "$ColorSeparator"
@@ -123,7 +121,6 @@ function prompt {
             }
             $result += $line + "`n"
             $line = ""
-            $RightAligned = $False
             $ColorSeparator = "&ColorSeparator;"
             $Separator = "&Separator;"
             $LastBackground = $null
@@ -153,6 +150,7 @@ function prompt {
             #Write-Debug "Normal output ($($string -replace "\u001B.*?\p{L}")) ($($($string -replace "\u001B.*?\p{L}").Length)) on $LastBackground"
         }
     }
+    # At the end, output everything as one single string
     $result + $line + ([PoshCode.Pansies.Text]@{
         Object          = "$ColorSeparator&Clear;"
         ForegroundColor = $LastBackground

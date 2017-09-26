@@ -44,7 +44,14 @@ function Set-PowerLinePrompt {
         [Parameter()]
         [switch]$RestoreVirtualTerminal,
 
-        [switch]$Newline
+        [switch]$Newline,
+
+        # One or more scriptblocks you want to use as your new prompt
+        [List[ScriptBlock]]$Prompt,
+
+        # One or more colors you want to use as the prompt background
+        [List[RgbColor]]$Colors
+
     )
     if ($null -eq $script:OldPrompt) {
         $script:OldPrompt = $function:global:prompt
@@ -64,6 +71,18 @@ function Set-PowerLinePrompt {
     if ($PSBoundParameters.ContainsKey("CurrentDirectory")) {
         $Local:PowerLinePrompt['SetCurrentDirectory'] = $CurrentDirectory
     }
+    # If they didn't pass in the prompt, use the existing one
+    # NOTE: we know $global:Prompt is set because we set it at import
+    if(!$PSBoundParameters.ContainsKey("Prompt")) {
+        $Script:Prompt = $Global:Prompt
+    } else {
+        # Otherwise, copy the colors onto the new one
+        Add-Member -InputObject $Prompt -MemberType NoteProperty -Name Colors -Value $global:Prompt.Colors
+    }
+    if($PSBoundParameters.ContainsKey("Colors")) {
+        InitializeColor $Script:Prompt $Colors
+    }
+
     if($Newline) {
         $Script:DefaultAddIndex = $Insert = $Prompt.Count
         @(
