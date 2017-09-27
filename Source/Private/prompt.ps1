@@ -26,7 +26,7 @@ function prompt {
     # Evaluate all the scriptblocks in $prompt
     $UniqueColorsCount = 0
     $PromptText = @(
-        foreach ($block in $Prompt) {
+        foreach ($block in $Global:Prompt) {
             $block = & $block
             $buffer = $(
                 if($block -as [PoshCode.Pansies.Text[]]) {
@@ -42,14 +42,22 @@ function prompt {
         }
     ).Where{ $_.Object }
 
+    # When someone sets $Prompt, they loose the colors.
+    # To fix that, we cache the colors whenever we get a chance
+    # And if it's not set, we re-initialize from the cache
+    if($Global:Prompt.Colors) {
+        $Script:PowerlineColors = $Global:Prompt.Colors
+    } else {
+        InitializeColor
+    }
     # Based on the number of text blocks, get a color gradient or the user's color choices
     [PoshCode.Pansies.RgbColor[]]$Colors = @(
-        if ($Prompt.Colors.Count -ge $UniqueColorsCount) {
-            $Prompt.Colors
-        } elseif ($Prompt.Colors.Count -eq 2) {
-            Get-Gradient ($Prompt.Colors[0]) ($Prompt.Colors[1]) -Count $UniqueColorsCount -Flatten
+        if ($Global:Prompt.Colors.Count -ge $UniqueColorsCount) {
+            $Global:Prompt.Colors
+        } elseif ($Global:Prompt.Colors.Count -eq 2) {
+            Get-Gradient ($Global:Prompt.Colors[0]) ($Global:Prompt.Colors[1]) -Count $UniqueColorsCount -Flatten
         } else {
-            $Prompt.Colors * ([Math]::Ceiling($UniqueColorsCount/$Prompt.Colors.Count))
+            $Global:Prompt.Colors * ([Math]::Ceiling($UniqueColorsCount/$Global:Prompt.Colors.Count))
         }
     )
 

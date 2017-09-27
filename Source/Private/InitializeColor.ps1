@@ -7,13 +7,18 @@ function InitializeColor {
     )
 
     if(!$PSBoundParameters.ContainsKey("Colors")){
-        [List[RgbColor]]$Colors = "xt45","xt39","xt33","xt27","xt12"
+        [List[RgbColor]]$Colors = if($Script:PowerlineColors) {
+            $Script:PowerlineColors
+        } else {
+            "xt45","xt39","xt33","xt27","xt12"
+        }
     }
+    $Script:PowerlineColors = $Colors
 
-    if(!(Get-Member -InputObject $Prompt -Name Colors)) {
-        Add-Member -InputObject $Prompt -MemberType NoteProperty -Name Colors -Value $Colors
+    if(!(Get-Member -InputObject $Local:Prompt -Name Colors)) {
+        Add-Member -InputObject $Local:Prompt -MemberType NoteProperty -Name Colors -Value $Colors
     } else {
-        $Prompt.Colors = $Colors
+        $Local:Prompt.Colors = $Colors
     }
 }
 

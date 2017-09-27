@@ -73,18 +73,17 @@ function Set-PowerLinePrompt {
     }
     # If they didn't pass in the prompt, use the existing one
     # NOTE: we know $global:Prompt is set because we set it at import
-    if(!$PSBoundParameters.ContainsKey("Prompt")) {
-        $Script:Prompt = $Global:Prompt
-    } else {
+    if($PSBoundParameters.ContainsKey("Prompt")) {
         # Otherwise, copy the colors onto the new one
-        Add-Member -InputObject $Prompt -MemberType NoteProperty -Name Colors -Value $global:Prompt.Colors
+        Add-Member -InputObject $Local:Prompt -MemberType NoteProperty -Name Colors -Value $global:Prompt.Colors
+        $global:Prompt = $local:Prompt
     }
     if($PSBoundParameters.ContainsKey("Colors")) {
-        InitializeColor $Script:Prompt $Colors
+        InitializeColor $global:Prompt $Colors
     }
 
     if($Newline) {
-        $Script:DefaultAddIndex = $Insert = $Prompt.Count
+        $Script:DefaultAddIndex = $Insert = $global:Prompt.Count
         @(
             { "`t" }
             { Get-Elapsed }

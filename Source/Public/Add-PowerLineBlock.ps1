@@ -39,19 +39,19 @@ function Add-PowerLineBlock {
         }
 
 
-        $Skip = @($Prompt).ForEach{$_.ToString().Trim()} -eq $InputObject.ToString().Trim()
+        $Skip = @($Global:Prompt).ForEach{$_.ToString().Trim()} -eq $InputObject.ToString().Trim()
 
         if($Force -or !$Skip) {
-            if($Index -eq -1 -or $Index -gt $Prompt.Count) {
+            if($Index -eq -1 -or $Index -gt $Global:Prompt.Count) {
                 Write-Verbose "Appending '$InputObject' to the end of the prompt"
-                $Prompt.Add($InputObject)
+                $Global:Prompt.Add($InputObject)
             } elseif($Index -lt 0) {
-                $Index = $Prompt.Count - $Index
+                $Index = $Global:Prompt.Count - $Index
                 Write-Verbose "Inserting '$InputObject' at $Index of the prompt"
-                $Prompt.Insert($Index, $InputObject)
+                $Global:Prompt.Insert($Index, $InputObject)
             } else {
                 Write-Verbose "Inserting '$InputObject' at $Index of the prompt"
-                $Prompt.Insert($Index, $InputObject)
+                $Global:Prompt.Insert($Index, $InputObject)
             }
         } else {
             Write-Verbose "Prompt already contained the InputObject block"
