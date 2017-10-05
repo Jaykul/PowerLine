@@ -74,6 +74,8 @@ PrivateData = @{
         3.0.0: Total refactor to simplify the array.
             Uses $Prompt (an array of String or ScriptBlock)
             Uses $PowerLineColors (an array of PoshCode.Pansies.RgbColor)
+            Removed -UseAnsiEscapes -- with Pansies, we always use Ansi escape sequences
+            Added -FullColor -- by default, use only 16 Colors [System.ConsoleColor]
         2.3.1: Fixed the missing New-PowerLineBlock alias for backward compatibility with 2.2.0
         2.3.0: Switch to using Pansies to get support for full RGBColor with css style colors, like: #336699
         2.2.0: Add -RestoreVirtualTerminal switch for controlling if the prompt should reenable VT processing after each command

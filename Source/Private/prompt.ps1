@@ -75,7 +75,11 @@ function prompt {
 
         foreach ($b in @($block)) {
             if ($b.BackgroundColor -ne $null -and $b.ForegroundColor -eq $null) {
-                $b.ForegroundColor = Get-Complement $b.BackgroundColor -ForceContrast
+                if($Script:PowerLinePrompt.FullColor) {
+                    $b.ForegroundColor = Get-Complement $b.BackgroundColor -ForceContrast
+                } else {
+                    $b.BackgroundColor, $b.ForegroundColor = Get-Complement $b.BackgroundColor -ConsoleColor -Passthru
+                }
             }
         }
     }

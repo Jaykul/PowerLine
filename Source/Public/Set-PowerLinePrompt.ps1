@@ -17,9 +17,9 @@ function Set-PowerLinePrompt {
     #
     #   Sets the powerline prompt and forces the use of "safe" separator characters. You can still change the characters used to separate blocks in the PowerLine output after running this, by setting the static members of [PowerLine.Prompt] like Separator and ColorSeparator...
     #.Example
-    #   Set-PowerLinePrompt -UseAnsiEscapes
+    #   Set-PowerLinePrompt -FullColor
     #
-    #   Sets the powerline prompt and forces the use of ANSI escape sequences in the string output (rather than Write-Host) to change colors, regardless of what we're able to detect about the console.
+    #   Sets the powerline prompt and forces the assumption of full RGB color support instead of 16 color
     [CmdletBinding(DefaultParameterSetName = "PowerLine")]
     param(
         # A script which outputs a string used to update the Window Title each time the prompt is run
@@ -36,9 +36,9 @@ function Set-PowerLinePrompt {
         [Parameter(ParameterSetName = "Reset")]
         [switch]$ResetSeparators,
 
-        # If true, override the default testing for ANSI consoles and force the use of Escape Sequences rather than Write-Host
+        # If true, assume full color support, otherwise normalize to 16 ConsoleColor
         [Parameter()]
-        [switch]$UseAnsiEscapes = $($Host.UI.SupportsVirtualTerminal -or $Env:ConEmuANSI -eq "ON"),
+        [switch]$FullColor,
 
         # If true, adds ENABLE_VIRTUAL_TERMINAL_PROCESSING to the console output mode. Useful on PowerShell versions that don't restore the console
         [Parameter()]
@@ -61,8 +61,18 @@ function Set-PowerLinePrompt {
     }
 
     $Local:PowerLinePrompt = @{
-        UseAnsiEscapes         = $UseAnsiEscapes
-        RestoreVirtualTerminal = $RestoreVirtualTerminal
+        RestoreVirtualTerminal = [bool]$RestoreVirtualTerminal
+        FullColor = [bool]$FullColor
+    }
+
+    if (!$PSBoundParameters.ContainsKey("FullColor")) {
+        if($Host.UI.SupportsVirtualTerminal) {
+            $Local:PowerLinePrompt["FullColor"] = (Get-Process -Id $global:Pid).MainWindowHandle -ne 0
+        }
+    }
+
+    if($PSBoundParameters.ContainsKey("RestoreVirtualTerminal") -and !$RestoreVirtualTerminal) {
+        [PoshCode.Pansies.Console.WindowsHelper]::DisableVirtualTerminalProcessing()
     }
 
     if ($PSBoundParameters.ContainsKey("Title")) {
@@ -120,4 +130,5 @@ function Set-PowerLinePrompt {
     }
 
     $function:global:prompt = $function:script:Prompt
+    [PoshCode.Pansies.RgbColor]::ResetConsolePalette()
 }
