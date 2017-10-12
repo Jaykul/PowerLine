@@ -1,24 +1,29 @@
-> Currently in PowerShell, the prompt is a function that _must_ return a string. Modules that want to add information to your prompt typically don't even try if you have customized your prompt (see Posh-Git, for example). We want to have beautiful custom prompts **and** let modules add information easily.
+```gherkin
+As a PowerShell user
+In order to have the right information available
+I need to be able to customize my prompt
 
-# NOTE: PowerLine 3 is NOT backward compatible
+As a PowerShell module author
+In order to give my users the right information
+I need to add information to the user's prompt
 
-Almost all the old features are here, but with a *much* simpler interface. Existing users will need to change to use the simple lists in `$Prompt` and `$PowerLineColors`, but it's for a good cause:
-
-# Prompts as arrays
-
-The core argument of PowerLine 3 is that PowerShell should change it's built-in prompt to use a `$Prompt` variable that's a list of scriptblocks like this:
-
-```posh
-using namespace System.Collections.Generic
-
-[List[ScriptBlock]]$Prompt = @(
-    { "PS " }
-    { $executionContext.SessionState.Path.CurrentLocation }
-    { '>' * ($nestedPromptLevel + 1) }
-)
+As an alpha geek
+In order to stand out
+I want to have a cool prompt!
 ```
 
-And then use a default `prompt` function which invokes those scripts, something like this:
+> Currently in PowerShell, the prompt is a function that _must_ return a string. Modules that want to add information to your prompt typically _don't even try_ if you have customized your prompt (see Posh-Git, for example). The goal of PowerLine is to have beautiful custom prompts **and** let modules add (and remove) information easily.
+
+## NOTE: PowerLine 3 is NOT backward compatible
+
+Almost all the old features are here, but with a *much* simpler interface. Existing users will need to change to use the simple lists in `$Prompt` and `$Prompt.Colors`, but it's for a good cause:
+
+# Your Prompt as a Collection
+
+The core principle of PowerLine 3 is to make your prompt easier to change, and changes easier to undo.
+
+The idea is to assume a `$Prompt` variable that's a `List` of `ScriptBlock` and just join the output of those scriptblocks:
+
 
 ```posh
 function prompt {
@@ -26,104 +31,130 @@ function prompt {
 }
 ```
 
-This change would produce _the same output_ as before, and would have _no impact_ on users who already overwrite the default prompt.
-
-Of course, that means **you** can switch to this model right now, by just putting those two blocks in your profile.
-
 # Why Lists of ScriptBlocks?
 
-A few months ago I realized that while the first version of my PowerLine prompt had made my prompt prettier, it had also made it harder for me to change on the fly, and made it nearly impossible for modules to modify it. So I wrote these requirements:
+1. The user can easily add or remove information on the fly.
+2. Modules can add (and remove) information as they're imported/removed.
+3. We can customize the look separate from the content.
 
-```gherkin
-As a PowerShell user
-I want to be able to customize my prompt
-So that I can get the right information
+Take this for example, it's the same as the current default prompt, except split in three parts:
 
-As a PowerShell module author
-I want to be able to add information to the user's prompt
-So users can automatically get the right information
-
-As an alpha geek
-I want to be have a cool prompt
-So that others will copy it
+```
+[System.Collections.Generic.List[ScriptBlock]]$Prompt = @(
+    { "PS " }
+    { $executionContext.SessionState.Path.CurrentLocation }
+    { '>' * ($nestedPromptLevel + 1) }
+)
 ```
 
-By converting the prompt to a List:
+This would produce _the same output_ as before, and would have _no impact_ on users who already overwrite the default prompt. In fact, **you** can switch to this right now, by just putting those two blocks in your profile.
 
-1. The user can easily add or remove information on the fly.
-2. Modules can add (and remove) information as they're imported.
-3. We can customize the look separate from the content.
 
 ## For users:
 
 It's suddenly easy to tweak the prompt. I can remove the unecessary "PS " from the front of my prompt by just running
-`$Prompt = $Prompt | Select -Skip 1`. Or if I wanted to print the current command's `HistoryId` instead of the "PS",
-I could just replace that first part: `$Prompt[0] = { "$($MyInvocation.HistoryId) " }`.
+
+```posh
+$Prompt = $Prompt | Select -Skip 1
+```
+
+Or if I wanted to print the current command's `HistoryId` instead of the "PS", I could just replace that first part: 
+
+```posh
+$Prompt[0] = { "$($MyInvocation.HistoryId) " }
+```
 
 ## For module authors:
 
-Modules can modify your prompt just as easily. Adding to a list is _**a lot** simpler_ for module authors, and it makes
-it easier for users to re-order the changes afterward. Modules no longer have to modify an existing function, and users
-still end up with better control, and a prompt they can understand.
+Modules can modify the prompt just as easily. Adding to a list is simpler and easier to undo, plus it's possible for the user to re-order their prompt. Since modules don't have to modify or wrap the actual prompt function, users end up in control.
 
-For instance, posh-git can just do this: `$Prompt.Add({Write-VcsStatus})` and their new prompt function (which returns
-a string, instead of using Write-Host), is added within your prompt. Not only that, the user can then re-order the prompt
-by doing something like: `$Prompt = $Prompt[0,1,3,2]`
+For example, posh-git can add it's information to the prompt in just one line:
 
-## For power users:
+```posh
+$Prompt.Add({Write-VcsStatus})
+```
 
-The best part, in my opinion, is that we can then make your prompt look cooler. You can go from simple to elegant with a single command from the PowerLine module, and then you can tweak the colors by setting the $Prompt.Colors variable to a list of colors, perhaps using `Get-Gradient -Flatten`...
+And can hook it's own removal to clean up the status:
+
+```posh
+$MyInvocation.MyCommand.Module.OnRemove = {
+    $Prompt.RemoveAll( {param($_) $_.ToString().Trim() -eq "Write-VcsStatus" } )
+}
+```
+
+# PowerLine
+
+Of course, with PowerLine, it's even easier. You just run:
+
+```posh
+Add-PowerLineBlock { Write-VcsStatus } -AutoRemove
+```
+
+And because your whole prompt is just a list of script blocks, we can transform your prompt's appearance. You can go from simple to elegant instantly, and then take control of colors and more.
 
 ```posh
 Set-PowerLinePrompt -Newline -PowerLineFont
 ```
-<!--
-![Set-PowerLine](https://github.com/Jaykul/PowerLine/raw/media/powerline_features_psgit.png)
--->
 
-Of course, you could get some of that look by manually writing ANSI sequences, but that's a lot more complicated:
+### PowerLine Coloring blocks
 
-```posh
-function prompt {
-    $Color = 21
-    $E = "$([char]27)"
-    $F = "$E[38;5"
-    $B = "$E[48;5"
+PowerLine adds a `.Colors` property to the $Prompt variable which consists of a list of colors. 
 
-    "$B;${Color}m" + $(
-        $Prompt.Invoke().ForEach{
-            # Cycle colors
-            "$_$F;${Color}m$B;$(($Color+=6))m"
-        } -join "$([char]0xe0b0)$E[39m"
-    ) +
-    # I HEART PS >
-    "`n$B;15m$F;0mI $F;9m$([char]9829)$F;0m PS$B;0m$F;15m$([char]0xe0b0)$E[0m"
-}
-```
+Each scriptblock which has output (PowerLine cleans up and ignores empty blocks), uses one of those colors, looping around if it runs out.
+PowerLine can automatically select contrasting colors for the text (foreground) color.
 
-# PowerLine's Fancy Features
+If you specify just two colors, PowerLine will generate a gradient between those colors with the same number of steps as you have output blocks.
 
-In addition the the obvious color features, if you install a [PowerLine font](https://github.com/PowerLine/fonts), you get
-nice angled separators. There are a lot of monospaced fonts to choose from, and you can even install them all by just
-cloning the repository and running the `install.ps1` script, or you can just pick one and download and install that.
-There are [screenshots of all of them](https://github.com/powerline/fonts/blob/master/samples/All.md).
+### PowerLine Fonts and Separators
 
-On top of that, there are a couple of somewhat hidden features.
+The `-PowerLineFont` switch requires using a [PowerLine font](https://github.com/PowerLine/fonts), which is a font that 
+has the extra extended characters with the nice angled separators you see in the screenshots here between colors.
+There are a lot of monospaced fonts to choose from, and you can even install them all by just cloning the repository 
+and running the `install.ps1` script, or you can just pick just one TTF and download and install that.
 
-## PowerLine supports right-aligned text.
+There are [screenshots of all of them here](https://github.com/powerline/fonts/blob/master/samples/All.md).
 
-Obviously, if you add a scriptblock that outputs a new line, you get a multi-line prompt. PowerLine explicitly supports
-blocks that consist of nothing but the newline character, like  `{ "``n" }` and in addition, supports having right-aligned
-blocks. If you add a scriptblock that outputs a tab `{ "``t" }`, everything from there to the next block which is just a
-newline will be right aligned.
+If you're not using a PowerLine font, don't use the `-PowerLineFont` switch, and the module will output common ASCII 
+box characters like ▌ as the separators...
 
-PowerLine cleans up empty blocks -- because we add separator characters, and you don't want to end up with a string of
-separaters.
+These characters are set into a dictionary (`[PoshCode.Pansies.Entities]::ExtendedCharacters`) when you call `Set-PowerLinePrompt`.
 
-PowerLine supports blocks which output arrays -- by default each block gets a new color (and is separated from other blocks
-with a "ColorSeparator," as specified in `[PoshCode.Pansies.Entities]::ExtendedCharacters`) but if a block outputs an array,
-the elements of the array will be separated with the alternate "Separator" instead. Note that right-aligned blocks use the
-"ReverseColorSeparator" and "ReverseSeparator" instead.
+#### Array output
+
+By default, each ScriptBlock outputs one string, and is colored in one color, with the "ColorSeparator" character between each block.
+
+However, PowerLine also supports blocks which output arrays. When a ScriptBlock outputs an array of strings, 
+they will be separated with the alternate "Separator" instead of the "ColorSeparator".
+
+
+### Right-aligned blocks
+
+If you add a scriptblock that outputs _just_ a tab `{ "``t" }`, 
+blocks after that will be right-aligned until the next block which is _just_ a newline `{ "``n" }`.
+
+For Right-aligned blocks, the "ReverseColorSeparator" or "ReverseSeparator" characters are used instead of the "ColorSeparator" and "Separator".
+
+### Characters and Custom Entities
+
+PowerLine uses the [Pansies](https://github.com/PoshCode/Pansies) module for coloring and output, so it inherits Pansies' support for [HTML named entities](https://www.w3schools.com/charsets/ref_html_entities_4.asp) like `&hearts;` and `&copy;` or `&cent;` and numerical unicode character entities in decimal (`&#926;`) and hexadeximal (`&#x39E;`), so you can easily embed characters.
+
+Additionally, Pansies treats the `ExtendedCharacters` dictionary of characters mentioned earlier as entities, and has an additional `EscapeSequences` dictionary which maps entity names to a string. Both of these are modifyable and support adding your own characters, which can then be used as named entities with a `&` and a `;` ...
+
+### Helper Functions for Prompts
+
+We recommend that modules which want to add information to the prompt create a function which returns a string, and then add a scriptblock wrapping that single function to the `$Prompt` using `Add-PowerLineBlock` (or by hand, as shown above).
+
+There are a few extra functions included as part of the PowerLine module:
+
+Cmdlet                | Description
+----                  | -----------
+New-PromptText        | A wrapper for New-Text that supports changing foreground or background colors based on whether there's an error or whether the session is elevated.
+Get-Elapsed           | Calls Get-History to get a single command (the most recent, or by ID) and returns the difference between the Start and End execution time.
+Get-SegmentedPath     | Converts a path to an array of Pansies Text objects (one for each folder), with a limit on how many folders to return. Truncates and appends an ellipsis.
+Get-ShortenedPath     | Shortens a path to a specified length, with some options for the output
+Test-Elevation        | Returns True if the current session is elevated, false otherwise
+Test-Success          | Returns True if the last command was successful, false otherwise
+
 
 ## Helpers for module authors
 
