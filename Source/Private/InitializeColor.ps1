@@ -3,17 +3,21 @@ function InitializeColor {
     param(
         [List[ScriptBlock]]$Prompt = $Global:Prompt,
 
-        [List[RgbColor]]$Colors = $Global:Prompt.Colors
+        [List[RgbColor]]$Colors = $Global:Prompt.Colors,
+
+        [switch]$Passthru
     )
 
     if(!$PSBoundParameters.ContainsKey("Colors")){
-        [List[RgbColor]]$Colors = if($Script:PowerlineColors) {
-            $Script:PowerlineColors
+        [List[RgbColor]]$Colors = if($Script:PowerLinePrompt.Colors) {
+            $Script:PowerLinePrompt.Colors
         } else {
-            "xt45","xt39","xt33","xt27","xt12"
+            "Cyan","DarkCyan","Gray","DarkGray","Gray"
         }
     }
-    $Script:PowerlineColors = $Colors
+    if($Passthru) {
+        $Colors
+    }
 
     if(!(Get-Member -InputObject $Local:Prompt -Name Colors)) {
         Add-Member -InputObject $Local:Prompt -MemberType NoteProperty -Name Colors -Value $Colors
@@ -21,5 +25,3 @@ function InitializeColor {
         $Local:Prompt.Colors = $Colors
     }
 }
-
-InitializeColor
