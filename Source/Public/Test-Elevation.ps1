@@ -6,5 +6,5 @@ function Test-Elevation {
     [CmdletBinding()]
     param()
 
-    [Security.Principal.WindowsIdentity]::GetCurrent().Owner -eq 'S-1-5-32-544'
+    [Security.Principal.WindowsIdentity]::GetCurrent().Owner.IsWellKnown("BuiltInAdministratorsSid")
 }
