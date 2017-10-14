@@ -26,7 +26,8 @@ function Set-PowerLinePrompt {
         [scriptblock]$Title,
 
         # Keep the .Net Current Directory in sync with PowerShell's
-        [switch]$CurrentDirectory,
+        [Alias("CurrentDirectory")]
+        [switch]$SetCurrentDirectory,
 
         # If true, set the [PowerLine.Prompt] static members to extended characters from PowerLine fonts
         [Parameter(ParameterSetName = "PowerLine")]
@@ -44,7 +45,11 @@ function Set-PowerLinePrompt {
         [Parameter()]
         [switch]$RestoreVirtualTerminal,
 
+        # Add a "I ♥ PS" on a line by itself to it's prompt (using ConsoleColors, to keep it safe from PSReadLine)
         [switch]$Newline,
+
+        # Add a right-aligned timestamp before the newline (implies Newline)
+        [switch]$Timestamp,
 
         # One or more scriptblocks you want to use as your new prompt
         [List[ScriptBlock]]$Prompt,
@@ -60,55 +65,47 @@ function Set-PowerLinePrompt {
         }
     }
 
-    $Local:PowerLinePrompt = @{
-        RestoreVirtualTerminal = [bool]$RestoreVirtualTerminal
-        FullColor = [bool]$FullColor
-    }
-
-    if (!$PSBoundParameters.ContainsKey("FullColor")) {
-        if($Host.UI.SupportsVirtualTerminal) {
-            $Local:PowerLinePrompt["FullColor"] = (Get-Process -Id $global:Pid).MainWindowHandle -ne 0
+    $Local:PowerLinePrompt = Import-Configuration | Update-Object $PSBoundParameters
+    if($Local:PowerLinePrompt.ExtendedCharacters) {
+        $ExtendedCharacters = [Collections.Generic.Dictionary[String,Char]]::new()
+        foreach($key in $Local:PowerLinePrompt.ExtendedCharacters.Keys) {
+            $ExtendedCharacters.$key = $Local:PowerLinePrompt.ExtendedCharacters.$key
         }
+
+        [PoshCode.Pansies.Entities]::ExtendedCharacters = $ExtendedCharacters
     }
 
-    if($PSBoundParameters.ContainsKey("RestoreVirtualTerminal") -and !$RestoreVirtualTerminal) {
-        [PoshCode.Pansies.Console.WindowsHelper]::DisableVirtualTerminalProcessing()
+    if($Local:PowerLinePrompt.EscapeSequences) {
+        $EscapeSequences = [Collections.Generic.Dictionary[String,String]]::new()
+        foreach($key in $Local:PowerLinePrompt.EscapeSequences.Keys) {
+            $EscapeSequences.$key = $Local:PowerLinePrompt.EscapeSequences.$key
+        }
+        [PoshCode.Pansies.Entities]::EscapeSequences = $EscapeSequences
     }
 
-    if ($PSBoundParameters.ContainsKey("Title")) {
-        $Local:PowerLinePrompt['Title'] = $Title
+    if ($Local:PowerLinePrompt.FullColor -eq $Null -and $Host.UI.SupportsVirtualTerminal) {
+        $Local:PowerLinePrompt.FullColor = (Get-Process -Id $global:Pid).MainWindowHandle -ne 0
     }
-    if ($PSBoundParameters.ContainsKey("CurrentDirectory")) {
-        $Local:PowerLinePrompt['SetCurrentDirectory'] = $CurrentDirectory
-    }
+
     # If they didn't pass in the prompt, use the existing one
     # NOTE: we know $global:Prompt is set because we set it at import
     if($PSBoundParameters.ContainsKey("Prompt")) {
         # Otherwise, copy the colors onto the new one
         Add-Member -InputObject $Local:Prompt -MemberType NoteProperty -Name Colors -Value $global:Prompt.Colors
-        $global:Prompt = $local:Prompt
+        $Local:PowerLinePrompt.Prompt = $Prompt
     }
+    if($Local:PowerLinePrompt.Prompt) {
+        $global:Prompt = [ScriptBlock[]]$local:PowerLinePrompt.Prompt
+    }
+
     if($PSBoundParameters.ContainsKey("Colors")) {
-        InitializeColor $global:Prompt $Colors
+        $local:PowerLinePrompt.Colors = $Colors
     }
-
-    if($Newline) {
-        $Script:DefaultAddIndex = $Insert = $global:Prompt.Count
-        @(
-            { "`t" }
-            { Get-Elapsed }
-            { Get-Date -f "T" }
-            { "`n" }
-            { New-PromptText {
-                "I $(New-PromptText -Fg Red -ErrorForegroundColor White "&hearts;$([char]27)[30m") PS"
-              } -BackgroundColor White -ErrorBackgroundColor Red -ForegroundColor Black }
-        ) | Add-PowerLineBlock
-        $Script:DefaultAddIndex = $Insert
+    if($Local:PowerLinePrompt.Colors) {
+        InitializeColor $global:Prompt $local:PowerLinePrompt.Colors
     } else {
-        $Script:DefaultAddIndex = -1
+        $local:PowerLinePrompt.Colors = InitializeColor $global:Prompt -Passthru
     }
-
-    $Script:PowerLinePrompt = [PSCustomObject]$Local:PowerLinePrompt
 
     if ($ResetSeparators -or ($PSBoundParameters.ContainsKey("PowerLineFont") -and !$PowerLineFont) ) {
         # Use characters that at least work in Consolas
@@ -129,6 +126,34 @@ function Set-PowerLinePrompt {
         [PoshCode.Pansies.Entities]::ExtendedCharacters['Gear'] = [char]0x26EF
     }
 
+    $Local:PowerLinePrompt.ExtendedCharacters = [PoshCode.Pansies.Entities]::ExtendedCharacters
+    $Local:PowerLinePrompt.EscapeSequences    = [PoshCode.Pansies.Entities]::EscapeSequences
+    if($null -eq $Local:PowerLinePrompt.DefaultAddIndex) {
+        $Local:PowerLinePrompt.DefaultAddIndex    = -1
+    }
+
+    Export-Configuration $Local:PowerLinePrompt
+
+    $Script:PowerLinePrompt = [PSCustomObject]$Local:PowerLinePrompt
+
+    if($Script:PowerLinePrompt.Newline -or $Script:PowerLinePrompt.Timestamp) {
+        $Script:PowerLinePrompt.DefaultAddIndex = $Insert = $global:Prompt.Count
+        @(
+            if($Script:PowerLinePrompt.Timestamp) {
+                { "`t" }
+                { Get-Elapsed }
+                { Get-Date -f "T" }
+            }
+            { "`n" }
+            { New-PromptText {
+                "I $(New-PromptText -Fg Red -ErrorForegroundColor White "&hearts;$([char]27)[30m") PS"
+              } -BackgroundColor White -ErrorBackgroundColor Red -ForegroundColor Black }
+        ) | Add-PowerLineBlock
+        $Script:PowerLinePrompt.DefaultAddIndex = $Insert
+    }
+
     $function:global:prompt = $function:script:Prompt
     [PoshCode.Pansies.RgbColor]::ResetConsolePalette()
 }
+
+Set-PowerLinePrompt

@@ -24,9 +24,10 @@ public class EmptyStringAsNullAttribute : ArgumentTransformationAttribute
 
 $script:PowerLineRoot = $PSScriptRoot
 
-
 [List[ScriptBlock]]$Global:Prompt = if(Test-Path Variable:Prompt) {
     $Prompt | ForEach-Object { $_ }
 } else {
     { $MyInvocation.HistoryId }, { Get-SegmentedPath }
 }
+
+Add-MetadataConverter @{ [char] = { "'$_'" } }

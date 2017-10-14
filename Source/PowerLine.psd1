@@ -36,7 +36,10 @@ PowerShellVersion = '5.0.0'
 # Format files (.ps1xml) to be loaded when importing this module
 # FormatsToProcess = @()
 
-RequiredModules = @(@{ModuleName="Pansies"; ModuleVersion="1.0.0"})
+RequiredModules = @(
+    @{ModuleName="Pansies"; ModuleVersion="1.2.1"}
+    @{ModuleName="Configuration"; ModuleVersion="1.0.4"}
+)
 # RequiredAssemblies = "lib\PowerLine.dll"
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
@@ -46,7 +49,7 @@ FunctionsToExport = 'Set-PowerLinePrompt', 'Add-PowerLineBlock', 'Remove-PowerLi
 # CmdletsToExport = '*'
 
 # Variables to export from this module
-VariablesToExport = 'PowerLineColors'
+# VariablesToExport = 'PowerLineColors'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
 AliasesToExport = 'New-PowerLineBlock'
@@ -72,10 +75,12 @@ PrivateData = @{
         # ReleaseNotes of this module
         ReleaseNotes = '
         3.0.0: Total refactor to simplify the array.
-            Uses $Prompt (an array of String or ScriptBlock)
-            Uses $PowerLineColors (an array of PoshCode.Pansies.RgbColor)
+            Add a dependency on the Configuration module
+            Uses $Prompt (an array of ScriptBlock)
+            Uses $Prompt.Colors (an array of PoshCode.Pansies.RgbColor)
             Removed -UseAnsiEscapes -- with Pansies, we always use Ansi escape sequences
             Added -FullColor -- by default, use only 16 Colors [System.ConsoleColor]
+            Support storing prompt options so we can restore the prompt upon import
         2.3.1: Fixed the missing New-PowerLineBlock alias for backward compatibility with 2.2.0
         2.3.0: Switch to using Pansies to get support for full RGBColor with css style colors, like: #336699
         2.2.0: Add -RestoreVirtualTerminal switch for controlling if the prompt should reenable VT processing after each command

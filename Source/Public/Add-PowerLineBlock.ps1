@@ -35,7 +35,7 @@ function Add-PowerLineBlock {
     process {
         Write-Debug "Add-PowerLineBlock $InputObject"
         if(!$PSBoundParameters.ContainsKey("Index")) {
-            $Index = $Script:DefaultAddIndex++
+            $Index = $Script:PowerLinePrompt.DefaultAddIndex++
         }
 
 

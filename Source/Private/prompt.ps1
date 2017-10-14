@@ -46,7 +46,7 @@ function prompt {
     # To fix that, we cache the colors whenever we get a chance
     # And if it's not set, we re-initialize from the cache
     if($Global:Prompt.Colors) {
-        $Script:PowerlineColors = $Global:Prompt.Colors
+        $Script:PowerLinePrompt.Colors = $Global:Prompt.Colors
     } else {
         InitializeColor
     }

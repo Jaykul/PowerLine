@@ -9,4 +9,4 @@ function Test-Success {
     $script:LastSuccess
 }
 
-Export-ModuleMember -Function *-* -Alias * -Variable Prompt, PowerLineColors
+Export-ModuleMember -Function *-* -Alias *
