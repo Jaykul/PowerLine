@@ -25,33 +25,37 @@ function New-PromptText {
         [Alias("Foreground", "Fg")]
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
-        [RgbColor]$ForegroundColor,
+        [PoshCode.Pansies.RgbColor]$ForegroundColor,
 
         # The background color to use when the last command succeeded
         [Alias("Background", "Bg")]
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
-        [RgbColor]$BackgroundColor,
+        [PoshCode.Pansies.RgbColor]$BackgroundColor,
 
         # The foreground color to use when the process is elevated (running as administrator)
+        [Alias("AFg")]
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
-        [RgbColor]$ElevatedForegroundColor,
+        [PoshCode.Pansies.RgbColor]$ElevatedForegroundColor,
 
         # The background color to use when the process is elevated (running as administrator)
+        [Alias("ABg")]
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
-        [RgbColor]$ElevatedBackgroundColor,
+        [PoshCode.Pansies.RgbColor]$ElevatedBackgroundColor,
 
         # The foreground color to use when the last command failed
+        [Alias("EFg")]
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
-        [RgbColor]$ErrorForegroundColor,
+        [PoshCode.Pansies.RgbColor]$ErrorForegroundColor,
 
         # The background color to use when the last command failed
+        [Alias("EBg")]
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowNull()][EmptyStringAsNull()]
-        [RgbColor]$ErrorBackgroundColor
+        [PoshCode.Pansies.RgbColor]$ErrorBackgroundColor
     )
     process {
 

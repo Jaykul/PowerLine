@@ -1,16 +1,16 @@
 function InitializeColor {
     [CmdletBinding()]
     param(
-        [List[ScriptBlock]]$Prompt = $Global:Prompt,
+        [System.Collections.Generic.List[ScriptBlock]]$Prompt = $(@($Global:Prompt)),
 
-        [List[RgbColor]]$Colors = $Global:Prompt.Colors,
+        [System.Collections.Generic.List[PoshCode.Pansies.RgbColor]]$Colors = $Global:Prompt.Colors,
 
         [switch]$Passthru
     )
 
     if(!$PSBoundParameters.ContainsKey("Colors")){
-        [List[RgbColor]]$Colors = if($Script:PowerLinePrompt.Colors) {
-            $Script:PowerLinePrompt.Colors
+        [System.Collections.Generic.List[PoshCode.Pansies.RgbColor]]$Colors = if($global:Prompt.Colors) {
+            $global:Prompt.Colors
         } else {
             "Cyan","DarkCyan","Gray","DarkGray","Gray"
         }

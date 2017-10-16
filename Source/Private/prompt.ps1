@@ -3,14 +3,14 @@ function prompt {
     [bool]$script:LastSuccess = $?
 
     # Then handle PowerLinePrompt Features:
-    if ($Script:PowerLinePrompt.Title) {
+    if ($Script:PowerLineConfig.Title) {
         try {
-            $Host.UI.RawUI.WindowTitle = [System.Management.Automation.LanguagePrimitives]::ConvertTo( (& $Script:PowerLinePrompt.Title), [string] )
+            $Host.UI.RawUI.WindowTitle = [System.Management.Automation.LanguagePrimitives]::ConvertTo( (& $Script:PowerLineConfig.Title), [string] )
         } catch {
-            Write-Error "Failed to set Title from scriptblock { $($Script:PowerLinePrompt.Title) }"
+            Write-Error "Failed to set Title from scriptblock { $($Script:PowerLineConfig.Title) }"
         }
     }
-    if ($Script:PowerLinePrompt.SetCurrentDirectory) {
+    if ($Script:PowerLineConfig.SetCurrentDirectory) {
         try {
             # Make sure Windows & .Net know where we are
             # They can only handle the FileSystem, and not in .Net Core
@@ -19,7 +19,7 @@ function prompt {
             Write-Error "Failed to set CurrentDirectory to: (Get-Location -PSProvider FileSystem).ProviderPath"
         }
     }
-    if ($Script:PowerLinePrompt.RestoreVirtualTerminal) {
+    if ($Script:PowerLineConfig.RestoreVirtualTerminal -and (-not $IsLinux -and -not $IsMacOS)) {
         [PoshCode.Pansies.Console.WindowsHelper]::EnableVirtualTerminalProcessing()
     }
 
@@ -45,9 +45,7 @@ function prompt {
     # When someone sets $Prompt, they loose the colors.
     # To fix that, we cache the colors whenever we get a chance
     # And if it's not set, we re-initialize from the cache
-    if($Global:Prompt.Colors) {
-        $Script:PowerLinePrompt.Colors = $Global:Prompt.Colors
-    } else {
+    if(!$Global:Prompt.Colors) {
         InitializeColor
     }
     # Based on the number of text blocks, get a color gradient or the user's color choices
@@ -75,7 +73,7 @@ function prompt {
 
         foreach ($b in @($block)) {
             if ($b.BackgroundColor -ne $null -and $b.ForegroundColor -eq $null) {
-                if($Script:PowerLinePrompt.FullColor) {
+                if($Script:PowerLineConfig.FullColor) {
                     $b.ForegroundColor = Get-Complement $b.BackgroundColor -ForceContrast
                 } else {
                     $b.BackgroundColor, $b.ForegroundColor = Get-Complement $b.BackgroundColor -ConsoleColor -Passthru

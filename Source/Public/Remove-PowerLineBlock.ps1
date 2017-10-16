@@ -24,8 +24,8 @@ function Remove-PowerLineBlock {
         if($Index -ge 0) {
             $null = $Global:Prompt.RemoveAt($Index)
         }
-        if($Index -lt $Script:PowerLinePrompt.DefaultAddIndex) {
-            $Script:PowerLinePrompt.DefaultAddIndex--
+        if($Index -lt $Script:PowerLineConfig.DefaultAddIndex) {
+            $Script:PowerLineConfig.DefaultAddIndex--
         }
     }
 }

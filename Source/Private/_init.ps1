@@ -22,12 +22,11 @@ public class EmptyStringAsNullAttribute : ArgumentTransformationAttribute
 }
 '@
 
-$script:PowerLineRoot = $PSScriptRoot
-
-[List[ScriptBlock]]$Global:Prompt = if(Test-Path Variable:Prompt) {
-    $Prompt | ForEach-Object { $_ }
-} else {
-    { $MyInvocation.HistoryId }, { Get-SegmentedPath }
-}
+# Ensure the global prompt variable exists and is typed the way we expect
+[List[ScriptBlock]]$Global:Prompt = @(
+    if(Test-Path Variable:Prompt) {
+        $Prompt | ForEach-Object { $_ }
+    }
+)
 
 Add-MetadataConverter @{ [char] = { "'$_'" } }

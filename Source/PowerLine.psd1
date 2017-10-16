@@ -37,13 +37,13 @@ PowerShellVersion = '5.0.0'
 # FormatsToProcess = @()
 
 RequiredModules = @(
+    @{ModuleName="Configuration"; ModuleVersion="1.1.0"}
     @{ModuleName="Pansies"; ModuleVersion="1.2.1"}
-    @{ModuleName="Configuration"; ModuleVersion="1.0.4"}
 )
 # RequiredAssemblies = "lib\PowerLine.dll"
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Set-PowerLinePrompt', 'Add-PowerLineBlock', 'Remove-PowerLineblock', 'New-PromptText', 'Get-Elapsed', 'Get-SegmentedPath', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation'
+FunctionsToExport = 'Set-PowerLinePrompt', 'Export-PowerLinePrompt', 'Add-PowerLineBlock', 'Remove-PowerLineBlock', 'New-PromptText', 'Get-Elapsed', 'Get-SegmentedPath', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 # CmdletsToExport = '*'
