@@ -23,7 +23,7 @@ public class EmptyStringAsNullAttribute : ArgumentTransformationAttribute
 '@
 
 # Ensure the global prompt variable exists and is typed the way we expect
-[List[ScriptBlock]]$Global:Prompt = @(
+[System.Collections.Generic.List[ScriptBlock]]$Global:Prompt = [ScriptBlock[]]@(
     if(Test-Path Variable:Prompt) {
         $Prompt | ForEach-Object { $_ }
     }
