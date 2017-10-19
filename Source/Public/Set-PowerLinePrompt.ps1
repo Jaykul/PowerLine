@@ -1,8 +1,8 @@
 function Set-PowerLinePrompt {
     #.Synopsis
-    #   Set the default PowerLine prompt function which uses the $PowerLinePrompt variable
+    #   Set the default PowerLine prompt function which uses the $Prompt variable
     #.Description
-    #   Overwrites the current prompt function with one that uses the PowerLinePrompt variable
+    #   Overwrites the current prompt function with one that uses the $Prompt variable
     #   Note that this doesn't try to preserve any changes already made to the prompt by modules like ZLocation
     #.Example
     #   Set-PowerLinePrompt -CurrentDirectory
@@ -17,88 +17,159 @@ function Set-PowerLinePrompt {
     #
     #   Sets the powerline prompt and forces the use of "safe" separator characters. You can still change the characters used to separate blocks in the PowerLine output after running this, by setting the static members of [PowerLine.Prompt] like Separator and ColorSeparator...
     #.Example
-    #   Set-PowerLinePrompt -UseAnsiEscapes
+    #   Set-PowerLinePrompt -FullColor
     #
-    #   Sets the powerline prompt and forces the use of ANSI escape sequences in the string output (rather than Write-Host) to change colors, regardless of what we're able to detect about the console.
-    [CmdletBinding(DefaultParameterSetName="PowerLine")]
+    #   Sets the powerline prompt and forces the assumption of full RGB color support instead of 16 color
+    [CmdletBinding(DefaultParameterSetName = "PowerLine")]
     param(
         # A script which outputs a string used to update the Window Title each time the prompt is run
         [scriptblock]$Title,
 
         # Keep the .Net Current Directory in sync with PowerShell's
-        [switch]$CurrentDirectory,
+        [Alias("CurrentDirectory")]
+        [switch]$SetCurrentDirectory,
 
         # If true, set the [PowerLine.Prompt] static members to extended characters from PowerLine fonts
-        [Parameter(ParameterSetName="PowerLine")]
+        [Parameter(ParameterSetName = "PowerLine")]
         [switch]$PowerLineFont,
 
         # If true, set the [PowerLine.Prompt] static members to characters available in Consolas and Courier New
-        [Parameter(ParameterSetName="Reset")]
+        [Parameter(ParameterSetName = "Reset")]
         [switch]$ResetSeparators,
 
-        # If true, override the default testing for ANSI consoles and force the use of Escape Sequences rather than Write-Host
+        # If true, assume full color support, otherwise normalize to 16 ConsoleColor
         [Parameter()]
-        [switch]$UseAnsiEscapes = $($Host.UI.SupportsVirtualTerminal -or $Env:ConEmuANSI -eq "ON"),
+        [switch]$FullColor,
 
         # If true, adds ENABLE_VIRTUAL_TERMINAL_PROCESSING to the console output mode. Useful on PowerShell versions that don't restore the console
         [Parameter()]
-        [switch]$RestoreVirtualTerminal
+        [switch]$RestoreVirtualTerminal,
+
+        # Add a "I ♥ PS" on a line by itself to it's prompt (using ConsoleColors, to keep it safe from PSReadLine)
+        [switch]$Newline,
+
+        # Add a right-aligned timestamp before the newline (implies Newline)
+        [switch]$Timestamp,
+
+        # One or more scriptblocks you want to use as your new prompt
+        [System.Collections.Generic.List[ScriptBlock]]$Prompt,
+
+        # One or more colors you want to use as the prompt background
+        [System.Collections.Generic.List[PoshCode.Pansies.RgbColor]]$Colors,
+
+        # If set, calls Export-PowerLinePrompt
+        [Switch]$Save
+
     )
-    if($null -eq $script:OldPrompt) {
+    if ($null -eq $script:OldPrompt) {
         $script:OldPrompt = $function:global:prompt
         $MyInvocation.MyCommand.Module.OnRemove = {
             $function:global:prompt = $script:OldPrompt
         }
     }
-    if($PSBoundParameters.ContainsKey("Title")) {
-        $global:PowerLinePrompt.Title = $Title
+
+    # Hide these from serialization
+    $null = $PSBoundParameters.Remove("Save")
+    $null = $PSBoundParameters.Remove("Newline")
+    $null = $PSBoundParameters.Remove("Timestamp")
+
+    $Configuration = Import-Configuration
+
+    # Upodate the saved PowerLinePrompt with the parameters
+    if(!$Configuration.PowerLineConfig) {
+        $Configuration.PowerLineConfig = @{}
     }
-    if($PSBoundParameters.ContainsKey("CurrentDirectory")) {
-        $global:PowerLinePrompt.SetCurrentDirectory = $CurrentDirectory
-    }
+    $PowerLineConfig = $Configuration.PowerLineConfig | Update-Object $PSBoundParameters
 
-    $global:PowerLinePrompt.UseAnsiEscapes = $UseAnsiEscapes
-    $global:PowerLinePrompt.RestoreVirtualTerminal = $RestoreVirtualTerminal
-
-
-    if($ResetSeparators -or ($PSBoundParameters.ContainsKey("PowerLineFont") -and !$PowerLineFont) ) {
-        # Use characters that at least work in Consolas
-        [PowerLine.Prompt]::ColorSeparator  = [char]0x258C
-        [PowerLine.Prompt]::ReverseColorSeparator = [char]0x2590
-        [PowerLine.Prompt]::Separator  = [char]0x25BA
-        [PowerLine.Prompt]::ReverseSeparator = [char]0x25C4
-        [PowerLine.Prompt]::Branch   = [char]0x00A7
-        [PowerLine.Prompt]::Gear     = [char]0x263C
-    }
-    if($PowerLineFont) {
-        # Make sure we're using the PowerLine custom use extended characters:
-        [PowerLine.Prompt]::ColorSeparator = [char]0xe0b0
-        [PowerLine.Prompt]::ReverseColorSeparator = [char]0xe0b2
-        [PowerLine.Prompt]::Separator = [char]0xe0b1
-        [PowerLine.Prompt]::ReverseSeparator = [char]0xe0b3
-        [PowerLine.Prompt]::Branch   = [char]0xE0A0
-        [PowerLine.Prompt]::Gear     = [char]0x26EF
-    }
-
-    $function:global:prompt =  {
-
-        # FIRST, make a note if there was an error in the previous command
-        [bool]$script:LastSuccess = $?
-
-        try {
-            if($global:PowerLinePrompt.Title) {
-                $Host.UI.RawUI.WindowTitle = [System.Management.Automation.LanguagePrimitives]::ConvertTo( (& $global:PowerLinePrompt.Title), [string] )
-            }
-            if($global:PowerLinePrompt.SetCurrentDirectory) {
-                # Make sure Windows & .Net know where we are
-                # They can only handle the FileSystem, and not in .Net Core
-                [System.IO.Directory]::SetCurrentDirectory( (Get-Location -PSProvider FileSystem).ProviderPath )
-            }
-        } catch {}
-
-        if ($global:PowerLinePrompt.RestoreVirtualTerminal) {
-            [PoshCode.Pansies.Console.WindowsHelper]::EnableVirtualTerminalProcessing()
+    if($Configuration.ExtendedCharacters) {
+        foreach($key in $Configuration.ExtendedCharacters.Keys) {
+            [PoshCode.Pansies.Entities]::ExtendedCharacters.$key = $Configuration.ExtendedCharacters.$key
         }
-        $global:PowerLinePrompt.ToString($Host.UI.RawUI.BufferSize.Width)
+    }
+
+    if($Configuration.EscapeSequences) {
+        foreach($key in $Configuration.EscapeSequences.Keys) {
+            [PoshCode.Pansies.Entities]::EscapeSequences.$key = $Configuration.EscapeSequences.$key
+        }
+    }
+
+    if ($PowerLineConfig.FullColor -eq $Null -and $Host.UI.SupportsVirtualTerminal) {
+        $PowerLineConfig.FullColor = (Get-Process -Id $global:Pid).MainWindowHandle -ne 0
+    }
+
+    # For Prompt and Colors we want to support modifying the global variable outside this function
+    if($PSBoundParameters.ContainsKey("Prompt")) {
+        [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $Local:Prompt
+
+    } elseif(!@($global:Prompt).Count -and @($PowerLineConfig.Prompt).Count) {
+        [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = [ScriptBlock[]]@($PowerLineConfig.Prompt)
+
+    } else {
+        [ScriptBlock[]]$PowerLineConfig.Prompt = { $MyInvocation.HistoryId }, { Get-SegmentedPath }
+        [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $PowerLineConfig.Prompt
+    }
+
+    if($PSBoundParameters.ContainsKey("Colors")) {
+        InitializeColor $global:Prompt $PowerLineConfig.Colors
+    } elseif($global:Prompt.Colors) {
+        InitializeColor $global:Prompt $global:Prompt.Colors
+    } elseif($PowerLineConfig.Colors) {
+        InitializeColor $global:Prompt $PowerLineConfig.Colors
+    } else {
+        InitializeColor $global:Prompt
+    }
+
+    if ($ResetSeparators -or ($PSBoundParameters.ContainsKey("PowerLineFont") -and !$PowerLineFont) ) {
+        # Use characters that at least work in Consolas
+        [PoshCode.Pansies.Entities]::ExtendedCharacters['ColorSeparator'] = [char]0x258C
+        [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseColorSeparator'] = [char]0x2590
+        [PoshCode.Pansies.Entities]::ExtendedCharacters['Separator'] = [char]0x25BA
+        [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseSeparator'] = [char]0x25C4
+        [PoshCode.Pansies.Entities]::ExtendedCharacters['Branch'] = [char]0x00A7
+        [PoshCode.Pansies.Entities]::ExtendedCharacters['Gear'] = [char]0x263C
+    }
+    if ($PowerLineFont) {
+        # Make sure we're using the PowerLine custom use extended characters:
+        [PoshCode.Pansies.Entities]::ExtendedCharacters['ColorSeparator'] = [char]0xe0b0
+        [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseColorSeparator'] = [char]0xe0b2
+        [PoshCode.Pansies.Entities]::ExtendedCharacters['Separator'] = [char]0xe0b1
+        [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseSeparator'] = [char]0xe0b3
+        [PoshCode.Pansies.Entities]::ExtendedCharacters['Branch'] = [char]0xE0A0
+        [PoshCode.Pansies.Entities]::ExtendedCharacters['Gear'] = [char]0x26EF
+    }
+
+    if($null -eq $PowerLineConfig.DefaultAddIndex) {
+        $PowerLineConfig.DefaultAddIndex    = -1
+    }
+
+    $Script:PowerLineConfig = $PowerLineConfig
+
+    if($Newline -or $Timestamp) {
+        $Script:PowerLineConfig.DefaultAddIndex = $Insert = $global:Prompt.Count
+
+        @(
+            if($Timestamp) {
+                { "`t" }
+                { Get-Elapsed }
+                { Get-Date -f "T" }
+            }
+            { "`n" }
+            { New-PromptText { "I $(New-PromptText -Fg Red -EFg White "&hearts;$([char]27)[30m") PS" } -Bg White -EBg Red -Fg Black }
+        ) | Add-PowerLineBlock
+
+        $Script:PowerLineConfig.DefaultAddIndex = $Insert
+    } else {
+        $Script:PowerLineConfig.DefaultAddIndex = -1
+    }
+
+    # Finally, update the prompt function
+    $function:global:prompt = $function:script:Prompt
+    [PoshCode.Pansies.RgbColor]::ResetConsolePalette()
+
+    # If they asked us to save, or if there's nothing saved yet
+    if($Save -or ($PSBoundParameters.Count -and !(Test-Path (Join-Path (Get-StoragePath) Configuration.psd1)))) {
+        Export-PowerLinePrompt
     }
 }
+
+Set-PowerLinePrompt

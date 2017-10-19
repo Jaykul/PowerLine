@@ -1,18 +1,32 @@
 #!/usr/bin/env powershell
+using namespace System.Management.Automation
 using namespace System.Collections.Generic
 using namespace PoshCode.Pansies
 
-$script:PowerLineRoot = $PSScriptRoot
-
-if($PSVersionTable.PSVersion -lt "6.0") {
-    Add-Type -Path $PSScriptRoot\lib\net451\PowerLine.dll
-} else {
-    Add-Type -Path $PSScriptRoot\lib\netstandard1.6\PowerLine.dll
+Add-Type @'
+using System;
+using System.Management.Automation;
+public class EmptyStringAsNullAttribute : ArgumentTransformationAttribute
+{
+    public override object Transform(EngineIntrinsics engineIntrinsics, object inputData)
+    {
+        if (inputData is string && ((string)inputData).Length == 0)
+        {
+            return null;
+        }
+        else
+        {
+            return inputData;
+        }
+    }
 }
+'@
 
-if(!$PowerLinePrompt) {
-    [PowerLine.Prompt]$Script:PowerLinePrompt = @(,@(
-        @{ bg = "Cyan";     fg = "White"; text = { $MyInvocation.HistoryId } },
-        @{ bg = "DarkBlue"; fg = "White"; text = { Get-SegmentedPath } }
-    ))
-}
+# Ensure the global prompt variable exists and is typed the way we expect
+[System.Collections.Generic.List[ScriptBlock]]$Global:Prompt = [ScriptBlock[]]@(
+    if(Test-Path Variable:Prompt) {
+        $Prompt | ForEach-Object { $_ }
+    }
+)
+
+Add-MetadataConverter @{ [char] = { "'$_'" } }

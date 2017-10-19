@@ -8,3 +8,5 @@ function Test-Success {
 
     $script:LastSuccess
 }
+
+Export-ModuleMember -Function *-* -Alias *

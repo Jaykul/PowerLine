@@ -4,7 +4,7 @@
 RootModule = 'PowerLine.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.3.0'
+ModuleVersion = '3.0.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -31,22 +31,25 @@ PowerShellVersion = '5.0.0'
 # ScriptsToProcess = @()
 
 # Type files (.ps1xml) to be loaded when importing this module
-TypesToProcess = @("PowerLine.types.ps1xml")
+# TypesToProcess = @("PowerLine.types.ps1xml")
 
 # Format files (.ps1xml) to be loaded when importing this module
 # FormatsToProcess = @()
 
-RequiredModules = @("Pansies")
+RequiredModules = @(
+    @{ModuleName="Configuration"; ModuleVersion="1.1.0"}
+    @{ModuleName="Pansies"; ModuleVersion="1.2.1"}
+)
 # RequiredAssemblies = "lib\PowerLine.dll"
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Set-PowerLinePrompt', 'Add-PowerLineBlock', 'New-TextFactory', 'Get-Elapsed', 'Get-SegmentedPath', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation'
+FunctionsToExport = 'Set-PowerLinePrompt', 'Export-PowerLinePrompt', 'Add-PowerLineBlock', 'Remove-PowerLineBlock', 'New-PromptText', 'Get-Elapsed', 'Get-SegmentedPath', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 # CmdletsToExport = '*'
 
 # Variables to export from this module
-VariablesToExport = 'PowerLinePrompt'
+# VariablesToExport = 'PowerLineColors'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
 AliasesToExport = 'New-PowerLineBlock'
@@ -71,6 +74,15 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+        3.0.0: Total refactor to simplify the array.
+            Add a dependency on the Configuration module
+            Uses $Prompt (an array of ScriptBlock)
+            Uses $Prompt.Colors (an array of PoshCode.Pansies.RgbColor)
+            Removed -UseAnsiEscapes -- with Pansies, we always use Ansi escape sequences
+            Added -FullColor -- by default, use only 16 Colors [System.ConsoleColor]
+            Support storing prompt options so we can restore the prompt upon import
+        2.3.1: Fixed the missing New-PowerLineBlock alias for backward compatibility with 2.2.0
+        2.3.0: Switch to using Pansies to get support for full RGBColor with css style colors, like: #336699
         2.2.0: Add -RestoreVirtualTerminal switch for controlling if the prompt should reenable VT processing after each command
         2.1.0: Add -UseAnsiEscapes switch for controlling the use of VT escape sequences (in preparation for adding a Write-Host adapter)
         Add pre-compiled assembly for .Net Core
