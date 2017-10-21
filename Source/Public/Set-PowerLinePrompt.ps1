@@ -98,23 +98,18 @@ function Set-PowerLinePrompt {
     }
 
     # For Prompt and Colors we want to support modifying the global variable outside this function
-    Write-Warning "Before Prompt Count: $($global:Prompt.Count) and $($Local:Prompt.Count)"
     if($PSBoundParameters.ContainsKey("Prompt")) {
-        Write-Warning "Set Prompt"
         [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $Local:Prompt
 
     } elseif($global:Prompt.Count -eq 0 -and $PowerLineConfig.Prompt.Count -gt 0) {
-        Write-Warning "ReSet Prompt"
         [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = [ScriptBlock[]]@($PowerLineConfig.Prompt)
 
     } elseif($global:Prompt.Count -eq 0) {
-        Write-Warning "Initialize Prompt"
         [ScriptBlock[]]$PowerLineConfig.Prompt = { $MyInvocation.HistoryId }, { Get-SegmentedPath }
         [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $PowerLineConfig.Prompt
     }
 
     # Prefer the existing colors over the saved colors, but not over the colors parameter
-    Write-Warning "Before InitializeColor Count: $($global:Prompt.Count)"
     if($PSBoundParameters.ContainsKey("Colors")) {
         InitializeColor $Colors
     } elseif($global:Prompt.Colors) {
@@ -124,7 +119,6 @@ function Set-PowerLinePrompt {
     } else {
         InitializeColor
     }
-    Write-Warning "After InitializeColor Count: $($global:Prompt.Count)"
 
     if ($ResetSeparators -or ($PSBoundParameters.ContainsKey("PowerLineFont") -and !$PowerLineFont) ) {
         # Use characters that at least work in Consolas
