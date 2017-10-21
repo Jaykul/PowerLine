@@ -101,7 +101,7 @@ function Set-PowerLinePrompt {
     if($PSBoundParameters.ContainsKey("Prompt")) {
         [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $Local:Prompt
 
-    } elseif(!@($global:Prompt).Count -and @($PowerLineConfig.Prompt).Count) {
+    } elseif($global:Prompt.Count -eq 0 -and $PowerLineConfig.Prompt.Count -gt 0) {
         [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = [ScriptBlock[]]@($PowerLineConfig.Prompt)
 
     } else {
