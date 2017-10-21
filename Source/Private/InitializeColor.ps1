@@ -1,8 +1,6 @@
 function InitializeColor {
     [CmdletBinding()]
     param(
-        [System.Collections.Generic.List[ScriptBlock]]$Prompt = $(@($Global:Prompt)),
-
         [System.Collections.Generic.List[PoshCode.Pansies.RgbColor]]$Colors = $Global:Prompt.Colors,
 
         [switch]$Passthru
@@ -19,9 +17,9 @@ function InitializeColor {
         $Colors
     }
 
-    if(!(Get-Member -InputObject $Local:Prompt -Name Colors)) {
-        Add-Member -InputObject $Local:Prompt -MemberType NoteProperty -Name Colors -Value $Colors
+    if(!(Get-Member -InputObject $Global:Prompt -Name Colors)) {
+        Add-Member -InputObject $Global:Prompt -MemberType NoteProperty -Name Colors -Value $Colors
     } else {
-        $Local:Prompt.Colors = $Colors
+        $Global:Prompt.Colors = $Colors
     }
 }
