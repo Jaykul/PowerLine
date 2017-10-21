@@ -1,3 +1,34 @@
+## PowerLine - Beautiful, Powerfull, PowerShell prompts
+
+### Install
+
+```posh
+Install-Module PowerLine
+Import-Module PowerLine
+```
+
+#### NOTE: PowerLine 3 is NOT backward compatible
+
+I've reworked the whole module with a simpler, more powerful interface. Existing users will need to re-create their configuration using the simple lists in `$Prompt` and `$Prompt.Colors`, but PowerLine now stores your configuration, so you won't need to create a big custom command line in your profile script anymore.
+
+### First use configuration
+
+There are quite a few options for PowerLine, and you're going to want to set some of them immediately to take full advantage.
+
+```posh
+Set-PowerLinePrompt -SetCurrentDirectory -RestoreVirtualTerminal -Newline -Timestamp -Colors "#00DDFF","#0066FF"
+```
+
+You can play with the [other options](#configuration), and when you get it the way you want, you can save it, and Powerline will re-load it on import in the future:
+
+```posh
+Export-PowerlinePrompt
+```
+
+For more information about the [configuration](#configuration) --particularly how to get the cool angled separators you see in my screenshots using [powerline fonts](#powerline-fonts-and-separators)-- you can skip past this explanation of why I wrote the module, but you should also explore the commands, as the documentation is currently lagging behind the implementation.
+
+# Why Powerline?
+
 ```gherkin
 As a PowerShell user
 In order to have the right information available
@@ -14,16 +45,11 @@ I want to have a cool prompt!
 
 > Currently in PowerShell, the prompt is a function that _must_ return a string. Modules that want to add information to your prompt typically _don't even try_ if you have customized your prompt (see Posh-Git, for example). The goal of PowerLine is to have beautiful custom prompts **and** let modules add (and remove) information easily.
 
-## NOTE: PowerLine 3 is NOT backward compatible
-
-Almost all the old features are here, but with a *much* simpler interface. Existing users will need to change to use the simple lists in `$Prompt` and `$Prompt.Colors`, but it's for a good cause:
-
-# Your Prompt as a Collection
+## Your Prompt as a Collection
 
 The core principle of PowerLine 3 is to make your prompt easier to change, and changes easier to undo.
 
 The idea is to assume a `$Prompt` variable that's a `List` of `ScriptBlock` and just join the output of those scriptblocks:
-
 
 ```posh
 function prompt {
@@ -31,7 +57,7 @@ function prompt {
 }
 ```
 
-# Why Lists of ScriptBlocks?
+## Why Lists of ScriptBlocks?
 
 1. The user can easily add or remove information on the fly.
 2. Modules can add (and remove) information as they're imported/removed.
@@ -50,7 +76,7 @@ Take this for example, it's the same as the current default prompt, except split
 This would produce _the same output_ as before, and would have _no impact_ on users who already overwrite the default prompt. In fact, **you** can switch to this right now, by just putting those two blocks in your profile.
 
 
-## For users:
+### For users:
 
 It's suddenly easy to tweak the prompt. I can remove the unecessary "PS " from the front of my prompt by just running
 
@@ -58,13 +84,13 @@ It's suddenly easy to tweak the prompt. I can remove the unecessary "PS " from t
 $Prompt = $Prompt | Select -Skip 1
 ```
 
-Or if I wanted to print the current command's `HistoryId` instead of the "PS", I could just replace that first part: 
+Or if I wanted to print the current command's `HistoryId` instead of the "PS", I could just replace that first part:
 
 ```posh
 $Prompt[0] = { "$($MyInvocation.HistoryId) " }
 ```
 
-## For module authors:
+### For module authors:
 
 Modules can modify the prompt just as easily. Adding to a list is simpler and easier to undo, plus it's possible for the user to re-order their prompt. Since modules don't have to modify or wrap the actual prompt function, users end up in control.
 
@@ -82,59 +108,59 @@ $MyInvocation.MyCommand.Module.OnRemove = {
 }
 ```
 
-# PowerLine
+#### Using PowerLine
 
-Of course, with PowerLine, it's even easier. You just run:
+Of course, with PowerLine, it's even easier. A module can just run:
 
 ```posh
 Add-PowerLineBlock { Write-VcsStatus } -AutoRemove
 ```
 
-And because your whole prompt is just a list of script blocks, we can transform your prompt's appearance. You can go from simple to elegant instantly, and then take control of colors and more.
+## Configuration
 
-```posh
-Set-PowerLinePrompt -Newline -PowerLineFont
-```
+PowerLine has a lot of flexibility and functionality around output and looks. Because your whole prompt is just a list of script blocks, we can transform your prompt's appearance. You can go from simple to elegant instantly, and then take control of colors and more.
 
 ### PowerLine Coloring blocks
 
-PowerLine adds a `.Colors` property to the $Prompt variable which consists of a list of colors. 
+The `-Colors` parameter supports setting the background colors. You can pass a list of colors and PowerLine will loop through them.
+You can also specify two colors, and PowerLine will generate a gradient between those colors with the same number of steps as you have output blocks.
 
-Each scriptblock which has output (PowerLine cleans up and ignores empty blocks), uses one of those colors, looping around if it runs out.
-PowerLine can automatically select contrasting colors for the text (foreground) color.
+Basically, each scriptblock which has output (PowerLine cleans up and ignores empty blocks), uses one of those colors, looping back to the first if it runs out.
+PowerLine automatically selects contrasting colors for the text (foreground) color.
 
-If you specify just two colors, PowerLine will generate a gradient between those colors with the same number of steps as you have output blocks.
+You can set the color with something like this: `Set-PowerLinePrompt -Color "#00DDFF","#0066FF"`
 
 ### PowerLine Fonts and Separators
 
-The `-PowerLineFont` switch requires using a [PowerLine font](https://github.com/PowerLine/fonts), which is a font that 
+The `-PowerLineFont` switch requires using a [PowerLine font](https://github.com/PowerLine/fonts), which is a font that
 has the extra extended characters with the nice angled separators you see in the screenshots here between colors.
-There are a lot of monospaced fonts to choose from, and you can even install them all by just cloning the repository 
+There are a lot of monospaced fonts to choose from, and you can even install them all by just cloning the repository
 and running the `install.ps1` script, or you can just pick just one TTF and download and install that.
 
 There are [screenshots of all of them here](https://github.com/powerline/fonts/blob/master/samples/All.md).
 
-If you're not using a PowerLine font, don't use the `-PowerLineFont` switch, and the module will output common ASCII 
+If you're not using a PowerLine font, don't use the `-PowerLineFont` switch, and the module will output common ASCII
 box characters like ▌ as the separators...
 
 These characters are set into a dictionary (`[PoshCode.Pansies.Entities]::ExtendedCharacters`) when you call `Set-PowerLinePrompt`.
 
-#### Array output
+### Prompts as arrays
 
 By default, each ScriptBlock outputs one string, and is colored in one color, with the "ColorSeparator" character between each block.
 
-However, PowerLine also supports blocks which output arrays. When a ScriptBlock outputs an array of strings, 
+However, PowerLine also supports blocks which output arrays. When a ScriptBlock outputs an array of strings,
 they will be separated with the alternate "Separator" instead of the "ColorSeparator".
 
+All you need to to is start adding things to your `$Prompt` -- you can do that directly on the list, using `$Prompt.Add` or `$Prompt.Insert`, or you can use the `Add-PowerLine` command.
 
-### Right-aligned blocks
+#### Right-aligned blocks
 
-If you add a scriptblock that outputs _just_ a tab `{ "``t" }`, 
+If you add a scriptblock that outputs _just_ a tab `{ "``t" }`,
 blocks after that will be right-aligned until the next block which is _just_ a newline `{ "``n" }`.
 
 For Right-aligned blocks, the "ReverseColorSeparator" or "ReverseSeparator" characters are used instead of the "ColorSeparator" and "Separator".
 
-### Characters and Custom Entities
+#### Characters and Custom Entities
 
 PowerLine uses the [Pansies](https://github.com/PoshCode/Pansies) module for coloring and output, so it inherits Pansies' support for [HTML named entities](https://www.w3schools.com/charsets/ref_html_entities_4.asp) like `&hearts;` and `&copy;` or `&cent;` and numerical unicode character entities in decimal (`&#926;`) and hexadeximal (`&#x39E;`), so you can easily embed characters.
 
