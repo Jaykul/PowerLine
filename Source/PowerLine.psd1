@@ -4,7 +4,7 @@
 RootModule = 'PowerLine.psm1'
 
 # Version number of this module.
-ModuleVersion = '3.0.0'
+ModuleVersion = '3.0.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -74,6 +74,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+        3.0.2: Fix a bug causing re-sets of the prompt
         3.0.0: Total refactor to simplify the array.
             Add a dependency on the Configuration module
             Uses $Prompt (an array of ScriptBlock)
