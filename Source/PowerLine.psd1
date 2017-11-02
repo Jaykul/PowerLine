@@ -4,7 +4,7 @@
 RootModule = 'PowerLine.psm1'
 
 # Version number of this module.
-ModuleVersion = '3.0.3'
+ModuleVersion = '3.0.5'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -43,7 +43,7 @@ RequiredModules = @(
 # RequiredAssemblies = "lib\PowerLine.dll"
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Set-PowerLinePrompt', 'Export-PowerLinePrompt', 'Add-PowerLineBlock', 'Remove-PowerLineBlock', 'New-PromptText', 'Get-Elapsed', 'Get-SegmentedPath', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation'
+FunctionsToExport = 'Set-PowerLinePrompt', 'Write-PowerlinePrompt', 'Export-PowerLinePrompt', 'Add-PowerLineBlock', 'Remove-PowerLineBlock', 'New-PromptText', 'Get-Elapsed', 'Get-SegmentedPath', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 # CmdletsToExport = '*'
