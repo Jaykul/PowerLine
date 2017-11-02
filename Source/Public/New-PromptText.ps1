@@ -58,6 +58,14 @@ function New-PromptText {
         [PoshCode.Pansies.RgbColor]$ErrorBackgroundColor
     )
     process {
+        # Try to fix the parameter binding
+        if($InputObject.InputObject) {
+            $InputObject = $InputObject.InputObject
+        } elseif($InputObject.Object) {
+            $InputObject = $InputObject.Object
+        }elseif($InputObject.Text) {
+            $InputObject = $InputObject.Text
+        }
 
         $output = [PoshCode.Pansies.Text]@{
             Object = $InputObject

@@ -164,7 +164,7 @@ function Set-PowerLinePrompt {
     }
 
     # Finally, update the prompt function
-    $function:global:prompt = $function:script:Prompt
+    $function:global:prompt = { Write-PowerlinePrompt }
     [PoshCode.Pansies.RgbColor]::ResetConsolePalette()
 
     # If they asked us to save, or if there's nothing saved yet
