@@ -174,7 +174,9 @@ function Write-PowerlinePrompt {
             }
         }
 
-        [string]$PromptErrorString = WriteExceptions $PromptErrors
+        [string]$PromptErrorString = if ($Script:PowerLineConfig.HideErrors) {
+            WriteExceptions $PromptErrors
+        }
         # At the end, output everything as one single string
         $PromptErrorString + $result + $line + ([PoshCode.Pansies.Text]@{
             Object          = "$ColorSeparator&Clear;"
