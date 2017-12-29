@@ -1,6 +1,8 @@
 function prompt {
     # FIRST, make a note if there was an error in the previous command
     [bool]$script:LastSuccess = $?
+	
+    $Script:PowerLineConfig = $(Get-Module PowerLine|Import-Configuration)
 
     # Then handle PowerLinePrompt Features:
     if ($Script:PowerLineConfig.Title) {
@@ -29,7 +31,7 @@ function prompt {
         foreach ($block in $Global:Prompt) {
             $block = & $block
             $buffer = $(
-                if($block -as [PoshCode.Pansies.Text[]]) {
+                if ($block -as [PoshCode.Pansies.Text[]]) {
                     [PoshCode.Pansies.Text[]]$block
                 } else {
                     [PoshCode.Pansies.Text[]][string[]]$block
@@ -37,7 +39,7 @@ function prompt {
             ).Where{ ![string]::IsNullOrEmpty($_.Object) }
 
             # Each $buffer gets a color, if it needs one (it's not whitespace)
-            $UniqueColorsCount += [bool]$buffer.Where({![string]::IsNullOrWhiteSpace($_.Object) -and $_.BackgroundColor -eq $null -and $_.ForegroundColor -eq $null }, 1)
+            $UniqueColorsCount += [bool]$buffer.Where( {![string]::IsNullOrWhiteSpace($_.Object) -and $_.BackgroundColor -eq $null -and $_.ForegroundColor -eq $null }, 1)
             , $buffer
         }
     ).Where{ $_.Object }
@@ -45,7 +47,7 @@ function prompt {
     # When someone sets $Prompt, they loose the colors.
     # To fix that, we cache the colors whenever we get a chance
     # And if it's not set, we re-initialize from the cache
-    if(!$Global:Prompt.Colors) {
+    if (!$Global:Prompt.Colors) {
         InitializeColor
     }
     # Based on the number of text blocks, get a color gradient or the user's color choices
@@ -55,7 +57,7 @@ function prompt {
         } elseif ($Global:Prompt.Colors.Count -eq 2) {
             Get-Gradient ($Global:Prompt.Colors[0]) ($Global:Prompt.Colors[1]) -Count $UniqueColorsCount -Flatten
         } else {
-            $Global:Prompt.Colors * ([Math]::Ceiling($UniqueColorsCount/$Global:Prompt.Colors.Count))
+            $Global:Prompt.Colors * ([Math]::Ceiling($UniqueColorsCount / $Global:Prompt.Colors.Count))
         }
     )
 
@@ -73,7 +75,7 @@ function prompt {
 
         foreach ($b in @($block)) {
             if ($b.BackgroundColor -ne $null -and $b.ForegroundColor -eq $null) {
-                if($Script:PowerLineConfig.FullColor) {
+                if ($Script:PowerLineConfig.FullColor) {
                     $b.ForegroundColor = Get-Complement $b.BackgroundColor -ForceContrast
                 } else {
                     $b.BackgroundColor, $b.ForegroundColor = Get-Complement $b.BackgroundColor -ConsoleColor -Passthru
@@ -98,7 +100,7 @@ function prompt {
 
         ## Allow `t to split into (2) columns:
         if ($string -eq "`t") {
-            if($LastBackground) {
+            if ($LastBackground) {
                 ## Before the (column) break, add a cap
                 #Write-Debug "Pre column-break, add a $LastBackground cap"
                 $line += [PoshCode.Pansies.Text]@{
@@ -113,9 +115,9 @@ function prompt {
             $ColorSeparator = "&ReverseColorSeparator;"
             $Separator = "&ReverseSeparator;"
             $LastBackground = $Host.UI.RawUI.BackgroundColor
-        ## Allow `n to create multi-line prompts
+            ## Allow `n to create multi-line prompts
         } elseif ($string -in "`n", "`r`n") {
-            if($RightAligned) {
+            if ($RightAligned) {
                 ## This is a VERY simplistic test for escape sequences
                 $lineLength = ($line -replace "\u001B.*?\p{L}").Length
                 $Align = $BufferWidth - $lineLength
@@ -134,14 +136,14 @@ function prompt {
             $ColorSeparator = "&ColorSeparator;"
             $Separator = "&Separator;"
             $LastBackground = $null
-        } elseif(![string]::IsNullOrWhiteSpace($string)) {
+        } elseif (![string]::IsNullOrWhiteSpace($string)) {
             ## If the output is just color sequences, toss it
-            if(($String -replace "\u001B.*?\p{L}").Length -eq 0) {
+            if (($String -replace "\u001B.*?\p{L}").Length -eq 0) {
                 #Write-Debug "Skip empty output, staying $LastBackground"
                 continue
             }
-            if($LastBackground -or $RightAligned) {
-                $line += if($block.BackgroundColor -ne $LastBackground) {
+            if ($LastBackground -or $RightAligned) {
+                $line += if ($block.BackgroundColor -ne $LastBackground) {
                     [PoshCode.Pansies.Text]@{
                         Object          = $ColorSeparator
                         ForegroundColor = ($LastBackground, $block.BackgroundColor)[$RightAligned]
@@ -162,8 +164,8 @@ function prompt {
     }
     # At the end, output everything as one single string
     $result + $line + ([PoshCode.Pansies.Text]@{
-        Object          = "$ColorSeparator&Clear;"
-        ForegroundColor = $LastBackground
-        BackgroundColor = $Host.UI.RawUI.BackgroundColor
-    })
+            Object          = "$ColorSeparator&Clear;"
+            ForegroundColor = $LastBackground
+            BackgroundColor = $Host.UI.RawUI.BackgroundColor
+        })
 }
