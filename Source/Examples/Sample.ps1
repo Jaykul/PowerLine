@@ -1,27 +1,47 @@
-#requires -module @{ModuleName='PowerLine';ModuleVersion='1.1.0'}, @{ModuleName='PSGit'; ModuleVersion='2.0.3'}
-using module PowerLine
-using namespace PowerLine
+Import-module PowerLine
 
 
+$host.UI.RawUI.ForegroundColor = 'Green'
+$host.UI.RawUI.BackgroundColor = 'Black'
 
-$global:PowerLinePrompt = 1,
-    # two lines
-    @(
-        # on the first line, two columns -- the first one is null (empty), the second is right-justified
-        $null,
-        @(
-            @{ text = { New-PowerLineBlock (Get-Elapsed) -ErrorBackgroundColor DarkRed -ErrorForegroundColor White -ForegroundColor Black -BackgroundColor DarkGray } }
-            @{ bg = "Gray";     fg = "Black"; text = { Get-Date -f "T" } }
-        )
-    ),
-    (
-        @{ bg = "Blue";     fg = "White"; text = { $MyInvocation.HistoryId } },
-        @{ bg = "Cyan";     fg = "White"; text = { [PowerLine.Prompt]::Gear * $NestedPromptLevel } },
-        @{ bg = "Cyan";     fg = "White"; text = { if($pushd = (Get-Location -Stack).count) { "$([char]187)" + $pushd } } },
-        @{ bg = "DarkBlue"; fg = "White"; text = { $pwd.Drive.Name } },
-        @{ bg = "DarkBlue"; fg = "White"; text = { Split-Path $pwd -leaf } },
-        # This requires my PoshCode/PSGit module and the use of the SamplePSGitConfiguration -- remove the last LeftCap in that.
-        @{ bg = "DarkCyan";               text = { Get-GitStatusPowerline } }
+if ($env:ConEmuAnsi -or $Host.UI.SupportsVirtualTerminal) {
+    
+    [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = @(
+        {  "`t" }
+        {New-PromptText {Get-Elapsed} -ErrorBackgroundColor DarkRed -ErrorForegroundColor White -ForegroundColor Black -BackgroundColor DarkGray  }
+        {New-PromptText {Get-Date -f "T"} -ErrorBackgroundColor DarkRed -ErrorForegroundColor White -ForegroundColor Black -BackgroundColor Gray  }
+        {  "`n" }
+        { if ($Global:IsAdmin) {New-PromptText {"ADMIN"} -BackgroundColor DarkRed -ForegroundColor Yellow}else {""} }
+        {New-PromptText {$Env:COMPUTERNAME} -ForegroundColor Red -BackgroundColor Yellow}
+        {New-PromptText {$(Convert-Path -Path $(Get-Location))} -ForegroundColor White -BackgroundColor 'DarkBlue'}
     )
 
-Set-PowerLinePrompt -CurrentDirectory -PowerLineFont -Title { "PowerShell - {0} ({1})" -f (Convert-Path $pwd),  $pwd.Provider.Name }
+    $Script:PowerLinePrompt = $global:Prompt
+    Set-PowerLinePrompt -Prompt $global:Prompt -PowerLineFont -Title { "{0} ({1})" -f (Convert-Path $pwd), $pwd.Provider.Name } 
+
+} else {
+
+    function prompt {
+
+        #Write-Host("[$($env:computername)][$(get-location)]")  
+        $host.UI.RawUI.WindowTitle = $($env:computername)
+        if ($IsAdmin) {  
+            Write-Host '[' -NoNewline -ForegroundColor Gray
+            Write-Host 'ADMIN' -NoNewline -ForegroundColor Red
+            Write-Host ']' -NoNewline -ForegroundColor Gray
+        }
+  
+        Write-Host '[' -NoNewline -ForegroundColor Gray
+        Write-Host $($env:computername) -NoNewline -ForegroundColor Yellow
+        Write-Host '][' -NoNewline -ForegroundColor Gray
+        Write-Host $(Convert-Path -Path $(Get-Location).Path) -NoNewline -ForegroundColor Green
+        Write-Host ']' -NoNewline -ForegroundColor Gray
+
+        return "#"
+        
+    }
+}
+
+
+
+
