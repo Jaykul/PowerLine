@@ -51,6 +51,8 @@ function Set-PowerLinePrompt {
         # Add a right-aligned timestamp before the newline (implies Newline)
         [switch]$Timestamp,
 
+        [switch]$HideErrors,
+
         # One or more scriptblocks you want to use as your new prompt
         [System.Collections.Generic.List[ScriptBlock]]$Prompt,
 
@@ -68,7 +70,7 @@ function Set-PowerLinePrompt {
         }
     }
 
-    # Hide these from serialization
+    # These switches aren't stored in the config
     $null = $PSBoundParameters.Remove("Save")
     $null = $PSBoundParameters.Remove("Newline")
     $null = $PSBoundParameters.Remove("Timestamp")
@@ -164,7 +166,7 @@ function Set-PowerLinePrompt {
     }
 
     # Finally, update the prompt function
-    $function:global:prompt = $function:script:Prompt
+    $function:global:prompt = { Write-PowerlinePrompt }
     [PoshCode.Pansies.RgbColor]::ResetConsolePalette()
 
     # If they asked us to save, or if there's nothing saved yet
