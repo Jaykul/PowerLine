@@ -5,7 +5,7 @@ function Set-PowerLinePrompt {
     #   Overwrites the current prompt function with one that uses the $Prompt variable
     #   Note that this doesn't try to preserve any changes already made to the prompt by modules like ZLocation
     #.Example
-    #   Set-PowerLinePrompt -CurrentDirectory
+    #   Set-PowerLinePrompt -SetCurrentDirectory
     #
     #   Sets the powerline prompt and activates and option supported by this prompt function to update the .Net environment with the current directory each time the prompt runs.
     #.Example
