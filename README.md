@@ -2,6 +2,15 @@
 
 ### Install
 
+> **NOTE:**
+> If you don't have my [`PANSIES` module for ANSI Escape Sequences](/PoshCode/Pansies), you may want to install that separately, because it includes a (fully backwards compatible) replacement for `Write-Host`, which requires the `-AllowClobber` switch to install:
+> 
+> ```posh
+> Install-Module PANSIES -AllowClobber
+> ```
+
+You can install and import PowerLine from the PowerShell Gallery:
+
 ```posh
 Install-Module PowerLine
 Import-Module PowerLine
