@@ -97,6 +97,7 @@ function Write-PowerlinePrompt {
 
         ## Finally, unroll all the output and join into one string (using separators and spacing)
         $Buffer = $PromptText | % { $_ }
+        $extraLineCount = 0
         $line = ""
         $result = ""
         $RightAligned = $False
@@ -142,6 +143,7 @@ function Write-PowerlinePrompt {
                         BackgroundColor = $Host.UI.RawUI.BackgroundColor
                     }
                 }
+                $extraLineCount++
                 $result += $line + "`n"
                 $line = ""
                 $ColorSeparator = "&ColorSeparator;"
@@ -178,10 +180,12 @@ function Write-PowerlinePrompt {
             WriteExceptions $PromptErrors
         }
         # At the end, output everything as one single string
+        # create the number of lines we need for output up front:
+        ("`n" * $extraLineCount) + ("`eM" * $extraLineCount) +
         $PromptErrorString + $result + $line + ([PoshCode.Pansies.Text]@{
             Object          = "$ColorSeparator&Clear;"
             ForegroundColor = $LastBackground
-            BackgroundColor = $Host.UI.RawUI.BackgroundColor
+            # BackgroundColor = $Host.UI.RawUI.BackgroundColor
         })
     } catch {
         Write-Warning "Exception in PowerLinePrompt`n$_"
