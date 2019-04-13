@@ -4,7 +4,7 @@
 RootModule = 'PowerLine.psm1'
 
 # Version number of this module.
-ModuleVersion = '3.0.5'
+ModuleVersion = '3.1.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -43,13 +43,13 @@ RequiredModules = @(
 # RequiredAssemblies = "lib\PowerLine.dll"
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Set-PowerLinePrompt', 'Write-PowerlinePrompt', 'Export-PowerLinePrompt', 'Add-PowerLineBlock', 'Remove-PowerLineBlock', 'New-PromptText', 'Get-Elapsed', 'Get-SegmentedPath', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation'
+FunctionsToExport = 'Set-PowerLinePrompt', 'Write-PowerlinePrompt', 'Export-PowerLinePrompt', 'Add-PowerLineBlock', 'Remove-PowerLineBlock', 'New-PromptText', 'Get-Elapsed', 'Get-ErrorCount', 'Get-SegmentedPath', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-# CmdletsToExport = '*'
+CmdletsToExport = @()
 
 # Variables to export from this module
-# VariablesToExport = 'PowerLineColors'
+VariablesToExport = @()
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
 AliasesToExport = 'New-PowerLineBlock'
@@ -74,6 +74,11 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+        3.1.0: Adds Error output, so when something is wrong, you will know!
+            Also adds support for hiding the errors
+            Adds a function `Get-ErrorCount` comparing the count in `$Error` since the last command
+            Fixes longstanding bug where right-aligned columns would sometimes leak background color
+        3.0.4: ... lost to the mists of time ...
         3.0.3: Remove debug "Warning" statements. Sorry!
         3.0.2: Fix a bug causing re-sets of the prompt
         3.0.0: Total refactor to simplify the array.
