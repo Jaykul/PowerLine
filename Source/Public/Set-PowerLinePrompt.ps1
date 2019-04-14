@@ -162,7 +162,7 @@ function Set-PowerLinePrompt {
         ) | Add-PowerLineBlock
 
         $Script:PowerLineConfig.DefaultAddIndex = @($Global:Prompt).ForEach{ $_.ToString().Trim() }.IndexOf('"`t"')
-    } else {
+    } elseif ($PSBoundParameters.ContainsKey("Prompt")) {
         $Script:PowerLineConfig.DefaultAddIndex = -1
     }
 
