@@ -4,7 +4,7 @@
 RootModule = 'PowerLine.psm1'
 
 # Version number of this module.
-ModuleVersion = '3.1.0'
+ModuleVersion = '3.1.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -74,25 +74,11 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+        3.1.1: Fix default insertion point when -Timeline or -Newline are used
         3.1.0: Adds Error output, so when something is wrong, you will know!
             Also adds support for hiding the errors
             Adds a function `Get-ErrorCount` comparing the count in `$Error` since the last command
             Fixes longstanding bug where right-aligned columns would sometimes leak background color
-        3.0.4: ... lost to the mists of time ...
-        3.0.3: Remove debug "Warning" statements. Sorry!
-        3.0.2: Fix a bug causing re-sets of the prompt
-        3.0.0: Total refactor to simplify the array.
-            Add a dependency on the Configuration module
-            Uses $Prompt (an array of ScriptBlock)
-            Uses $Prompt.Colors (an array of PoshCode.Pansies.RgbColor)
-            Removed -UseAnsiEscapes -- with Pansies, we always use Ansi escape sequences
-            Added -FullColor -- by default, use only 16 Colors [System.ConsoleColor]
-            Support storing prompt options so we can restore the prompt upon import
-        2.3.1: Fixed the missing New-PowerLineBlock alias for backward compatibility with 2.2.0
-        2.3.0: Switch to using Pansies to get support for full RGBColor with css style colors, like: #336699
-        2.2.0: Add -RestoreVirtualTerminal switch for controlling if the prompt should reenable VT processing after each command
-        2.1.0: Add -UseAnsiEscapes switch for controlling the use of VT escape sequences (in preparation for adding a Write-Host adapter)
-        Add pre-compiled assembly for .Net Core
         '
     } # End of PSData hashtable
 } # End of PrivateData hashtable
