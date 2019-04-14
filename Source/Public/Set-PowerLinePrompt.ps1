@@ -107,6 +107,7 @@ function Set-PowerLinePrompt {
         [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = [ScriptBlock[]]@($PowerLineConfig.Prompt)
 
     } elseif($global:Prompt.Count -eq 0) {
+        # The default PowerLine Prompt
         [ScriptBlock[]]$PowerLineConfig.Prompt = { $MyInvocation.HistoryId }, { Get-SegmentedPath }
         [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $PowerLineConfig.Prompt
     }

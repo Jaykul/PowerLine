@@ -1,0 +1,13 @@
+{
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "files.encoding": "utf8",
+    "powershell.codeFormatting.preset": "OTBS",
+    "powershell.codeFormatting.ignoreOneLineBlock": false,
+    "powershell.codeFormatting.newLineAfterCloseBrace": false,
+    "files.associations": {
+        "*.ps1xml": "xml"
+    }
+}
