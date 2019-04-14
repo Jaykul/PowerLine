@@ -24,7 +24,7 @@ function Add-PowerLineBlock {
         [Alias("Text")]
         $InputObject,
 
-        # The position to insert the InputObject at, Defaults to -1 (to append at the end).
+        # The position to insert the InputObject at, by default, inserts in the same place as the last one
         [int]$Index = -1,
 
         [Switch]$AutoRemove,
@@ -38,13 +38,13 @@ function Add-PowerLineBlock {
             $Index = $Script:PowerLineConfig.DefaultAddIndex++
         }
 
-
         $Skip = @($Global:Prompt).ForEach{$_.ToString().Trim()} -eq $InputObject.ToString().Trim()
 
         if($Force -or !$Skip) {
-            if($Index -eq -1 -or $Index -gt $Global:Prompt.Count) {
+            if($Index -eq -1 -or $Index -ge $Global:Prompt.Count) {
                 Write-Verbose "Appending '$InputObject' to the end of the prompt"
                 $Global:Prompt.Add($InputObject)
+                $Index = $Global:Prompt.Count
             } elseif($Index -lt 0) {
                 $Index = $Global:Prompt.Count - $Index
                 Write-Verbose "Inserting '$InputObject' at $Index of the prompt"
@@ -53,6 +53,7 @@ function Add-PowerLineBlock {
                 Write-Verbose "Inserting '$InputObject' at $Index of the prompt"
                 $Global:Prompt.Insert($Index, $InputObject)
             }
+            $Script:PowerLineConfig.DefaultAddIndex = $Index + 1
         } else {
             Write-Verbose "Prompt already contained the InputObject block"
         }

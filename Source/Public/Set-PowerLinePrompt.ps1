@@ -148,7 +148,7 @@ function Set-PowerLinePrompt {
     $Script:PowerLineConfig = $PowerLineConfig
 
     if($Newline -or $Timestamp) {
-        $Script:PowerLineConfig.DefaultAddIndex = $Insert = $global:Prompt.Count
+        $Script:PowerLineConfig.DefaultAddIndex = $global:Prompt.Count
 
         @(
             if($Timestamp) {
@@ -160,7 +160,7 @@ function Set-PowerLinePrompt {
             { New-PromptText { "I $(New-PromptText -Fg Red -EFg White "&hearts;$([char]27)[30m") PS" } -Bg White -EBg Red -Fg Black }
         ) | Add-PowerLineBlock
 
-        $Script:PowerLineConfig.DefaultAddIndex = $Insert
+        $Script:PowerLineConfig.DefaultAddIndex = @($Global:Prompt).ForEach{ $_.ToString().Trim() }.IndexOf('"`t"')
     } else {
         $Script:PowerLineConfig.DefaultAddIndex = -1
     }
