@@ -4,7 +4,7 @@
 
 > **NOTE:**
 > If you don't have my [`PANSIES` module for ANSI Escape Sequences](/PoshCode/Pansies), you may want to install that separately, because it includes a (fully backwards compatible) replacement for `Write-Host`, which requires the `-AllowClobber` switch to install:
-> 
+>
 > ```posh
 > Install-Module PANSIES -AllowClobber
 > ```
@@ -15,20 +15,38 @@ You can install and import PowerLine from the PowerShell Gallery:
 Install-Module PowerLine
 Import-Module PowerLine
 ```
-
-#### NOTE: PowerLine 3 is NOT backward compatible
-
-I've reworked the whole module with a simpler, more powerful interface. Existing users will need to re-create their configuration using the simple lists in `$Prompt` and `$Prompt.Colors`, but PowerLine now stores your configuration, so you won't need to create a big custom command line in your profile script anymore.
-
 ### First use configuration
 
 There are quite a few options for PowerLine, and you're going to want to set some of them immediately to take full advantage.
 
 ```posh
-Set-PowerLinePrompt -SetCurrentDirectory -RestoreVirtualTerminal -Newline -Timestamp -Colors "#00DDFF","#0066FF"
+Set-PowerLinePrompt -SetCurrentDirectory -RestoreVirtualTerminal -Newline -Timestamp -Colors "#FFDD00", "#FF6600"
+```
+![Prompt ScreenShot](assets/prompt.png)
+
+You can change the colors by running just that part of the command:
+
+```Posh
+Set-PowerLinePrompt -Colors "#00DDFF", "#0066FF"
+```
+![Prompt ScreenShot](assets/left-prompt.png)
+
+You can review (or modify) your current blocks by using `$prompt`, and check which colors it's using with `$prompt.colors`, but there are also commands like the one above to help out.
+
+Now you can add additional blocks to your prompt, even inserting them into the list. Blocks without output are automatically hidden in PowerLine, so you can write a conditional block like this:
+
+```posh
+Add-PowerLineBlock { if($pushed = (Get-Location -Stack).count) { "&raquo;$pushed" } }  -Index 1
 ```
 
-You can play with the [other options](#configuration), and when you get it the way you want, you can save it, and Powerline will re-load it on import in the future:
+![Prompt ScreenShot](assets/pushd.png)
+
+
+Note that in your PowerLine blocks, there is full support for [PANSIES](/PoshCode/PANSIES) `Text`, which means named HTML Entities like `&hearts;` and `&euro;` and colors from it's drives, like `$fg:red` etc.
+
+There are some helper functions in PowerLine for common things you'd want in your prompt, like `Get-ShortenedPath` or `Get-Elapsed` and `Test-Elevation` and `Test-Success`.
+
+Once you start playing with the [other options](#configuration), and get it the way you want, you can save it, and Powerline will re-load it on import in the future:
 
 ```posh
 Export-PowerlinePrompt

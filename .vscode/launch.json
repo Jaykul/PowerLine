@@ -6,8 +6,17 @@
             "request": "launch",
             "name": "PowerShell Launch (current file)",
             "script": "${file}",
-            "args": [],
-            "cwd": "${file}"
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
+            "name": "PowerShell Launch (current test file)",
+            "script": "Invoke-Pester",
+            "args": [
+                "-Path", "${file}",
+                "-PesterOption", "@{ IncludeVSCodeMarker = $True }"
+            ],
+            "createTemporaryIntegratedConsole": true
         },
         {
             "type": "PowerShell",

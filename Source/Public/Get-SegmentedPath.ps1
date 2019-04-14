@@ -51,7 +51,7 @@ function Get-SegmentedPath {
         $buffer += if($Path -eq "~") {
             @{ Object = $Path }
         } else {
-            @{ Object = Split-Path $Path -Leaf }
+            @{ Object = (Split-Path $Path -Leaf) -replace "[\\/]$" }
         }
         $Path = Split-Path $Path
 
