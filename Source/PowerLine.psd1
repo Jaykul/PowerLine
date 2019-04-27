@@ -4,7 +4,7 @@
 RootModule = 'PowerLine.psm1'
 
 # Version number of this module.
-ModuleVersion = '3.1.1'
+ModuleVersion = '3.1.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -74,6 +74,8 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+        3.1.2: Fix the -HideError switch being backwards
+               Log non-terminating errors
         3.1.1: Fix default insertion point when -Timeline or -Newline are used
         3.1.0: Adds Error output, so when something is wrong, you will know!
             Also adds support for hiding the errors
