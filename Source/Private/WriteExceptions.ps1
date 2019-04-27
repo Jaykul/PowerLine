@@ -8,7 +8,7 @@ function WriteExceptions {
 
     if($PromptErrors.Count -gt 0) {
         $global:PromptErrors = [ordered]@{} + $ScriptExceptions
-        Write-Warning "Exception thrown from prompt block. Check `$PromptErrors"
+        Write-Warning "Exception thrown from prompt block. Check `$PromptErrors. To suppress this message, Set-PowerLine -HideError"
         #$PromptErrors.Insert(0, "0 Preview","Exception thrown from prompt block. Check `$PromptErrors:`n")
         if(@($Host.PrivateData.PSTypeNames)[0] -eq "Microsoft.PowerShell.ConsoleHost+ConsoleColorProxy") {
             foreach($e in $ScriptExceptions.Values) {
