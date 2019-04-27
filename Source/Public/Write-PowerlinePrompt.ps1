@@ -176,7 +176,7 @@ function Write-PowerlinePrompt {
             }
         }
 
-        [string]$PromptErrorString = if ($Script:PowerLineConfig.HideErrors) {
+        [string]$PromptErrorString = if (!$Script:PowerLineConfig.HideErrors) {
             WriteExceptions $PromptErrors
         }
         # At the end, output everything as one single string
