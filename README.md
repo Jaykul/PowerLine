@@ -182,8 +182,8 @@ All you need to to is start adding things to your `$Prompt` -- you can do that d
 
 #### Right-aligned blocks
 
-If you add a scriptblock that outputs _just_ a tab `{ "``t" }`,
-blocks after that will be right-aligned until the next block which is _just_ a newline `{ "``n" }`.
+If you add a scriptblock that outputs _just_ a tab ``{ "`t" }``,
+blocks after that will be right-aligned until the next block which is _just_ a newline ``{ "`n" }``.
 
 For Right-aligned blocks, the "ReverseColorSeparator" or "ReverseSeparator" characters are used instead of the "ColorSeparator" and "Separator".
 
