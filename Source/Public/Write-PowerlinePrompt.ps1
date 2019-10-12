@@ -3,6 +3,8 @@ function Write-PowerlinePrompt {
     param()
 
     try {
+        $escape =  [char]0x001b
+
         # FIRST, make a note if there was an error in the previous command
         [bool]$script:LastSuccess = $?
         $PromptErrors = [ordered]@{}
@@ -140,7 +142,7 @@ function Write-PowerlinePrompt {
                     $lineLength = ($line -replace "\u001B.*?\p{L}").Length
                     $Align = $BufferWidth - $lineLength
                     #Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long so we're aligning to $($Align)"
-                    $result += [PoshCode.Pansies.Text]::new("&Esc;$($Align)G ")
+                    $result += "$($escape)[s" + [PoshCode.Pansies.Text]::new("&Esc;$($Align)G ")
                     $RightAligned = $False
                 } else {
                     $line += [PoshCode.Pansies.Text]@{
@@ -150,7 +152,7 @@ function Write-PowerlinePrompt {
                     }
                 }
                 $extraLineCount++
-                $result += $line + "`n"
+                $result += "$($line)$($escape)[u"
                 $line = ""
                 $ColorSeparator = "&ColorSeparator;"
                 $Separator = "&Separator;"
