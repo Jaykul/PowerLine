@@ -124,7 +124,7 @@ function Write-PowerlinePrompt {
                     ## Before the (column) break, add a cap
                     #Write-Debug "Pre column-break, add a $LastBackground cap"
                     $line += [PoshCode.Pansies.Text]@{
-                        Object          = "$ColorSeparator "
+                        Object          = "$ColorSeparator"
                         ForegroundColor = $LastBackground
                         BackgroundColor = $Host.UI.RawUI.BackgroundColor
                     }
@@ -142,7 +142,7 @@ function Write-PowerlinePrompt {
                     $lineLength = ($line -replace "\u001B.*?\p{L}").Length
                     $Align = $BufferWidth - $lineLength
                     #Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long so we're aligning to $($Align)"
-                    $result += "$($escape)[s" + [PoshCode.Pansies.Text]::new("&Esc;$($Align)G ")
+                    $result += "$($escape)[s" + [PoshCode.Pansies.Text]::new("&Esc;$($Align)G")
                     $RightAligned = $False
                 } else {
                     $line += [PoshCode.Pansies.Text]@{
@@ -191,7 +191,7 @@ function Write-PowerlinePrompt {
         # create the number of lines we need for output up front:
         ("`n" * $extraLineCount) + ("$([char]27)M" * $extraLineCount) +
         $PromptErrorString + $result + $line + ([PoshCode.Pansies.Text]@{
-            Object          = "$([char]27)[49m$ColorSeparator&Clear;"
+            Object          = if($extraLineCount -gt 0) {"$([char]27)[49m&Clear;" } else { "$([char]27)[49m$ColorSeparator&Clear;" }
             ForegroundColor = $LastBackground
         })
     } catch {
