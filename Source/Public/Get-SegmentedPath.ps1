@@ -53,7 +53,8 @@ function Get-SegmentedPath {
         } else {
             @{ Object = (Split-Path $Path -Leaf) -replace "[\\/]$" }
         }
-        $Path = Split-Path $Path
+        # See https://github.com/PowerShell/PowerShell/issues/10092
+        $Path = if ($Path -eq "/") { "" } else { Split-Path $Path }
 
         Write-Verbose $Path
 
