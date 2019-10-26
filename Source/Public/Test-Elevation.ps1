@@ -5,7 +5,7 @@ function Test-Elevation {
     #>
     [CmdletBinding()]
     param()
-    if(-not ($IsLinux -or $IsOSX)) {
+    if(-not ($IsLinux -or $IsMacOS)) {
         [Security.Principal.WindowsIdentity]::GetCurrent().Owner.IsWellKnown("BuiltInAdministratorsSid")
     } else {
         0 -eq (id -u)
