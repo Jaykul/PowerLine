@@ -155,7 +155,7 @@ function Set-PowerLinePrompt {
             if($Timestamp) {
                 { "`t" }
                 { Get-Elapsed }
-                { Get-Date -f "T" }
+                { Get-Date -format "T" }
             }
             { "`n" }
             { New-PromptText { "I $(New-PromptText -Fg Red -EFg White "&hearts;$([char]27)[30m") PS" } -Bg White -EBg Red -Fg Black }
