@@ -20,17 +20,20 @@ function Set-PowerLinePrompt {
     #   Set-PowerLinePrompt -FullColor
     #
     #   Sets the powerline prompt and forces the assumption of full RGB color support instead of 16 color
+    [Alias("Set-PowerLineTheme")]
     [CmdletBinding(DefaultParameterSetName = "PowerLine")]
     param(
         # A script which outputs a string used to update the Window Title each time the prompt is run
+        [Parameter(ValueFromPipelineByPropertyName)]
         [scriptblock]$Title,
 
         # Keep the .Net Current Directory in sync with PowerShell's
+        [Parameter(ValueFromPipelineByPropertyName)]
         [Alias("CurrentDirectory")]
         [switch]$SetCurrentDirectory,
 
         # If true, set the [PowerLine.Prompt] static members to extended characters from PowerLine fonts
-        [Parameter(ParameterSetName = "PowerLine")]
+        [Parameter(ParameterSetName = "PowerLine", ValueFromPipelineByPropertyName)]
         [switch]$PowerLineFont,
 
         # If true, set the [PowerLine.Prompt] static members to characters available in Consolas and Courier New
@@ -38,30 +41,47 @@ function Set-PowerLinePrompt {
         [switch]$ResetSeparators,
 
         # If true, assume full color support, otherwise normalize to 16 ConsoleColor
-        [Parameter()]
+        [Parameter(ValueFromPipelineByPropertyName)]
         [switch]$FullColor,
 
         # If true, adds ENABLE_VIRTUAL_TERMINAL_PROCESSING to the console output mode. Useful on PowerShell versions that don't restore the console
-        [Parameter()]
+        [Parameter(ValueFromPipelineByPropertyName)]
         [switch]$RestoreVirtualTerminal,
 
         # Add a "I ♥ PS" on a line by itself to it's prompt (using ConsoleColors, to keep it safe from PSReadLine)
+        [Parameter(ValueFromPipelineByPropertyName)]
         [switch]$Newline,
 
         # Add a right-aligned timestamp before the newline (implies Newline)
+        [Parameter(ValueFromPipelineByPropertyName)]
         [switch]$Timestamp,
 
+        # Prevent errors in the prompt from being shown (like the normal PowerShell behavior)
+        [Parameter(ValueFromPipelineByPropertyName)]
         [switch]$HideErrors,
 
         # One or more scriptblocks you want to use as your new prompt
+        [Parameter(ValueFromPipelineByPropertyName)]
         [System.Collections.Generic.List[ScriptBlock]]$Prompt,
 
         # One or more colors you want to use as the prompt background
+        [Parameter(ValueFromPipelineByPropertyName)]
         [System.Collections.Generic.List[PoshCode.Pansies.RgbColor]]$Colors,
 
         # If set, calls Export-PowerLinePrompt
-        [Switch]$Save
+        [Parameter()]
+        [Switch]$Save,
 
+        # A hashtable of extended characters you can use in PowerLine output (or any PANSIES output) with HTML entity syntax like "&hearts;". By default you have the HTML named entities plus the Branch (), Lock (), Gear (⛯) and Power (⚡) icons. You can add any characters you wish, but to change the Powerline theme, you need to specify these four keys using matching pairs:
+        #
+        # @{
+        #    "ColorSeparator" = ""
+        #    "ReverseColorSeparator" = ""
+        #    "Separator" = ""
+        #    "ReverseSeparator" = ""
+        # }
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [hashtable]$PowerLineCharacters
     )
     if ($null -eq $script:OldPrompt) {
         $script:OldPrompt = $function:global:prompt
@@ -95,7 +115,7 @@ function Set-PowerLinePrompt {
         }
     }
 
-    if ($PowerLineConfig.FullColor -eq $Null -and $Host.UI.SupportsVirtualTerminal) {
+    if ($Null -eq $PowerLineConfig.FullColor -and $Host.UI.SupportsVirtualTerminal) {
         $PowerLineConfig.FullColor = (Get-Process -Id $global:Pid).MainWindowHandle -ne 0
     }
 
@@ -140,6 +160,11 @@ function Set-PowerLinePrompt {
         [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseSeparator'] = [char]0xe0b3
         [PoshCode.Pansies.Entities]::ExtendedCharacters['Branch'] = [char]0xE0A0
         [PoshCode.Pansies.Entities]::ExtendedCharacters['Gear'] = [char]0x26EF
+    }
+    if ($PowerLineCharacters) {
+        foreach ($key in $PowerLineCharacters.Keys) {
+            [PoshCode.Pansies.Entities]::ExtendedCharacters["$key"] = $PowerLineCharacters[$key].ToString()
+        }
     }
 
     if($null -eq $PowerLineConfig.DefaultAddIndex) {

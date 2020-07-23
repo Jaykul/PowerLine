@@ -4,7 +4,7 @@
 RootModule = 'PowerLine.psm1'
 
 # Version number of this module.
-ModuleVersion = '3.1.2'
+ModuleVersion = '3.2.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -34,7 +34,7 @@ PowerShellVersion = '5.0.0'
 # TypesToProcess = @("PowerLine.types.ps1xml")
 
 # Format files (.ps1xml) to be loaded when importing this module
-# FormatsToProcess = @()
+FormatsToProcess = @("PowerLine.format.ps1xml")
 
 RequiredModules = @(
     @{ModuleName="Configuration"; ModuleVersion="1.1.0"}
@@ -43,7 +43,7 @@ RequiredModules = @(
 # RequiredAssemblies = "lib\PowerLine.dll"
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Set-PowerLinePrompt', 'Write-PowerlinePrompt', 'Export-PowerLinePrompt', 'Add-PowerLineBlock', 'Remove-PowerLineBlock', 'New-PromptText', 'Get-Elapsed', 'Get-ErrorCount', 'Get-SegmentedPath', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation'
+FunctionsToExport = 'Set-PowerLinePrompt', 'Write-PowerlinePrompt', 'Export-PowerLinePrompt', 'Get-PowerLineTheme', 'Add-PowerLineBlock', 'Remove-PowerLineBlock', 'New-PromptText', 'Get-Elapsed', 'Get-ErrorCount', 'Get-SegmentedPath', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
@@ -52,7 +52,7 @@ CmdletsToExport = @()
 VariablesToExport = @()
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = 'New-PowerLineBlock'
+AliasesToExport = 'New-PowerLineBlock', 'Set-PowerLineTheme'
 
 # List of all files packaged with this module
 # FileList = @()
@@ -61,7 +61,7 @@ AliasesToExport = 'New-PowerLineBlock'
 PrivateData = @{
     PSData = @{
         # Tags applied to this module. These help with module discovery in online galleries.
-        Tags = @("Prompt","ANSI","VirtualTerminal")
+        Tags = @("Prompt", "ANSI", "VirtualTerminal", "EzTheme")
 
         # A URL to the license for this module.
         LicenseUri = 'https://github.com/Jaykul/PowerLine/blob/master/LICENSE'
@@ -74,6 +74,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+        3.2.0: Add support for EzTheme
         3.1.2: Fix the -HideError switch being backwards
                Log non-terminating errors
         3.1.1: Fix default insertion point when -Timeline or -Newline are used
@@ -83,6 +84,10 @@ PrivateData = @{
             Fixes longstanding bug where right-aligned columns would sometimes leak background color
         '
     } # End of PSData hashtable
+    "EzTheme" = @{
+        Get = 'Get-PowerLineTheme'
+        Set = 'Set-PowerLineTheme'
+    }
 } # End of PrivateData hashtable
 
 # HelpInfo URI of this module

@@ -1,0 +1,26 @@
+<Configuration>
+    <ViewDefinitions>
+        <View>
+            <Name>PowerLine-Preview</Name>
+            <ViewSelectedBy>
+                <TypeName>PowerLine.Theme</TypeName>
+            </ViewSelectedBy>
+            <CustomControl>
+                <CustomEntries>
+                    <CustomEntry>
+                        <CustomItem>
+                            <ExpressionBinding>
+                                <ScriptBlock>
+                                    $CurrentTheme = Get-PowerLineTheme
+                                    $_ | Set-PowerLineTheme
+                                    $( Write-PowerLinePrompt )
+                                    $CurrentTheme | Set-PowerLineTheme
+                                </ScriptBlock>
+                            </ExpressionBinding>
+                        </CustomItem>
+                    </CustomEntry>
+                </CustomEntries>
+            </CustomControl>
+        </View>
+    </ViewDefinitions>
+</Configuration>

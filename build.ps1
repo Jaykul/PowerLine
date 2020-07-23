@@ -1,37 +1,26 @@
-[CmdletBinding()]
+#requires -Module ModuleBuilder
+[CmdletBinding(SupportsShouldProcess)]
 param(
-    [ValidateSet("Release","Debug")]
-    $Configuration = "Release"
+    # A specific folder to build into
+    $OutputDirectory,
+
+    # The version of the output module
+    [Alias("ModuleVersion")]
+    [string]$SemVer
 )
 
-Push-Location $PSScriptRoot
+# Sanitize parameters to pass to Build-Module
+$ErrorActionPreference = "Stop"
+Push-Location $PSScriptRoot -StackName BuildModuleScript
+
+if (-not $Semver -and (Get-Command gitversion -ErrorAction Ignore)) {
+    if ($semver = gitversion -showvariable SemVer) {
+        $null = $PSBoundParameters.Add("SemVer", $SemVer)
+    }
+}
+
 try {
-    $BuildTimer = New-Object System.Diagnostics.Stopwatch
-    $BuildTimer.Start()
-
-    $ModuleName = Split-Path $PSScriptRoot -Leaf
-    $ErrorActionPreference = "Stop"
-    $version = Get-Metadata ".\Source\${ModuleName}.psd1"
-    $folder = mkdir $version -Force
-
-    Get-ChildItem Source -filter "${ModuleName}.*" |
-        Copy-Item -Dest $folder.FullName -PassThru |
-        ForEach {
-            Write-Host "  $($_.Name) -> $($_.FullName)"
-        }
-
-    Get-ChildItem Source\Private, Source\Public -Filter *.ps1 -Recurse |
-        Sort-Object Directory, Name |
-        Get-Content |
-        Set-Content "$($folder.FullName)\${ModuleName}.psm1"
-    Write-Host "  PowerLine -> $($folder.FullName)\${ModuleName}.psm1"
-
-    Write-Host
-    Write-Host "Module build finished." -ForegroundColor Green
-    $BuildTimer.Stop()
-    Write-Host "Total Elapsed $($BuildTimer.Elapsed.ToString("hh\:mm\:ss\.ff"))"
-} catch {
-    throw $_
+    Build-Module @PSBoundParameters -Target CleanBuild
 } finally {
-    Pop-Location
+    Pop-Location -StackName BuildModuleScript
 }
