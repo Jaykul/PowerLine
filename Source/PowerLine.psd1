@@ -4,7 +4,7 @@
 RootModule = 'PowerLine.psm1'
 
 # Version number of this module.
-ModuleVersion = '3.2.0'
+ModuleVersion = '3.2.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -19,13 +19,13 @@ Author = 'Joel Bennett'
 CompanyName = 'HuddledMasses.org'
 
 # Copyright statement for this module
-Copyright = '(c) 2016 Joel Bennett. All rights reserved.'
+Copyright = '(c) 2016-2020 Joel Bennett. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Classes for richer output and prompts'
 
 # Minimum version of the Windows PowerShell engine required by this module
-PowerShellVersion = '5.0.0'
+PowerShellVersion = '5.1.0'
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
 # ScriptsToProcess = @()
@@ -38,7 +38,7 @@ FormatsToProcess = @("PowerLine.format.ps1xml")
 
 RequiredModules = @(
     @{ModuleName="Configuration"; ModuleVersion="1.1.0"}
-    @{ModuleName="Pansies"; ModuleVersion="1.2.1"}
+    @{ModuleName="Pansies";       ModuleVersion="2.0.0"}
 )
 # RequiredAssemblies = "lib\PowerLine.dll"
 

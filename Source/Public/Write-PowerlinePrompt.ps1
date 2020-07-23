@@ -27,7 +27,7 @@ function Write-PowerlinePrompt {
             }
         }
         if ($Script:PowerLineConfig.RestoreVirtualTerminal -and (-not $IsLinux -and -not $IsMacOS)) {
-            [PoshCode.Pansies.Console.WindowsHelper]::EnableVirtualTerminalProcessing()
+            [PoshCode.Pansies.NativeMethods]::EnableVirtualTerminalProcessing()
         }
 
         # Evaluate all the scriptblocks in $prompt
