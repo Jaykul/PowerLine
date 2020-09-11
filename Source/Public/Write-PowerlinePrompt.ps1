@@ -118,13 +118,13 @@ function Write-PowerlinePrompt {
 
             ## Allow `t to split into (2) columns:
             if ($string -eq "`t") {
-                if($LastBackground) {
+                if ($LastBackground) {
                     ## Before the (column) break, add a cap
                     #Write-Debug "Pre column-break, add a $LastBackground cap"
                     $line += [PoshCode.Pansies.Text]@{
-                        Object          = "$ColorSeparator "
+                        Object          = "$([char]27)[49m$ColorSeparator&Clear;"
                         ForegroundColor = $LastBackground
-                        BackgroundColor = $Host.UI.RawUI.BackgroundColor
+                        BackgroundColor = $null # $Host.UI.RawUI.BackgroundColor
                     }
                 }
                 $result += $line
@@ -132,7 +132,7 @@ function Write-PowerlinePrompt {
                 $RightAligned = $True
                 $ColorSeparator = "&ReverseColorSeparator;"
                 $Separator = "&ReverseSeparator;"
-                $LastBackground = $Host.UI.RawUI.BackgroundColor
+                $LastBackground = $null
             ## Allow `n to create multi-line prompts
             } elseif ($string -in "`n", "`r`n") {
                 if($RightAligned) {
@@ -144,7 +144,7 @@ function Write-PowerlinePrompt {
                     $RightAligned = $False
                 } else {
                     $line += [PoshCode.Pansies.Text]@{
-                        Object          = "$ColorSeparator"
+                        Object          = $ColorSeparator
                         ForegroundColor = $LastBackground
                         BackgroundColor = $Host.UI.RawUI.BackgroundColor
                     }
@@ -162,19 +162,26 @@ function Write-PowerlinePrompt {
                     continue
                 }
                 if($LastBackground -or $RightAligned) {
-                    $line += if($block.BackgroundColor -ne $LastBackground) {
-                        [PoshCode.Pansies.Text]@{
-                            Object          = $ColorSeparator
-                            ForegroundColor = ($LastBackground, $block.BackgroundColor)[$RightAligned]
-                            BackgroundColor = ($block.BackgroundColor, $LastBackground)[$RightAligned]
+                    $line +=
+                        if ($RightAligned -and -not $LastBackground) {
+                            [PoshCode.Pansies.Text]@{
+                                Object          = "$([char]27)[49m$ColorSeparator"
+                                ForegroundColor = ($LastBackground, $block.BackgroundColor)[$RightAligned]
+                                BackgroundColor = $null
+                            }
+                        } elseif($block.BackgroundColor -ne $LastBackground) {
+                            [PoshCode.Pansies.Text]@{
+                                Object          = $ColorSeparator
+                                ForegroundColor = ($LastBackground, $block.BackgroundColor)[$RightAligned]
+                                BackgroundColor = ($block.BackgroundColor, $LastBackground)[$RightAligned]
+                            }
+                        } else {
+                            [PoshCode.Pansies.Text]@{
+                                Object          = $Separator
+                                BackgroundColor = $block.BackgroundColor
+                                ForegroundColor = $block.ForegroundColor
+                            }
                         }
-                    } else {
-                        [PoshCode.Pansies.Text]@{
-                            Object          = $Separator
-                            BackgroundColor = $block.BackgroundColor
-                            ForegroundColor = $block.ForegroundColor
-                        }
-                    }
                 }
                 $line += $string
                 $LastBackground = $block.BackgroundColor
