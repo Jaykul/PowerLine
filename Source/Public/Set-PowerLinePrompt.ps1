@@ -183,8 +183,15 @@ function Set-PowerLinePrompt {
                 { Get-Date -f "T" }
             }
             { "`n" }
-            { New-PromptText { "I $(New-PromptText -Fg Red -EFg White "&hearts;$([char]27)[30m") PS" } -Bg White -EBg Red -Fg Black }
+            { New-PromptText { "I $(New-PromptText -Fg Red3 -EFg White "&hearts;$([char]27)[30m") PS" } -Bg White -EBg Red3 -Fg Black }
         ) | Add-PowerLineBlock
+
+        if (Get-Module PSReadLine) {
+            Set-PSReadLineOption -PromptText @(
+                New-PromptText -Fg Black -Bg White "I ${Fg:Red3}&hearts;${Fg:Black} PS${Fg:White}${Bg:Clear}&ColorSeparator;"
+                New-PromptText -Bg Red3 -Fg White "I ${Fg:White}&hearts;${Fg:White} PS${Fg:Red3}${Bg:Clear}&ColorSeparator;"
+            )
+        }
 
         $Script:PowerLineConfig.DefaultAddIndex = @($Global:Prompt).ForEach{ $_.ToString().Trim() }.IndexOf('"`t"')
     } elseif ($PSBoundParameters.ContainsKey("Prompt")) {
