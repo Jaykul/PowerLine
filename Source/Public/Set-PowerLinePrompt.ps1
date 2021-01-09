@@ -81,7 +81,13 @@ function Set-PowerLinePrompt {
         #    "ReverseSeparator" = ""
         # }
         [Parameter(ValueFromPipelineByPropertyName)]
-        [hashtable]$PowerLineCharacters
+        [hashtable]$PowerLineCharacters,
+
+        # When there's a parse error, PSReadLine changes a part of the prompt red, but ot assumes the default prompt is just foreground color
+        # You can use this option to override the character, OR to specify BOTH the normal and error strings.
+        # If you specify two strings, they should both be the same length (ignoring escape sequences)
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [string[]]$PSReadLinePromptText = ""
     )
     if ($null -eq $script:OldPrompt) {
         $script:OldPrompt = $function:global:prompt
@@ -187,15 +193,23 @@ function Set-PowerLinePrompt {
         ) | Add-PowerLineBlock
 
         if (Get-Module PSReadLine) {
-            Set-PSReadLineOption -PromptText @(
-                New-PromptText -Fg Black -Bg White "I ${Fg:Red3}&hearts;${Fg:Black} PS${Fg:White}${Bg:Clear}&ColorSeparator;"
-                New-PromptText -Bg Red3 -Fg White "I ${Fg:White}&hearts;${Fg:White} PS${Fg:Red3}${Bg:Clear}&ColorSeparator;"
-            )
+            if ($PSBoundParameters.ContainsKey("PSReadLinePromptText")) {
+                Set-PSReadLineOption -PromptText $PSReadLinePromptText
+            } else {
+                Set-PSReadLineOption -PromptText @(
+                    New-PromptText -Fg Black -Bg White "I ${Fg:Red3}&hearts;${Fg:Black} PS${Fg:White}${Bg:Clear}&ColorSeparator;"
+                    New-PromptText -Bg Red3 -Fg White "I ${Fg:White}&hearts;${Fg:White} PS${Fg:Red3}${Bg:Clear}&ColorSeparator;"
+                )
+            }
         }
 
         $Script:PowerLineConfig.DefaultAddIndex = @($Global:Prompt).ForEach{ $_.ToString().Trim() }.IndexOf('"`t"')
     } elseif ($PSBoundParameters.ContainsKey("Prompt")) {
         $Script:PowerLineConfig.DefaultAddIndex = -1
+    }
+
+    if ($PSBoundParameters.ContainsKey("PSReadLinePromptText") -and (Get-Module PSReadLine)) {
+        Set-PSReadLineOption -PromptText $PSReadLinePromptText
     }
 
     # Finally, update the prompt function

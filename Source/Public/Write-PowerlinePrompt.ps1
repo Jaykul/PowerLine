@@ -38,7 +38,7 @@ function Write-PowerlinePrompt {
                 try {
                     $outputBlock = . {
                         [CmdletBinding()]param()
-                         & $block
+                        & $block
                     } -ErrorVariable logging
                     $buffer = $(
                         if($outputBlock -as [PoshCode.Pansies.Text[]]) {

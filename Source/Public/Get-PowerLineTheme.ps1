@@ -19,6 +19,8 @@ function Get-PowerLineTheme {
         'ReverseSeparator' = [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseSeparator']
     }
 
+    $Configuration.PSReadLinePromptText = (Get-PSReadLineOption).PromptText
+
     $Result = New-Object PSObject -Property $Configuration
     $Result.PSTypeNames.Insert(0, "PowerLine.Theme")
     $Result

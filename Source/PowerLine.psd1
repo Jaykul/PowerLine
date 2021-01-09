@@ -4,7 +4,7 @@
 RootModule = 'PowerLine.psm1'
 
 # Version number of this module.
-ModuleVersion = '3.2.1'
+ModuleVersion = '3.3.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -19,7 +19,7 @@ Author = 'Joel Bennett'
 CompanyName = 'HuddledMasses.org'
 
 # Copyright statement for this module
-Copyright = '(c) 2016-2020 Joel Bennett. All rights reserved.'
+Copyright = '(c) 2016-2021 Joel Bennett. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Classes for richer output and prompts'
@@ -74,6 +74,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+        3.3.0: Add support for Set-PSReadLineOption -Prompt
         3.2.0: Add support for EzTheme
         3.1.2: Fix the -HideError switch being backwards
                Log non-terminating errors

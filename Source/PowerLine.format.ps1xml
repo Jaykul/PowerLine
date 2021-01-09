@@ -13,7 +13,7 @@
                                 <ScriptBlock>
                                     $CurrentTheme = Get-PowerLineTheme
                                     $_ | Set-PowerLineTheme
-                                    $( Write-PowerLinePrompt )
+                                    "$( Write-PowerLinePrompt )`n`n$($_.PSReadLinePromptText -join "`n")"
                                     $CurrentTheme | Set-PowerLineTheme
                                 </ScriptBlock>
                             </ExpressionBinding>
