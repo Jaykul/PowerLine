@@ -3,7 +3,7 @@
 $global:prompt = @(
     { "`t" } # On the first line, right-justify
     { New-PowerLineBlock (Get-Elapsed) -ErrorBackgroundColor DarkRed -ErrorForegroundColor White -ForegroundColor Black -BackgroundColor DarkGray }
-    { Get-Date -f "T" }
+    { Get-Date -format "T" }
     { "`n" } # Start another line
     { $MyInvocation.HistoryId }
     { "&Gear;" * $NestedPromptLevel }

@@ -7,7 +7,7 @@
 $global:Prompt = @(
     { "`t" } # On the first line, right-justify
     { Get-Elapsed }
-    { Get-Date -f "T" }
+    { Get-Date -format "T" }
     { "`n" } # Start another line
     { $MyInvocation.HistoryId }
     { "&Gear;" * $NestedPromptLevel }
