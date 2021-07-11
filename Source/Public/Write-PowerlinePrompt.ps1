@@ -146,7 +146,7 @@ function Write-PowerlinePrompt {
                     $line += [PoshCode.Pansies.Text]@{
                         Object          = $ColorSeparator
                         ForegroundColor = $LastBackground
-                        BackgroundColor = $Host.UI.RawUI.BackgroundColor
+                        BackgroundColor = if ($Host.UI.RawUI.BackgroundColor -ge 0) { $Host.UI.RawUI.BackgroundColor } else { $null }
                     }
                 }
                 $extraLineCount++
