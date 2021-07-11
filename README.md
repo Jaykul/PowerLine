@@ -3,7 +3,7 @@
 ### Install
 
 > **NOTE:**
-> If you don't have my [`PANSIES` module for ANSI Escape Sequences](//github.com/PoshCode/Pansies), you may want to install that separately, because it includes a (fully backwards compatible) replacement for `Write-Host`, which requires the `-AllowClobber` switch to install:
+> If you don't have my [`PANSIES` module for ANSI Escape Sequences](//github.com/PoshCode/Pansies), you will need to install that separately, because it includes a (fully backwards compatible) replacement for `Write-Host`, which requires the `-AllowClobber` switch to install:
 >
 > ```posh
 > Install-Module PANSIES -AllowClobber
