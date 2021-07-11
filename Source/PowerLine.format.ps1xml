@@ -13,7 +13,13 @@
                                 <ScriptBlock>
                                     $CurrentTheme = Get-PowerLineTheme
                                     $_ | Set-PowerLineTheme
-                                    "$( Write-PowerLinePrompt )`n`n$($_.PSReadLinePromptText -join "`n")"
+                                    "$( Write-PowerLinePrompt )`n`n$(
+                                      $PSRL = $_.PSReadLinePromptText
+                                      @(if ($PSRL.Count -ge 2) {
+                                        "PSReadLine PromptText:"
+                                        $PSRL[0] + "$([char]27)[0m'Normal Prompt'"
+                                        $PSRL[1] + "$([char]27)[0m'Incomplete"
+                                      }) -join "`n")"
                                     $CurrentTheme | Set-PowerLineTheme
                                 </ScriptBlock>
                             </ExpressionBinding>
