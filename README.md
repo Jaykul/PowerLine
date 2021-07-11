@@ -3,7 +3,7 @@
 ### Install
 
 > **NOTE:**
-> If you don't have my [`PANSIES` module for ANSI Escape Sequences](//github.com/PoshCode/Pansies), you will need to install that separately, because it includes a (fully backwards compatible) replacement for `Write-Host`, which requires the `-AllowClobber` switch to install:
+> My [`PANSIES` module for ANSI Escape Sequences](//github.com/PoshCode/Pansies) is required. Because of how PowerShellGet works, you will probably need to install it separately, as it includes a replacement for `Write-Host` (which is faster, and fully backwards compatible), and therefore requires the `-AllowClobber` switch when installing:
 >
 > ```posh
 > Install-Module PANSIES -AllowClobber
