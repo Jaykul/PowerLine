@@ -12,11 +12,11 @@ Feature: PowerLine Prompt
 
     Scenario: PowerLine exports a $Prompt variable List of scripts
         When I have imported PowerLine
-        Then the $Prompt variable is a List of ScritpBlock
+        Then $Prompt is a [List[ScriptBlock]]
 
     Scenario: PowerLine exports a $Prompt.Colors List of RgbColors
         When I have imported PowerLine
-        Then the $Prompt.Colors variable is a List of RgbColor
+        Then $Prompt.Colors has a [List[RgbColor]]
 
     Scenario: PowerLine defines a prompt function
         When I have imported PowerLine

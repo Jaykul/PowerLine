@@ -1,0 +1,60 @@
+name: Build on push
+on: [push]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: GitVersion
+        id: gitversion
+        uses: PoshCode/Actions/gitversion@v1
+      - name: Install-RequiredModules
+        uses: PoshCode/Actions/install-requiredmodules@v1
+      - name: Build Module
+        id: build
+        uses: PoshCode/actions/build-module@v1
+        with:
+          version: ${{ steps.gitversion.outputs.LegacySemVerPadded }}
+          destination: ${{github.workspace}}/output
+      - name: Upload Build Output
+        uses: actions/upload-artifact@v2
+        with:
+          name: Modules
+          path: ${{github.workspace}}/output
+      - name: Upload Tests
+        uses: actions/upload-artifact@v2
+        with:
+          name: PesterTests
+          path: ${{github.workspace}}/Specs
+      - name: Upload RequiredModules.psd1
+        uses: actions/upload-artifact@v2
+        with:
+          name: RequiredModules
+          path: ${{github.workspace}}/RequiredModules.psd1
+      - name: Upload PSScriptAnalyzerSettings.psd1
+        uses: actions/upload-artifact@v2
+        with:
+          name: ScriptAnalyzer
+          path: ${{github.workspace}}/PSScriptAnalyzerSettings.psd1
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, windows-2016, ubuntu-latest, macos-latest]
+    needs: build
+    steps:
+      - name: Download Build Output
+        uses: actions/download-artifact@v2
+      - uses: PoshCode/Actions/install-requiredmodules@v1
+      - uses: PoshCode/Actions/pester@v1
+        with:
+          codeCoveragePath: Modules/PowerLine
+          moduleUnderTest: PowerLine
+          additionalModulePaths: ${{github.workspace}}/Modules
+      - name: Upload Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: Pester Results
+          path: ${{github.workspace}}/*.xml

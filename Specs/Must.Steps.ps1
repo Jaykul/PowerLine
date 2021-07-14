@@ -1,7 +1,7 @@
 # These are not really steps!
 # This is the deffinition of the Must assertion for Pester tests.
 
-function Must {
+function global:Must {
     [CmdletBinding(DefaultParameterSetName='equal', HelpUri='http://go.microsoft.com/fwlink/?LinkID=113423', RemotingCapability='None')]
     param(
         [Parameter(ValueFromPipeline=$true)]
@@ -254,9 +254,9 @@ begin
                 if(!$Result) {
                     $FailedValues += $InputValue.$Property
                 } else {
-                    $PassedValues += $InputValue.$Property                    
+                    $PassedValues += $InputValue.$Property
                 }
-            } 
+            }
             end  {
                 $TestResult = if($BeNullOrEmpty -and 0 -eq $TestResults.Count) {
                     Write-Verbose "EMPTY!"
@@ -303,7 +303,7 @@ begin
                     $exception = New-Object AggregateException ($message -join " ")
                     $errorRecord = New-Object System.Management.Automation.ErrorRecord $exception, "FailedMust", "LimitsExceeded", $message
                     $Cmdlet.ThrowTerminatingError($errorRecord)
-                }                
+                }
             }
         }
 
@@ -315,7 +315,7 @@ begin
             Write-Verbose "InputObject $InputObject"
             $InputObject | ft | out-string | % Trim | Write-Verbose
             $scriptCmd = {& $ForEachObjectCommand {
-                                [PSCustomObject]@{ 
+                                [PSCustomObject]@{
                                     Result = if($null -eq $InputObject){
                                                 Write-Verbose "NULL Object, no $Property to look at"
                                                 $false
@@ -330,12 +330,12 @@ begin
                                                 # Write-Debug ($InputObject.PSTypeNames -join "`n")
                                                 Write-Verbose "Is NULL? PROPERTY: $Property"
                                                 # Write-Debug ($InputObject."$Property".PSTypeNames -join "`n")
-                                                 
+
                                                 $null -eq $InputObject."$Property"
                                                 Write-Verbose "Is NULL? PROPERTY: $Property"
-                                             }  
+                                             }
                                     Value = $InputObject
-                                } 
+                                }
                             } | Throw-Failure -Operator $PSCmdlet.ParameterSetName -Any:$Any -All:$All -Not:$Not -BeNullOrEmpty:$BeNullOrEmpty
                          }
         } else {
@@ -343,7 +343,7 @@ begin
             $scriptCmd = {& $ForEachObjectCommand {
                                 Write-Verbose "Input Object is a $($InputObject.GetType().FullName)"
                                 Write-Verbose "Parameters: `n$($Parameters | Out-String)"
-                                [PSCustomObject]@{ 
+                                [PSCustomObject]@{
                                     Result = ($null -ne (Where-Object -Input $InputObject @Parameters))
                                     Value = $InputObject
                                 }
@@ -358,7 +358,6 @@ begin
         throw
     }
 }
-
 process
 {
     try {
