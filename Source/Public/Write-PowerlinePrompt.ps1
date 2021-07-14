@@ -122,7 +122,7 @@ function Write-PowerlinePrompt {
                     ## Before the (column) break, add a cap
                     #Write-Debug "Pre column-break, add a $LastBackground cap"
                     $line += [PoshCode.Pansies.Text]@{
-                        Object          = "$([char]27)[49m$ColorSeparator&Clear;"
+                        Object          = "&Esc;49m$ColorSeparator&Clear;&Store;"
                         ForegroundColor = $LastBackground
                         BackgroundColor = $null # $Host.UI.RawUI.BackgroundColor
                     }
@@ -138,9 +138,9 @@ function Write-PowerlinePrompt {
                 if($RightAligned) {
                     ## This is a VERY simplistic test for escape sequences
                     $lineLength = ($line -replace "\u001B.*?\p{L}").Length
-                    $Align = $BufferWidth - $lineLength
-                    #Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long so we're aligning to $($Align)"
-                    $result += [PoshCode.Pansies.Text]::new("&Esc;$($Align)G ")
+                    $Align = "$([char]27)[$(1 + $BufferWidth - $lineLength)G"
+                    Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long so we're aligning to $($Align)"
+                    $result += [PoshCode.Pansies.Text]::new("&Esc;$($Align)")
                     $RightAligned = $False
                 } else {
                     $line += [PoshCode.Pansies.Text]@{
@@ -150,7 +150,7 @@ function Write-PowerlinePrompt {
                     }
                 }
                 $extraLineCount++
-                $result += $line + "`n"
+                $result += $line + [PoshCode.Pansies.Text]::new("&Clear;`n")
                 $line = ""
                 $ColorSeparator = "&ColorSeparator;"
                 $Separator = "&Separator;"
@@ -165,7 +165,7 @@ function Write-PowerlinePrompt {
                     $line +=
                         if ($RightAligned -and -not $LastBackground) {
                             [PoshCode.Pansies.Text]@{
-                                Object          = "$([char]27)[49m$ColorSeparator"
+                                Object          = "&Esc;49m$ColorSeparator"
                                 ForegroundColor = ($LastBackground, $block.BackgroundColor)[$RightAligned]
                                 BackgroundColor = $null
                             }
@@ -192,13 +192,27 @@ function Write-PowerlinePrompt {
         [string]$PromptErrorString = if (-not $Script:PowerLineConfig.HideErrors) {
             WriteExceptions $PromptErrors
         }
+
+        # With the latest PSReadLine, we can support ending with a right-aligned block...
+        if ($RightAligned) {
+            ## This is a VERY simplistic test for escape sequences
+            $lineLength = ($line -replace "\u001B.*?\p{L}").Length
+            #Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long"
+            $Align = "$([char]27)[$(1 + $BufferWidth - $lineLength)G"
+            $result += [PoshCode.Pansies.Text]::new("$([char]27)[$Align")
+            $RightAligned = $False
+            $line += [PoshCode.Pansies.Text]::new("&Recall;")
+        } else {
+            $line += ([PoshCode.Pansies.Text]@{
+                Object          = "$([char]27)[49m$ColorSeparator&Clear;"
+                ForegroundColor = $LastBackground
+            })
+        }
+
         # At the end, output everything as one single string
         # create the number of lines we need for output up front:
         ("`n" * $extraLineCount) + ("$([char]27)M" * $extraLineCount) +
-        $PromptErrorString + $result + $line + ([PoshCode.Pansies.Text]@{
-            Object          = "$([char]27)[49m$ColorSeparator&Clear;"
-            ForegroundColor = $LastBackground
-        })
+        $PromptErrorString + $result + $line
     } catch {
         Write-Warning "Exception in PowerLinePrompt`n$_"
         "${PWD}>"
