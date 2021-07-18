@@ -5,6 +5,7 @@ function Get-Elapsed {
     .Description
         Calls Get-History to return a single command and returns the difference between the Start and End execution time
     #>
+    [OutputType([string])]
     [CmdletBinding()]
     param(
         # The command ID to get the execution time for (defaults to the previous command)
@@ -13,11 +14,20 @@ function Get-Elapsed {
 
         # A Timespan format pattern such as "{0:ss\.ffff}"
         [Parameter()]
-        [string]$Format = "{0:h\:mm\:ss\.ffff}"
+        [string]$Format = "{0:d\d\ h\:mm\:ss\.ffff}",
+
+        # If set trim leading zeros and separators off to make the string as short as possible
+        [switch]$Trim
     )
     $null = $PSBoundParameters.Remove("Format")
+    $null = $PSBoundParameters.Remove("Trim")
     $LastCommand = Get-History -Count 1 @PSBoundParameters
     if(!$LastCommand) { return "" }
     $Duration = $LastCommand.EndExecutionTime - $LastCommand.StartExecutionTime
-    $Format -f $Duration
+    $Result = $Format -f $Duration
+    if ($Trim) {
+        $Result.Trim("0:d ")
+    } else {
+        $Result
+    }
 }
