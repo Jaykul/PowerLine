@@ -150,7 +150,7 @@ function Set-PowerLinePrompt {
     }
 
     if ($ResetSeparators -or ($PSBoundParameters.ContainsKey("PowerLineFont") -and !$PowerLineFont) ) {
-        # Use characters that at least work in Consolas
+        # Use characters that at least work in Consolas and Lucida Console
         [PoshCode.Pansies.Entities]::ExtendedCharacters['ColorSeparator'] = [char]0x258C
         [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseColorSeparator'] = [char]0x2590
         [PoshCode.Pansies.Entities]::ExtendedCharacters['Separator'] = [char]0x25BA

@@ -10,6 +10,7 @@
     "powershell.codeFormatting.useCorrectCasing": true,
     "powershell.codeFormatting.alignPropertyValuePairs": true,
     "powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
+    "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
     "files.associations": {
         "*.ps1xml": "xml"
     }
