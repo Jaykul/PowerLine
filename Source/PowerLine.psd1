@@ -37,8 +37,8 @@ PowerShellVersion = '5.1.0'
 FormatsToProcess = @("PowerLine.format.ps1xml")
 
 RequiredModules = @(
-    @{ModuleName="Configuration"; ModuleVersion="1.1.0"}
-    @{ModuleName="Pansies";       ModuleVersion="2.0.0"}
+    @{ModuleName="Configuration"; ModuleVersion="1.5.0"}
+    @{ModuleName="Pansies";       ModuleVersion="2.3.0"}
 )
 # RequiredAssemblies = "lib\PowerLine.dll"
 
@@ -74,15 +74,15 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+        3.4.0: Support right-aligned blocks (with PSReadLine 2.2.0)
+            - Fix Get-SegmentedPath so it works with other paths
+            - Speed up some things using new PANSIES
+        3.3.1: Fix a series of bugs:
+            - Fix Get-Date format
+            - Fix Linux use of default BackgroundColor
         3.3.0: Add support for Set-PSReadLineOption -Prompt
         3.2.0: Add support for EzTheme
-        3.1.2: Fix the -HideError switch being backwards
-               Log non-terminating errors
-        3.1.1: Fix default insertion point when -Timeline or -Newline are used
-        3.1.0: Adds Error output, so when something is wrong, you will know!
-            Also adds support for hiding the errors
-            Adds a function `Get-ErrorCount` comparing the count in `$Error` since the last command
-            Fixes longstanding bug where right-aligned columns would sometimes leak background color
+            - Adds Get-PowerLineTheme (and alias for Set-PowerLinePrompt)
         '
     } # End of PSData hashtable
     "EzTheme" = @{

@@ -1,23 +1,30 @@
-## PowerLine - Beautiful, Powerfull, PowerShell prompts
+[![Build on push](https://github.com/PoshCode/Metadata/actions/workflows/build.yml/badge.svg)](https://github.com/PoshCode/Metadata/actions/workflows/build.yml)
 
-### Install
+# PowerLine - Beautiful, Powerful, PowerShell prompts
 
-> **NOTE:**
-> My [`PANSIES` module for ANSI Escape Sequences](//github.com/PoshCode/Pansies) is required. Because of how PowerShellGet works, you will probably need to install it separately, as it includes a replacement for `Write-Host` (which is faster, and fully backwards compatible), and therefore requires the `-AllowClobber` switch when installing:
->
-> ```posh
-> Install-Module PANSIES -AllowClobber
-> ```
+- [Install](#install)
+- [First Use](#first-use-configuration)
+- [Why Powerline](#why-powerline)
+- [Using PowerLine](#using-powerline)
+    - [Configuration](#configuration)
+- [Helpers for Module Authors](#helpers-for-module-authors)
 
-You can install and import PowerLine from the PowerShell Gallery:
+## Install
 
-```posh
+You can install PowerLine from the PowerShell gallery, using the following commands:
+
+```
+Install-Module PANSIES -AllowClobber
 Install-Module PowerLine
 Import-Module PowerLine
 ```
-### First use configuration
 
-There are quite a few options for PowerLine, and you're going to want to set some of them immediately to take full advantage.
+> **NOTE:**
+> My [`PANSIES` module for ANSI Escape Sequences](//github.com/PoshCode/Pansies) is required, and because of how PowerShellGet works, you need to install it separately, as it includes an improved `Write-Host` (which is faster, and fully backwards compatible), and therefore requires the `-AllowClobber` switch when installing.
+
+## First use configuration
+
+There are quite a few options for PowerLine, and you're going to want to set some of them immediately to take full advantage. Check out the [./Source/Examples](./Source/Examples) for some ideas.
 
 ```posh
 Set-PowerLinePrompt -SetCurrentDirectory -RestoreVirtualTerminal -Newline -Timestamp -Colors "#FFDD00", "#FF6600"
@@ -41,10 +48,9 @@ Add-PowerLineBlock { if($pushed = (Get-Location -Stack).count) { "&raquo;$pushed
 
 ![Prompt ScreenShot](assets/pushd.png)
 
+Note that in your PowerLine blocks, there is full support for [PANSIES](/PoshCode/PANSIES) `Text`, which means colors from it's drives, like `$fg:red` and named HTML Entities like `&hearts;` and `&euro;` and now, even emoji and nerdfont named entities -- if you enable them.
 
-Note that in your PowerLine blocks, there is full support for [PANSIES](/PoshCode/PANSIES) `Text`, which means named HTML Entities like `&hearts;` and `&euro;` and colors from it's drives, like `$fg:red` etc.
-
-There are some helper functions in PowerLine for common things you'd want in your prompt, like `Get-ShortenedPath` or `Get-Elapsed` and `Test-Elevation` and `Test-Success`.
+There are some helper functions in PowerLine for common things you'd want in your prompt, like `Get-ShortenedPath` and `Get-SegmentedPath` as well as `Get-Elapsed` and `Test-Elevation` and `Test-Success`.
 
 Once you start playing with the [other options](#configuration), and get it the way you want, you can save it, and Powerline will re-load it on import in the future:
 
@@ -52,9 +58,9 @@ Once you start playing with the [other options](#configuration), and get it the 
 Export-PowerlinePrompt
 ```
 
-For more information about the [configuration](#configuration) --particularly how to get the cool angled separators you see in my screenshots using [powerline fonts](#powerline-fonts-and-separators)-- you can skip past this explanation of why I wrote the module, but you should also explore the commands, as the documentation is currently lagging behind the implementation.
+For more information about the [configuration](#configuration) --particularly how to get the cool angled separators you see in my screenshots using [powerline fonts](#powerline-fonts-and-separators)-- you can skip past this explanation of why I wrote the module, but you should also explore the commands, as this external documentation is always lagging behind the implementation.
 
-# Why Powerline?
+## Why Powerline?
 
 ```gherkin
 As a PowerShell user
@@ -72,7 +78,7 @@ I want to have a cool prompt!
 
 > Currently in PowerShell, the prompt is a function that _must_ return a string. Modules that want to add information to your prompt typically _don't even try_ if you have customized your prompt (see Posh-Git, for example). The goal of PowerLine is to have beautiful custom prompts **and** let modules add (and remove) information easily.
 
-## Your Prompt as a Collection
+### Your Prompt as a Collection
 
 The core principle of PowerLine 3 is to make your prompt easier to change, and changes easier to undo.
 
@@ -84,7 +90,7 @@ function prompt {
 }
 ```
 
-## Why Lists of ScriptBlocks?
+### Why Lists of ScriptBlocks?
 
 1. The user can easily add or remove information on the fly.
 2. Modules can add (and remove) information as they're imported/removed.
@@ -135,7 +141,7 @@ $MyInvocation.MyCommand.Module.OnRemove = {
 }
 ```
 
-#### Using PowerLine
+## Using PowerLine
 
 Of course, with PowerLine, it's even easier. A module can just run:
 
@@ -143,11 +149,31 @@ Of course, with PowerLine, it's even easier. A module can just run:
 Add-PowerLineBlock { Write-VcsStatus } -AutoRemove
 ```
 
-## Configuration
+### Configuration
 
 PowerLine has a lot of flexibility and functionality around output and looks. Because your whole prompt is just a list of script blocks, we can transform your prompt's appearance. You can go from simple to elegant instantly, and then take control of colors and more.
 
-### PowerLine Coloring blocks
+One important aspect of configuring PowerLine is that it supports both the Configuration module and the EzTheme module. It saves it's current configuration when you run `Export-PowerLinePrompt` and automatically re-imports it when you import the module.
+
+#### The Configuration Module
+
+As with any module which supports Configuration, you can get the configuration as a hashtable using the Configuration commands:
+
+```PowerShell
+$Configuration = Get-Module PowerLine | Import-Configuration
+```
+
+You can examine and modify the configuration and then save it back to disk with:
+
+```PowerShell
+Get-Module PowerLine | Export-Configuration $Configuration
+```
+
+#### The EzTheme Module
+
+Of course, the EzTheme module supports some of the same functionality as the Configuration module -- it's goal is to support theming lots of modules at once (i.e. with each theme), so you can get your settings with `Get-PowerLineTheme` which by default will show a preview. You can review the settings by using `Format-List`, capture them with a variable and modify them (and even preview the modifications). As with any module that supports EzTheme, you can modify the returned object and put it back by piping it to `Set-PowerLineTheme`.
+
+#### PowerLine Coloring blocks
 
 The `-Colors` parameter supports setting the background colors. You can pass a list of colors and PowerLine will loop through them.
 You can also specify two colors, and PowerLine will generate a gradient between those colors with the same number of steps as you have output blocks.
@@ -157,7 +183,7 @@ PowerLine automatically selects contrasting colors for the text (foreground) col
 
 You can set the color with something like this: `Set-PowerLinePrompt -Color "#00DDFF","#0066FF"`
 
-### PowerLine Fonts and Separators
+#### PowerLine Fonts and Separators
 
 The `-PowerLineFont` switch requires using a [PowerLine font](https://github.com/PowerLine/fonts), which is a font that
 has the extra extended characters with the nice angled separators you see in the screenshots here between colors.
@@ -171,7 +197,7 @@ box characters like ▌ as the separators...
 
 These characters are set into a dictionary (`[PoshCode.Pansies.Entities]::ExtendedCharacters`) when you call `Set-PowerLinePrompt`.
 
-### Prompts as arrays
+#### Prompts as arrays
 
 By default, each ScriptBlock outputs one string, and is colored in one color, with the "ColorSeparator" character between each block.
 
@@ -219,7 +245,7 @@ There is a `New-PromptText` function which allows you to change the colors based
 
 Finally, there are separate `Test-Success` and `Test-Elevation` functions (which are used by New-PromptText), if you just want to output something conditionally, or deal with it on your own.
 
-# Future Plans
+## Future Plans
 
 If you have any questions, [please ask](https://github.com/jaykul/PowerLine/issues),
 and feel free to send me pull requests with additional escape sequences, or whatever.
