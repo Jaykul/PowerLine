@@ -26,7 +26,14 @@ function Get-Elapsed {
     $Duration = $LastCommand.EndExecutionTime - $LastCommand.StartExecutionTime
     $Result = $Format -f $Duration
     if ($Trim) {
-        $Result.Trim("0:d ")
+        $Short = $Result.Trim("0:d .")
+        if ($Short.Length -lt 5) {
+            $Short + "ms"
+        } elseif ($Short.Length -lt 8) {
+            $Short + "s"
+        } else {
+            $Short
+        }
     } else {
         $Result
     }
