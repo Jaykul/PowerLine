@@ -6,6 +6,10 @@ function Write-PowerlinePrompt {
         # FIRST, make a note if there was an error in the previous command
         [bool]$script:LastSuccess = $?
         $PromptErrors = [ordered]@{}
+        # When someone sets $Prompt, they loose the colors.
+        # To fix that, we cache the colors whenever we get a chance
+        # And if it's not set, we re-initialize from the cache
+        SyncColor
 
         # Then handle PowerLinePrompt Features:
         if ($Script:PowerLineConfig.Title) {
@@ -33,8 +37,8 @@ function Write-PowerlinePrompt {
         # Evaluate all the scriptblocks in $prompt
         $UniqueColorsCount = 0
         $PromptText = @(
-            for($b = 0; $b -lt $Prompt.Count; $b++) {
-                $block = $Global:Prompt[$b]
+            for ($index = 0; $index -lt $Prompt.Count; $index++) {
+                $block = $Global:Prompt[$index]
                 try {
                     $outputBlock = . {
                         [CmdletBinding()]param()
@@ -48,33 +52,27 @@ function Write-PowerlinePrompt {
                         }
                     ).Where{ ![string]::IsNullOrEmpty($_.Object) }
                     # Each $buffer gets a color, if it needs one (it's not whitespace)
-                    $UniqueColorsCount += [bool]$buffer.Where({ !([string]::IsNullOrWhiteSpace($_.Object)) -and !$_.BackgroundColor -and !$_.ForegroundColor }, 1)
+                    $UniqueColorsCount += [bool]$buffer.Where({ !([string]::IsNullOrWhiteSpace($_.Object)) -and !$_.BackgroundColor }, 1)
                     , $buffer
 
                     # Capture errors from blocks. We'll find a way to display them...
                     if ($logging) {
-                        $PromptErrors.Add("$b {$block}", $logging)
+                        $PromptErrors.Add("$index {$block}", $logging)
                     }
                 } catch {
-                    $PromptErrors.Add("$b {$block}", $_)
+                    $PromptErrors.Add("$index {$block}", $_)
                 }
             }
         ).Where{ $_.Object }
 
-        # When someone sets $Prompt, they loose the colors.
-        # To fix that, we cache the colors whenever we get a chance
-        # And if it's not set, we re-initialize from the cache
-        if(!$Global:Prompt.Colors) {
-            InitializeColor
-        }
-        # Based on the number of text blocks, get a color gradient or the user's color choices
-        [PoshCode.Pansies.RgbColor[]]$Colors = @(
-            if ($Global:Prompt.Colors.Count -ge $UniqueColorsCount) {
-                $Global:Prompt.Colors
-            } elseif ($Global:Prompt.Colors.Count -eq 2) {
-                Get-Gradient ($Global:Prompt.Colors[0]) ($Global:Prompt.Colors[1]) -Count $UniqueColorsCount -Flatten
+        # Based on the number of text blocks, make up colors if we need to...
+        [PoshCode.Pansies.RgbColor[]]$ActualColors = @(
+            if ($Script:Colors.Count -ge $UniqueColorsCount) {
+                $Script:Colors
+            } elseif ($Script:Colors.Count -eq 2) {
+                Get-Gradient ($Script:Colors[0]) ($Script:Colors[1]) -Count $UniqueColorsCount -Flatten
             } else {
-                $Global:Prompt.Colors * ([Math]::Ceiling($UniqueColorsCount/$Global:Prompt.Colors.Count))
+                $Script:Colors * ([Math]::Ceiling($UniqueColorsCount/$Script:Colors.Count))
             }
         )
 
@@ -84,7 +82,7 @@ function Write-PowerlinePrompt {
             $ColorUsed = $False
             foreach ($b in @($block)) {
                 if (![string]::IsNullOrWhiteSpace($b.Object) -and $null -eq $b.BackgroundColor) {
-                    $b.BackgroundColor = $Colors[$ColorIndex]
+                    $b.BackgroundColor = $ActualColors[$ColorIndex]
                     $ColorUsed = $True
                 }
             }
@@ -92,7 +90,7 @@ function Write-PowerlinePrompt {
 
             foreach ($b in @($block)) {
                 if ($null -ne $b.BackgroundColor -and $null -eq $b.ForegroundColor) {
-                    if($Script:PowerLineConfig.FullColor) {
+                    if ($Script:PowerLineConfig.FullColor) {
                         $b.ForegroundColor = Get-Complement $b.BackgroundColor -ForceContrast
                     } else {
                         $b.BackgroundColor, $b.ForegroundColor = Get-Complement $b.BackgroundColor -ConsoleColor -Passthru
@@ -135,7 +133,7 @@ function Write-PowerlinePrompt {
                 $LastBackground = $null
             ## Allow `n to create multi-line prompts
             } elseif ($string -in "`n", "`r`n") {
-                if($RightAligned) {
+                if ($RightAligned) {
                     ## This is a VERY simplistic test for escape sequences
                     $lineLength = ($line -replace "\u001B.*?\p{L}").Length
                     $Align = "$([char]27)[$(1 + $BufferWidth - $lineLength)G"
@@ -155,7 +153,34 @@ function Write-PowerlinePrompt {
                 $ColorSeparator = "&ColorSeparator;"
                 $Separator = "&Separator;"
                 $LastBackground = $null
-            } elseif(![string]::IsNullOrWhiteSpace($string)) {
+            } elseif ($String -eq " ") {
+                if ($LastBackground -or $RightAligned) {
+                    $line +=
+                    if ($RightAligned -and -not $LastBackground) {
+                        [PoshCode.Pansies.Text]@{
+                            Object          = "&Esc;49m$ColorSeparator"
+                            ForegroundColor = ($LastBackground, $block.BackgroundColor)[$RightAligned]
+                            BackgroundColor = $null
+                        }
+                    } elseif ($block.BackgroundColor -ne $LastBackground) {
+                        [PoshCode.Pansies.Text]@{
+                            Object          = $ColorSeparator
+                            ForegroundColor = ($LastBackground, $block.BackgroundColor)[$RightAligned]
+                            BackgroundColor = ($block.BackgroundColor, $LastBackground)[$RightAligned]
+                        }
+                    } else {
+                        [PoshCode.Pansies.Text]@{
+                            Object          = $Separator
+                            BackgroundColor = $block.BackgroundColor
+                            ForegroundColor = $block.ForegroundColor
+                        }
+                    }
+                }
+                # A space turns into just a pair of separators in the background color...
+                # $line += $string
+                $LastBackground = $block.BackgroundColor
+                #Write-Debug "Normal output ($($string -replace "\u001B.*?\p{L}")) ($($($string -replace "\u001B.*?\p{L}").Length)) on $LastBackground"
+            } elseif (![string]::IsNullOrWhiteSpace($string)) {
                 ## If the output is just color sequences, toss it
                 if(($String -replace "\u001B.*?\p{L}").Length -eq 0) {
                     #Write-Debug "Skip empty output, staying $LastBackground"

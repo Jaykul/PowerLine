@@ -138,15 +138,12 @@ function Set-PowerLinePrompt {
         [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $PowerLineConfig.Prompt
     }
 
-    # Prefer the existing colors over the saved colors, but not over the colors parameter
-    if($PSBoundParameters.ContainsKey("Colors")) {
-        InitializeColor $Colors
-    } elseif($global:Prompt.Colors) {
-        InitializeColor $global:Prompt.Colors
-    } elseif($PowerLineConfig.Colors) {
-        InitializeColor $PowerLineConfig.Colors
-    } else {
-        InitializeColor
+    # If they passed in colors, update everything
+    if ($PSBoundParameters.ContainsKey("Colors")) {
+        SyncColor $Colors
+    # Otherwise, if we haven't cached the colors, and there's configured colors, use those
+    } elseif (!$global:Prompt.Colors -and !$Script:Colors -and $PowerLineConfig.Colors) {
+        SyncColor $PowerLineConfig.Colors
     }
 
     if ($ResetSeparators -or ($PSBoundParameters.ContainsKey("PowerLineFont") -and !$PowerLineFont) ) {
