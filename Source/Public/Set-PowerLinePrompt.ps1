@@ -61,11 +61,11 @@ function Set-PowerLinePrompt {
         [switch]$HideErrors,
 
         # One or more scriptblocks you want to use as your new prompt
-        [Parameter(ValueFromPipelineByPropertyName)]
+        [Parameter(Position = 0, ValueFromPipelineByPropertyName)]
         [System.Collections.Generic.List[ScriptBlock]]$Prompt,
 
         # One or more colors you want to use as the prompt background
-        [Parameter(ValueFromPipelineByPropertyName)]
+        [Parameter(Position = 1, ValueFromPipelineByPropertyName)]
         [System.Collections.Generic.List[PoshCode.Pansies.RgbColor]]$Colors,
 
         # If set, calls Export-PowerLinePrompt
@@ -218,5 +218,3 @@ function Set-PowerLinePrompt {
         Export-PowerLinePrompt
     }
 }
-
-Set-PowerLinePrompt
