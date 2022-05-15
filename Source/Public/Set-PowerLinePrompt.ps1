@@ -81,140 +81,168 @@ function Set-PowerLinePrompt {
         #    "ReverseSeparator" = ""
         # }
         [Parameter(ValueFromPipelineByPropertyName)]
+        [Alias("ExtendedCharacters")]
         [hashtable]$PowerLineCharacters,
 
-        # When there's a parse error, PSReadLine changes a part of the prompt red, but ot assumes the default prompt is just foreground color
+        # When there's a parse error, PSReadLine changes a part of the prompt red, but it assumes the default prompt is just foreground color
         # You can use this option to override the character, OR to specify BOTH the normal and error strings.
         # If you specify two strings, they should both be the same length (ignoring escape sequences)
         [Parameter(ValueFromPipelineByPropertyName)]
-        [string[]]$PSReadLinePromptText = ""
+        [string[]]$PSReadLinePromptText,
+
+        # When you type a command that requires a second line (like if you type | and hit enter)
+        # This is the prompt text. Can be an empty string. Can be anything, really.
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [AllowEmptyString()]
+        [string]$PSReadLineContinuationPrompt,
+
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [AllowEmptyString()]
+        [string]$PSReadLineContinuationPromptColor
     )
-    if ($null -eq $script:OldPrompt) {
-        $script:OldPrompt = $function:global:prompt
-        $MyInvocation.MyCommand.Module.OnRemove = {
-            $function:global:prompt = $script:OldPrompt
-        }
-    }
-
-    # These switches aren't stored in the config
-    $null = $PSBoundParameters.Remove("Save")
-    $null = $PSBoundParameters.Remove("Newline")
-    $null = $PSBoundParameters.Remove("Timestamp")
-
-    $Configuration = Import-Configuration
-
-    # Upodate the saved PowerLinePrompt with the parameters
-    if(!$Configuration.PowerLineConfig) {
-        $Configuration.PowerLineConfig = @{}
-    }
-    $PowerLineConfig = $Configuration.PowerLineConfig | Update-Object $PSBoundParameters
-
-    if($Configuration.ExtendedCharacters) {
-        foreach($key in $Configuration.ExtendedCharacters.Keys) {
-            [PoshCode.Pansies.Entities]::ExtendedCharacters.$key = $Configuration.ExtendedCharacters.$key
-        }
-    }
-
-    if($Configuration.EscapeSequences) {
-        foreach($key in $Configuration.EscapeSequences.Keys) {
-            [PoshCode.Pansies.Entities]::EscapeSequences.$key = $Configuration.EscapeSequences.$key
-        }
-    }
-
-    if ($Null -eq $PowerLineConfig.FullColor -and $Host.UI.SupportsVirtualTerminal) {
-        $PowerLineConfig.FullColor = (Get-Process -Id $global:Pid).MainWindowHandle -ne 0
-    }
-
-    # For Prompt and Colors we want to support modifying the global variable outside this function
-    if($PSBoundParameters.ContainsKey("Prompt")) {
-        [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $Local:Prompt
-
-    } elseif($global:Prompt.Count -eq 0 -and $PowerLineConfig.Prompt.Count -gt 0) {
-        [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = [ScriptBlock[]]@($PowerLineConfig.Prompt)
-
-    } elseif($global:Prompt.Count -eq 0) {
-        # The default PowerLine Prompt
-        [ScriptBlock[]]$PowerLineConfig.Prompt = { $MyInvocation.HistoryId }, { Get-SegmentedPath }
-        [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $PowerLineConfig.Prompt
-    }
-
-    # If they passed in colors, update everything
-    if ($PSBoundParameters.ContainsKey("Colors")) {
-        SyncColor $Colors
-    # Otherwise, if we haven't cached the colors, and there's configured colors, use those
-    } elseif (!$global:Prompt.Colors -and !$Script:Colors -and $PowerLineConfig.Colors) {
-        SyncColor $PowerLineConfig.Colors
-    }
-
-    if ($ResetSeparators -or ($PSBoundParameters.ContainsKey("PowerLineFont") -and !$PowerLineFont) ) {
-        # Use characters that at least work in Consolas and Lucida Console
-        [PoshCode.Pansies.Entities]::ExtendedCharacters['ColorSeparator'] = [char]0x258C
-        [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseColorSeparator'] = [char]0x2590
-        [PoshCode.Pansies.Entities]::ExtendedCharacters['Separator'] = [char]0x25BA
-        [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseSeparator'] = [char]0x25C4
-        [PoshCode.Pansies.Entities]::ExtendedCharacters['Branch'] = [char]0x00A7
-        [PoshCode.Pansies.Entities]::ExtendedCharacters['Gear'] = [char]0x263C
-    }
-    if ($PowerLineFont) {
-        # Make sure we're using the PowerLine custom use extended characters:
-        [PoshCode.Pansies.Entities]::ExtendedCharacters['ColorSeparator'] = [char]0xe0b0
-        [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseColorSeparator'] = [char]0xe0b2
-        [PoshCode.Pansies.Entities]::ExtendedCharacters['Separator'] = [char]0xe0b1
-        [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseSeparator'] = [char]0xe0b3
-        [PoshCode.Pansies.Entities]::ExtendedCharacters['Branch'] = [char]0xE0A0
-        [PoshCode.Pansies.Entities]::ExtendedCharacters['Gear'] = [char]0x26EF
-    }
-    if ($PowerLineCharacters) {
-        foreach ($key in $PowerLineCharacters.Keys) {
-            [PoshCode.Pansies.Entities]::ExtendedCharacters["$key"] = $PowerLineCharacters[$key].ToString()
-        }
-    }
-
-    if($null -eq $PowerLineConfig.DefaultAddIndex) {
-        $PowerLineConfig.DefaultAddIndex    = -1
-    }
-
-    $Script:PowerLineConfig = $PowerLineConfig
-
-    if($Newline -or $Timestamp) {
-        $Script:PowerLineConfig.DefaultAddIndex = $global:Prompt.Count
-
-        @(
-            if($Timestamp) {
-                { "`t" }
-                { Get-Elapsed }
-                { Get-Date -format "T" }
+    process {
+        if ($null -eq $script:OldPrompt) {
+            $script:OldPrompt = $function:global:prompt
+            $MyInvocation.MyCommand.Module.OnRemove = {
+                $function:global:prompt = $script:OldPrompt
             }
-            { "`n" }
-            { New-PromptText { "I $(New-PromptText -Fg Red3 -EFg White "&hearts;$([char]27)[30m") PS" } -Bg White -EBg Red3 -Fg Black }
-        ) | Add-PowerLineBlock
+        }
+
+        # These switches aren't stored in the config
+        $null = $PSBoundParameters.Remove("Save")
+        $null = $PSBoundParameters.Remove("Newline")
+        $null = $PSBoundParameters.Remove("Timestamp")
+
+        $Configuration = Import-Configuration
+
+        # Upodate the saved PowerLinePrompt with the parameters
+        if(!$Configuration.PowerLineConfig) {
+            $Configuration.PowerLineConfig = @{}
+        }
+        $PowerLineConfig = $Configuration.PowerLineConfig | Update-Object $PSBoundParameters
+
+        if($Configuration.ExtendedCharacters) {
+            foreach($key in $Configuration.ExtendedCharacters.Keys) {
+                [PoshCode.Pansies.Entities]::ExtendedCharacters.$key = $Configuration.ExtendedCharacters.$key
+            }
+        }
+
+        if($Configuration.EscapeSequences) {
+            foreach($key in $Configuration.EscapeSequences.Keys) {
+                [PoshCode.Pansies.Entities]::EscapeSequences.$key = $Configuration.EscapeSequences.$key
+            }
+        }
+
+        if ($Null -eq $PowerLineConfig.FullColor -and $Host.UI.SupportsVirtualTerminal) {
+            $PowerLineConfig.FullColor = (Get-Process -Id $global:Pid).MainWindowHandle -ne 0
+        }
+
+        # For Prompt and Colors we want to support modifying the global variable outside this function
+        if($PSBoundParameters.ContainsKey("Prompt")) {
+            [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $Local:Prompt
+
+        } elseif($global:Prompt.Count -eq 0 -and $PowerLineConfig.Prompt.Count -gt 0) {
+            [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = [ScriptBlock[]]@($PowerLineConfig.Prompt)
+
+        } elseif($global:Prompt.Count -eq 0) {
+            # The default PowerLine Prompt
+            [ScriptBlock[]]$PowerLineConfig.Prompt = { $MyInvocation.HistoryId }, { Get-SegmentedPath }
+            [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $PowerLineConfig.Prompt
+        }
+
+        # If they passed in colors, update everything
+        if ($PSBoundParameters.ContainsKey("Colors")) {
+            SyncColor $Colors
+        # Otherwise, if we haven't cached the colors, and there's configured colors, use those
+        } elseif (!$global:Prompt.Colors -and !$Script:Colors -and $PowerLineConfig.Colors) {
+            SyncColor $PowerLineConfig.Colors
+        }
+
+        if ($ResetSeparators -or ($PSBoundParameters.ContainsKey("PowerLineFont") -and !$PowerLineFont) ) {
+            # Use characters that at least work in Consolas and Lucida Console
+            [PoshCode.Pansies.Entities]::ExtendedCharacters['ColorSeparator'] = [char]0x258C
+            [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseColorSeparator'] = [char]0x2590
+            [PoshCode.Pansies.Entities]::ExtendedCharacters['Separator'] = [char]0x25BA
+            [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseSeparator'] = [char]0x25C4
+            [PoshCode.Pansies.Entities]::ExtendedCharacters['Branch'] = [char]0x00A7
+            [PoshCode.Pansies.Entities]::ExtendedCharacters['Gear'] = [char]0x263C
+        }
+        if ($PowerLineFont) {
+            # Make sure we're using the PowerLine custom use extended characters:
+            [PoshCode.Pansies.Entities]::ExtendedCharacters['ColorSeparator'] = [char]0xe0b0
+            [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseColorSeparator'] = [char]0xe0b2
+            [PoshCode.Pansies.Entities]::ExtendedCharacters['Separator'] = [char]0xe0b1
+            [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseSeparator'] = [char]0xe0b3
+            [PoshCode.Pansies.Entities]::ExtendedCharacters['Branch'] = [char]0xE0A0
+            [PoshCode.Pansies.Entities]::ExtendedCharacters['Gear'] = [char]0x26EF
+        }
+        if ($PowerLineCharacters) {
+            foreach ($key in $PowerLineCharacters.Keys) {
+                [PoshCode.Pansies.Entities]::ExtendedCharacters["$key"] = $PowerLineCharacters[$key].ToString()
+            }
+        }
+
+        if($null -eq $PowerLineConfig.DefaultAddIndex) {
+            $PowerLineConfig.DefaultAddIndex    = -1
+        }
+
+        $Script:PowerLineConfig = $PowerLineConfig
+
+        if($Newline -or $Timestamp) {
+            $Script:PowerLineConfig.DefaultAddIndex = $global:Prompt.Count
+
+            @(
+                if($Timestamp) {
+                    { "`t" }
+                    { Get-Elapsed }
+                    { Get-Date -format "T" }
+                }
+                { "`n" }
+                { New-PromptText { "I $(New-PromptText -Fg Red3 -EFg White "&hearts;$([char]27)[30m") PS" } -Bg White -EBg Red3 -Fg Black }
+            ) | Add-PowerLineBlock
+
+            if (Get-Module PSReadLine) {
+                if ($PSBoundParameters.ContainsKey("PSReadLinePromptText")) {
+                    Set-PSReadLineOption -PromptText $PSReadLinePromptText
+                } else {
+                    Set-PSReadLineOption -PromptText @(
+                        New-PromptText -Fg Black -Bg White "I ${Fg:Red3}&hearts;${Fg:Black} PS${Fg:White}${Bg:Clear}&ColorSeparator;"
+                        New-PromptText -Bg Red3 -Fg White "I ${Fg:White}&hearts;${Fg:White} PS${Fg:Red3}${Bg:Clear}&ColorSeparator;"
+                    )
+                }
+            }
+
+            $Script:PowerLineConfig.DefaultAddIndex = @($Global:Prompt).ForEach{ $_.ToString().Trim() }.IndexOf('"`t"')
+        } elseif ($PSBoundParameters.ContainsKey("Prompt")) {
+            $Script:PowerLineConfig.DefaultAddIndex = -1
+        }
 
         if (Get-Module PSReadLine) {
+            $Options = @{}
             if ($PSBoundParameters.ContainsKey("PSReadLinePromptText")) {
-                Set-PSReadLineOption -PromptText $PSReadLinePromptText
-            } else {
-                Set-PSReadLineOption -PromptText @(
-                    New-PromptText -Fg Black -Bg White "I ${Fg:Red3}&hearts;${Fg:Black} PS${Fg:White}${Bg:Clear}&ColorSeparator;"
-                    New-PromptText -Bg Red3 -Fg White "I ${Fg:White}&hearts;${Fg:White} PS${Fg:Red3}${Bg:Clear}&ColorSeparator;"
-                )
+                $Options["PromptText"] = $PSReadLinePromptText
+            }
+
+            if ($PSBoundParameters.ContainsKey("PSReadLineContinuationPrompt")) {
+                $Options["ContinuationPrompt"] = $PSReadLineContinuationPrompt
+            }
+            if ($PSBoundParameters.ContainsKey("PSReadLineContinuationPromptColor")) {
+                $Options["Colors"] = @{
+                    ContinuationPrompt = $PSReadLineContinuationPromptColor
+                }
+            }
+            if ($Options) {
+                Set-PSReadLineOption @Options
             }
         }
 
-        $Script:PowerLineConfig.DefaultAddIndex = @($Global:Prompt).ForEach{ $_.ToString().Trim() }.IndexOf('"`t"')
-    } elseif ($PSBoundParameters.ContainsKey("Prompt")) {
-        $Script:PowerLineConfig.DefaultAddIndex = -1
-    }
+        # Finally, update the prompt function
+        $function:global:prompt = { Write-PowerlinePrompt }
+        [PoshCode.Pansies.RgbColor]::ResetConsolePalette()
 
-    if ($PSBoundParameters.ContainsKey("PSReadLinePromptText") -and (Get-Module PSReadLine)) {
-        Set-PSReadLineOption -PromptText $PSReadLinePromptText
-    }
-
-    # Finally, update the prompt function
-    $function:global:prompt = { Write-PowerlinePrompt }
-    [PoshCode.Pansies.RgbColor]::ResetConsolePalette()
-
-    # If they asked us to save, or if there's nothing saved yet
-    if($Save -or ($PSBoundParameters.Count -and !(Test-Path (Join-Path (Get-StoragePath) Configuration.psd1)))) {
-        Export-PowerLinePrompt
+        # If they asked us to save, or if there's nothing saved yet
+        if($Save -or ($PSBoundParameters.Count -and !(Test-Path (Join-Path (Get-StoragePath) Configuration.psd1)))) {
+            Export-PowerLinePrompt
+        }
     }
 }

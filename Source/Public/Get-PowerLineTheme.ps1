@@ -19,7 +19,14 @@ function Get-PowerLineTheme {
         'ReverseSeparator' = [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseSeparator']
     }
 
-    $Configuration.PSReadLinePromptText = (Get-PSReadLineOption).PromptText
+    if (Get-Command Get-PSReadLineOption) {
+        $PSReadLineOptions = Get-PSReadLineOption
+        # PromptText and ContinuationPrompt can have colors in them
+        $Configuration.PSReadLinePromptText = $PSReadLineOptions.PromptText
+        $Configuration.PSReadLineContinuationPrompt = $PSReadLineOptions.ContinuationPrompt
+        # If the ContinuationPrompt has color in it, this is irrelevant, but keep it anyway
+        $Configuration.PSReadLineContinuationPromptColor = $PSReadLineOptions.ContinuationPromptColor
+    }
 
     $Result = New-Object PSObject -Property $Configuration
     $Result.PSTypeNames.Insert(0, "PowerLine.Theme")
