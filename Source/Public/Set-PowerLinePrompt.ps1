@@ -62,7 +62,7 @@ function Set-PowerLinePrompt {
 
         # One or more scriptblocks you want to use as your new prompt
         [Parameter(Position = 0, ValueFromPipelineByPropertyName)]
-        [System.Collections.Generic.List[ScriptBlock]]$Prompt,
+        [System.Collections.Generic.List[PoshCode.PowerLine.Block]]$Prompt,
 
         # One or more colors you want to use as the prompt background
         [Parameter(Position = 1, ValueFromPipelineByPropertyName)]
@@ -139,15 +139,15 @@ function Set-PowerLinePrompt {
 
         # For Prompt and Colors we want to support modifying the global variable outside this function
         if($PSBoundParameters.ContainsKey("Prompt")) {
-            [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $Local:Prompt
+            [System.Collections.Generic.List[PoshCode.PowerLine.Block]]$global:Prompt = $Local:Prompt
 
         } elseif($global:Prompt.Count -eq 0 -and $PowerLineConfig.Prompt.Count -gt 0) {
-            [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = [ScriptBlock[]]@($PowerLineConfig.Prompt)
+            [System.Collections.Generic.List[PoshCode.PowerLine.Block]]$global:Prompt = [PoshCode.PowerLine.Block[]][ScriptBlock[]]@($PowerLineConfig.Prompt)
 
         } elseif($global:Prompt.Count -eq 0) {
             # The default PowerLine Prompt
             [ScriptBlock[]]$PowerLineConfig.Prompt = { $MyInvocation.HistoryId }, { Get-SegmentedPath }
-            [System.Collections.Generic.List[ScriptBlock]]$global:Prompt = $PowerLineConfig.Prompt
+            [System.Collections.Generic.List[PoshCode.PowerLine.Block]]$global:Prompt = [PoshCode.PowerLine.Block[]]$PowerLineConfig.Prompt
         }
 
         # If they passed in colors, update everything

@@ -4,7 +4,7 @@ using namespace System.Collections.Generic
 using namespace PoshCode.Pansies
 
 # Ensure the global prompt variable exists and is typed the way we expect
-[System.Collections.Generic.List[ScriptBlock]]$Global:Prompt = [ScriptBlock[]]@(
+[System.Collections.Generic.List[PoshCode.PowerLine.Block]]$Global:Prompt = [PoshCode.PowerLine.Block[]]@(
     if (Test-Path Variable:Prompt) {
         if ($Prompt.Colors) {
             try {
@@ -14,7 +14,7 @@ using namespace PoshCode.Pansies
             }
         }
 
-        $Prompt | ForEach-Object { $_ }
+        $Prompt | ForEach-Object { [PoshCode.PowerLine.Block]$_ }
     }
 )
 

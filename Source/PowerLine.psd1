@@ -36,7 +36,12 @@ PowerShellVersion = '5.1.0'
 # Format files (.ps1xml) to be loaded when importing this module
 FormatsToProcess = @("PowerLine.format.ps1xml")
 
+# Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
+NestedModules = @( "lib\PowerLine.dll" )
+
 RequiredModules = @(
+    # Make sure we get the fixed version of Metadata
+    @{ModuleName="Metadata"; ModuleVersion="1.5.3"}
     @{ModuleName="Configuration"; ModuleVersion="1.5.0"}
     @{ModuleName="Pansies";       ModuleVersion="2.3.0"}
 )
