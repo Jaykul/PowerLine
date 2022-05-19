@@ -17,22 +17,43 @@ function Add-PowerLineBlock {
             # It calls Get-Elapsed to show the duration of the last command as the text of the block
             # It uses New-PromptText to control the color so that it's highlighted in red if there is an error, but otherwise in dark blue (or yellow if it's an elevated host).
     #>
-    [CmdletBinding(DefaultParameterSetName="Error")]
+    [CmdletBinding(DefaultParameterSetName="InputObject")]
     param(
         # The text, object, or scriptblock to show as output
-        [Parameter(Position=0, Mandatory, ValueFromPipeline)]
+        [Parameter(Position=0, Mandatory, ValueFromPipeline, ParameterSetName = "InputObject")]
         [Alias("Text")]
         $InputObject,
 
         # The position to insert the InputObject at, by default, inserts in the same place as the last one
         [int]$Index = -1,
 
+        # When set by a module, hooks the calling module to remove this block if the module is removed
         [Switch]$AutoRemove,
 
         # If set, adds the input to the prompt without checking if it's already there
-        [Switch]$Force
+        [Switch]$Force,
+
+        # Add a line break to the prompt (the next block will start a new line)
+        [Parameter(Mandatory, ParameterSetName = "Newline")]
+        [Switch]$Newline,
+
+        # Add a column break to the prompt (the next block will be right-aligned)
+        [Parameter(Mandatory, ParameterSetName = "RightAlign")]
+        [Switch]$RightAlign,
+
+        # Add a zero-width space to the prompt (creates a gap between blocks)
+        [Parameter(Mandatory, ParameterSetName = "Spacer")]
+        [Switch]$Spacer
     )
     process {
+        if ($Newline) {
+            $InputObject = { "`n" }
+        } elseif ($RightAlign){
+            $InputObject = { "`t" }
+        } elseif ($Spacer){
+            $InputObject = { " " }
+        }
+
         Write-Debug "Add-PowerLineBlock $InputObject"
         if(!$PSBoundParameters.ContainsKey("Index")) {
             $Index = $Script:PowerLineConfig.DefaultAddIndex++

@@ -5,6 +5,5 @@ function Test-Success {
     #>
     [CmdletBinding()]
     param()
-
-    $script:LastSuccess
+    [PoshCode.PowerLine.State]::LastSuccess
 }

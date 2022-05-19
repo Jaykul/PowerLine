@@ -4,7 +4,7 @@ function Write-PowerlinePrompt {
 
     try {
         # FIRST, make a note if there was an error in the previous command
-        [bool]$script:LastSuccess = $?
+        [PoshCode.PowerLine.State]::LastSuccess = $?
         $PromptErrors = [ordered]@{}
         # When someone sets $Prompt, they loose the colors.
         # To fix that, we cache the colors whenever we get a chance
@@ -36,34 +36,7 @@ function Write-PowerlinePrompt {
 
         # Evaluate all the scriptblocks in $prompt
         $UniqueColorsCount = 0
-        $PromptText = @(
-            for ($index = 0; $index -lt $Prompt.Count; $index++) {
-                $block = $Global:Prompt[$index]
-                try {
-                    $outputBlock = . {
-                        [CmdletBinding()]param()
-                        & $block
-                    } -ErrorVariable logging
-                    $buffer = $(
-                        if($outputBlock -as [PoshCode.Pansies.Text[]]) {
-                            [PoshCode.Pansies.Text[]]$outputBlock
-                        } else {
-                            [PoshCode.Pansies.Text[]][string[]]$outputBlock
-                        }
-                    ).Where{ ![string]::IsNullOrEmpty($_.Object) }
-                    # Each $buffer gets a color, if it needs one (it's not whitespace)
-                    $UniqueColorsCount += [bool]$buffer.Where({ !([string]::IsNullOrWhiteSpace($_.Object)) -and !$_.BackgroundColor }, 1)
-                    , $buffer
-
-                    # Capture errors from blocks. We'll find a way to display them...
-                    if ($logging) {
-                        $PromptErrors.Add("$index {$block}", $logging)
-                    }
-                } catch {
-                    $PromptErrors.Add("$index {$block}", $_)
-                }
-            }
-        ).Where{ $_.Object }
+        $PromptText = @($Prompt)
 
         # Based on the number of text blocks, make up colors if we need to...
         [PoshCode.Pansies.RgbColor[]]$ActualColors = @(
@@ -81,9 +54,11 @@ function Write-PowerlinePrompt {
         foreach ($block in $PromptText) {
             $ColorUsed = $False
             foreach ($b in @($block)) {
-                if (![string]::IsNullOrWhiteSpace($b.Object) -and $null -eq $b.BackgroundColor) {
-                    $b.BackgroundColor = $ActualColors[$ColorIndex]
-                    $ColorUsed = $True
+                if (!$b.BackgroundColor) {
+                    if ($b.Object -isnot [PoshCode.PowerLine.Space]) {
+                        $b.BackgroundColor = $ActualColors[$ColorIndex]
+                        $ColorUsed = $True
+                    }
                 }
             }
             $ColorIndex += $ColorUsed
@@ -106,110 +81,45 @@ function Write-PowerlinePrompt {
         $result = ""
         $RightAligned = $False
         $BufferWidth = [Console]::BufferWidth
-        $ColorSeparator = "&ColorSeparator;"
-        $Separator = "&Separator;"
-        $LastBackground = $null
+        # $LastBackground = $null
         for ($b = 0; $b -lt $Buffer.Count; $b++) {
             $block = $Buffer[$b]
-            $string = $block.ToString()
-            # Write-Debug "STEP $b of $($Buffer.Count) [$(($String -replace "\u001B.*?\p{L}").Length)] $($String -replace "\u001B.*?\p{L}" -replace "`n","{newline}" -replace "`t","{tab}")"
+            $OtherColor = @(
+                if ($b -lt ($Buffer.Count - 2)) { $Buffer[$b + 1].BackgroundColor } else { $null }
+                if ($b -gt 0) { $Buffer[$b - 1].BackgroundColor } else { $null }
+            )
 
+            # Write-Debug "STEP $b of $($Buffer.Count) [$(($String -replace "\u001B.*?\p{L}").Length)] $($String -replace "\u001B.*?\p{L}" -replace "`n","{newline}" -replace "`t","{tab}")"
             ## Allow `t to split into (2) columns:
-            if ($string -eq "`t") {
-                if ($LastBackground) {
-                    ## Before the (column) break, add a cap
-                    #Write-Debug "Pre column-break, add a $LastBackground cap"
-                    $line += [PoshCode.Pansies.Text]@{
-                        Object          = "&Esc;49m$ColorSeparator&Clear;&Store;"
-                        ForegroundColor = $LastBackground
-                        BackgroundColor = $null # $Host.UI.RawUI.BackgroundColor
-                    }
-                }
-                $result += $line
+            if ($block.Object -eq [PoshCode.PowerLine.Space]::RightAlign) {
+                $result += $line + [PoshCode.Pansies.Text]::new("&Store;")
                 $line = ""
-                $RightAligned = $True
-                $ColorSeparator = "&ReverseColorSeparator;"
-                $Separator = "&ReverseSeparator;"
-                $LastBackground = $null
+                [PoshCode.PowerLine.State]::Alignment = "Right"
             ## Allow `n to create multi-line prompts
-            } elseif ($string -in "`n", "`r`n") {
-                if ($RightAligned) {
+            } elseif ($block.Object -eq [PoshCode.PowerLine.Space]::NewLine) {
+                if ([PoshCode.PowerLine.State]::Alignment) {
                     ## This is a VERY simplistic test for escape sequences
                     $lineLength = ($line -replace "\u001B.*?\p{L}").Length
-                    $Align = "$([char]27)[$(1 + $BufferWidth - $lineLength)G"
-                    Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long so we're aligning to $($Align)"
-                    $result += [PoshCode.Pansies.Text]::new("&Esc;$($Align)")
-                    $RightAligned = $False
-                } else {
-                    $line += [PoshCode.Pansies.Text]@{
-                        Object          = $ColorSeparator
-                        ForegroundColor = $LastBackground
-                        BackgroundColor = if ($Host.UI.RawUI.BackgroundColor -ge 0) { $Host.UI.RawUI.BackgroundColor } else { $null }
-                    }
+                    # Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long so we're aligning to $($Align)"
+                    $result += [PoshCode.Pansies.Text]::new("&Esc;$(1 + $BufferWidth - $lineLength)G")
+                    [PoshCode.PowerLine.State]::Alignment = "Left"
                 }
                 $extraLineCount++
                 $result += $line + [PoshCode.Pansies.Text]::new("&Clear;`n")
                 $line = ""
-                $ColorSeparator = "&ColorSeparator;"
-                $Separator = "&Separator;"
-                $LastBackground = $null
-            } elseif ($String -eq " ") {
-                if ($LastBackground -or $RightAligned) {
-                    $line +=
-                    if ($RightAligned -and -not $LastBackground) {
-                        [PoshCode.Pansies.Text]@{
-                            Object          = "&Esc;49m$ColorSeparator"
-                            ForegroundColor = ($LastBackground, $block.BackgroundColor)[$RightAligned]
-                            BackgroundColor = $null
-                        }
-                    } elseif ($block.BackgroundColor -ne $LastBackground) {
-                        [PoshCode.Pansies.Text]@{
-                            Object          = $ColorSeparator
-                            ForegroundColor = ($LastBackground, $block.BackgroundColor)[$RightAligned]
-                            BackgroundColor = ($block.BackgroundColor, $LastBackground)[$RightAligned]
-                        }
-                    } else {
-                        [PoshCode.Pansies.Text]@{
-                            Object          = $Separator
-                            BackgroundColor = $block.BackgroundColor
-                            ForegroundColor = $block.ForegroundColor
-                        }
-                    }
-                }
-                # A space turns into just a pair of separators in the background color...
-                # $line += $string
-                $LastBackground = $block.BackgroundColor
-                #Write-Debug "Normal output ($($string -replace "\u001B.*?\p{L}")) ($($($string -replace "\u001B.*?\p{L}").Length)) on $LastBackground"
-            } elseif (![string]::IsNullOrWhiteSpace($string)) {
-                ## If the output is just color sequences, toss it
-                if(($String -replace "\u001B.*?\p{L}").Length -eq 0) {
-                    #Write-Debug "Skip empty output, staying $LastBackground"
-                    continue
-                }
-                if($LastBackground -or $RightAligned) {
-                    $line +=
-                        if ($RightAligned -and -not $LastBackground) {
-                            [PoshCode.Pansies.Text]@{
-                                Object          = "&Esc;49m$ColorSeparator"
-                                ForegroundColor = ($LastBackground, $block.BackgroundColor)[$RightAligned]
-                                BackgroundColor = $null
-                            }
-                        } elseif($block.BackgroundColor -ne $LastBackground) {
-                            [PoshCode.Pansies.Text]@{
-                                Object          = $ColorSeparator
-                                ForegroundColor = ($LastBackground, $block.BackgroundColor)[$RightAligned]
-                                BackgroundColor = ($block.BackgroundColor, $LastBackground)[$RightAligned]
-                            }
-                        } else {
-                            [PoshCode.Pansies.Text]@{
-                                Object          = $Separator
-                                BackgroundColor = $block.BackgroundColor
-                                ForegroundColor = $block.ForegroundColor
-                            }
-                        }
-                }
-                $line += $string
-                $LastBackground = $block.BackgroundColor
+            } elseif ($block.Object -eq [PoshCode.PowerLine.Space]::Spacer) {
+                $line += ([PoshCode.Pansies.Text]@{
+                    Object          = "&Esc;7m&ColorSeparator;&Esc;27m"
+                    ForegroundColor = $OtherColor[[PoshCode.PowerLine.State]::Alignment]
+                })
+                # Write-Debug "Spacer output $($OtherColor[![PoshCode.PowerLine.State]::Alignment]) and $($OtherColor[[PoshCode.PowerLine.State]::Alignment])"
+            } else {
+                # ## If the output is just color sequences, toss it
+                # if (($String -replace "\u001B.*?\p{L}").Length -eq 0) {
+                #     #Write-Debug "Skip empty output, staying $LastBackground"
+                #     continue
+                # }
+                $line += $block.ToLine($OtherColor[[PoshCode.PowerLine.State]::Alignment])
                 #Write-Debug "Normal output ($($string -replace "\u001B.*?\p{L}")) ($($($string -replace "\u001B.*?\p{L}").Length)) on $LastBackground"
             }
         }
@@ -219,19 +129,13 @@ function Write-PowerlinePrompt {
         }
 
         # With the latest PSReadLine, we can support ending with a right-aligned block...
-        if ($RightAligned) {
+        if ([PoshCode.PowerLine.State]::Alignment) {
             ## This is a VERY simplistic test for escape sequences
             $lineLength = ($line -replace "\u001B.*?\p{L}").Length
             #Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long"
-            $Align = "$([char]27)[$(1 + $BufferWidth - $lineLength)G"
-            $result += [PoshCode.Pansies.Text]::new("$([char]27)[$Align")
-            $RightAligned = $False
+            $result += [PoshCode.Pansies.Text]::new("&Esc;$(1 + $BufferWidth - $lineLength)G")
             $line += [PoshCode.Pansies.Text]::new("&Recall;")
-        } else {
-            $line += ([PoshCode.Pansies.Text]@{
-                Object          = "$([char]27)[49m$ColorSeparator&Clear;"
-                ForegroundColor = $LastBackground
-            })
+            [PoshCode.PowerLine.State]::Alignment = "Left"
         }
 
         # At the end, output everything as one single string
