@@ -10,6 +10,7 @@ $global:Prompt = @(
     { "&Gear;" * $NestedPromptLevel }
     { $pwd.Drive.Name }
     { Split-Path $pwd -leaf }
+    { }
 
     { "`t" } # Add a few right-aligned blocks
     { Get-Elapsed }

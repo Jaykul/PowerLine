@@ -1,5 +1,6 @@
 function Write-PowerlinePrompt {
     [CmdletBinding()]
+    [OutputType([string])]
     param()
 
     try {
@@ -49,6 +50,12 @@ function Write-PowerlinePrompt {
             }
         )
 
+        $CacheKey = if ($Script:PowerLineConfig.NoCache) {
+            [Guid]::NewGuid()
+        } else {
+            $MyInvocation.HistoryId
+        }
+
         # Loop through the text blocks and set colors
         $ColorIndex = 0
         foreach ($block in $PromptText) {
@@ -79,47 +86,62 @@ function Write-PowerlinePrompt {
         $extraLineCount = 0
         $line = ""
         $result = ""
-        $RightAligned = $False
         $BufferWidth = [Console]::BufferWidth
+        $CSI = "$([char]27)["
+
+        # Pre-invoke everything, because then we can use .Cache
+        for ($b = 0; $b -lt $Buffer.Count; $b++) {
+            $block = $Buffer[$b].Invoke($CacheKey)
+        }
+
+        [PoshCode.PowerLine.State]::Alignment = "Left"
+
         # $LastBackground = $null
         for ($b = 0; $b -lt $Buffer.Count; $b++) {
             $block = $Buffer[$b]
-            $OtherColor = @(
-                if ($b -lt ($Buffer.Count - 2)) { $Buffer[$b + 1].BackgroundColor } else { $null }
-                if ($b -gt 0) { $Buffer[$b - 1].BackgroundColor } else { $null }
-            )
 
-            # Write-Debug "STEP $b of $($Buffer.Count) [$(($String -replace "\u001B.*?\p{L}").Length)] $($String -replace "\u001B.*?\p{L}" -replace "`n","{newline}" -replace "`t","{tab}")"
-            ## Allow `t to split into (2) columns:
+            # Column Separator
             if ($block.Object -eq [PoshCode.PowerLine.Space]::RightAlign) {
-                $result += $line + [PoshCode.Pansies.Text]::new("&Store;")
-                $line = ""
                 [PoshCode.PowerLine.State]::Alignment = "Right"
-            ## Allow `n to create multi-line prompts
+                $result += $line + $Csi + "s" # STORE
+                $line = ""
+            # New Line
             } elseif ($block.Object -eq [PoshCode.PowerLine.Space]::NewLine) {
                 if ([PoshCode.PowerLine.State]::Alignment) {
+                    [PoshCode.PowerLine.State]::Alignment = "Left"
                     ## This is a VERY simplistic test for escape sequences
                     $lineLength = ($line -replace "\u001B.*?\p{L}").Length
                     # Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long so we're aligning to $($Align)"
-                    $result += [PoshCode.Pansies.Text]::new("&Esc;$(1 + $BufferWidth - $lineLength)G")
-                    [PoshCode.PowerLine.State]::Alignment = "Left"
+                    $result += "$CSI$(1 + $BufferWidth - $lineLength)G"
                 }
                 $extraLineCount++
-                $result += $line + [PoshCode.Pansies.Text]::new("&Clear;`n")
+                $result += $line + $CSI + "0m`n" # CLEAR
                 $line = ""
-            } elseif ($block.Object -eq [PoshCode.PowerLine.Space]::Spacer) {
-                $line += ([PoshCode.Pansies.Text]@{
-                    Object          = "&Esc;7m&ColorSeparator;&Esc;27m"
-                    ForegroundColor = $OtherColor[[PoshCode.PowerLine.State]::Alignment]
-                })
-                # Write-Debug "Spacer output $($OtherColor[![PoshCode.PowerLine.State]::Alignment]) and $($OtherColor[[PoshCode.PowerLine.State]::Alignment])"
-            } else {
-                # ## If the output is just color sequences, toss it
-                # if (($String -replace "\u001B.*?\p{L}").Length -eq 0) {
-                #     #Write-Debug "Skip empty output, staying $LastBackground"
-                #     continue
-                # }
-                $line += $block.ToLine($OtherColor[[PoshCode.PowerLine.State]::Alignment])
+            # If the cache is null, it won't draw anything
+            } elseif ($block.Cache) {
+                $Neighbor = $null
+                $Direction = if ([PoshCode.PowerLine.State]::Alignment) { -1 } else { +1 }
+                $n = $b
+                # If this is not a spacer, it should use the color of the next non-empty block
+                do {
+                    $n += $Direction
+                    if ($n -lt 0 -or $n -ge $Buffer.Count) {
+                        $Neighbor = $null
+                        break;
+                    } elseif ($Buffer[$n].Cache) {
+                        $Neighbor = $Buffer[$n]
+                    }
+                } while(!$Neighbor)
+
+                # If this is a spacer, it should not render at all if the next non-empty block is a spacer
+                if ($block.Object -eq [PoshCode.PowerLine.Space]::Spacer -and $Neighbor.Object -eq [PoshCode.PowerLine.Space]::Spacer) {
+                    continue
+                }
+
+                if ($text = $block.ToLine($Neighbor.BackgroundColor, $CacheKey)) {
+                    $line += $text
+                }
+
                 #Write-Debug "Normal output ($($string -replace "\u001B.*?\p{L}")) ($($($string -replace "\u001B.*?\p{L}").Length)) on $LastBackground"
             }
         }
@@ -133,8 +155,8 @@ function Write-PowerlinePrompt {
             ## This is a VERY simplistic test for escape sequences
             $lineLength = ($line -replace "\u001B.*?\p{L}").Length
             #Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long"
-            $result += [PoshCode.Pansies.Text]::new("&Esc;$(1 + $BufferWidth - $lineLength)G")
-            $line += [PoshCode.Pansies.Text]::new("&Recall;")
+            $result += "$CSI$(1 + $BufferWidth - $lineLength)G"
+            $line += $CSI + "u" # Recall
             [PoshCode.PowerLine.State]::Alignment = "Left"
         }
 

@@ -4,7 +4,7 @@ namespace PoshCode.PowerLine
 {
     public enum Space
     {
-        Spacer,
+        Spacer = 1,
         RightAlign,
         NewLine
     }
