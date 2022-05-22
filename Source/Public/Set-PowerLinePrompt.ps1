@@ -98,7 +98,12 @@ function Set-PowerLinePrompt {
 
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowEmptyString()]
-        [string]$PSReadLineContinuationPromptColor
+        [string]$PSReadLineContinuationPromptColor,
+
+        # By default PowerLine caches output based on the prompt's history id
+        # That makes if *very* fase if you hit ENTER or Ctrl+C or Ctrl+L repeatedly
+        # But if you print the time, it wouldn't change, so you can disable that here
+        [switch]$NoCache
     )
     process {
         if ($null -eq $script:OldPrompt) {
@@ -146,7 +151,7 @@ function Set-PowerLinePrompt {
 
         } elseif($global:Prompt.Count -eq 0) {
             # The default PowerLine Prompt
-            [ScriptBlock[]]$PowerLineConfig.Prompt = { $MyInvocation.HistoryId }, { Get-SegmentedPath }
+            [ScriptBlock[]]$PowerLineConfig.Prompt = { $MyInvocation.HistoryId }, { Get-ShortPath -HomeString "~" -Depth 3 }
             [System.Collections.Generic.List[PoshCode.PowerLine.Block]]$global:Prompt = [PoshCode.PowerLine.Block[]]$PowerLineConfig.Prompt
         }
 

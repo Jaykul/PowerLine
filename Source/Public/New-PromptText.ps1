@@ -95,11 +95,14 @@ function New-PromptText {
     process {
         if ($Newline -or "`n" -eq $InputObject) {
             $InputObject = [PoshCode.PowerLine.Space]::NewLine
+            $null = $PSBoundParameters.Remove("Newline")
         } elseif ($RightAlign -or "`t" -eq $InputObject) {
             $InputObject = [PoshCode.PowerLine.Space]::RightAlign
+            $null = $PSBoundParameters.Remove("RightAlign")
         } elseif ($Spacer -or " " -eq $InputObject) {
             $InputObject = [PoshCode.PowerLine.Space]::Spacer
-            # Try to fix the parameter binding
+            $null = $PSBoundParameters.Remove("Spacer")
+            # Work around parameter binding
         } elseif ($InputObject.InputObject) {
             $InputObject = $InputObject.InputObject
         } elseif ($InputObject.Object) {
@@ -107,36 +110,8 @@ function New-PromptText {
         }elseif ($InputObject.Text) {
             $InputObject = $InputObject.Text
         }
+        $PSBoundParameters["InputObject"] = $InputObject
 
-        $output = [PoshCode.PowerLine.Block]@{
-            Object = $InputObject
-        }
-
-        if ($InputObject -isnot [PoshCode.PowerLine.Space]) {
-            if ($Separator) {
-                $output.Separator.Left = $Separator[0]
-                $output.Separator.Right = $Separator[-1]
-            } elseif ($PSBoundParameters.ContainsKey("Separator")) {
-                $output.Separator.Left = ""
-                $output.Separator.Right = ""
-            }
-
-            if ($Cap) {
-                $output.Cap.Left = $Cap[0]
-                $output.Cap.Right = $Cap[-1]
-            } elseif ($PSBoundParameters.ContainsKey("Cap")) {
-                $output.Cap.Left = ""
-                $output.Cap.Right = ""
-            }
-
-            $output.ForegroundColor = $ForegroundColor
-            $output.BackgroundColor = $BackgroundColor
-            $output.ElevatedForegroundColor = $ElevatedForegroundColor
-            $output.ElevatedBackgroundColor = $ElevatedBackgroundColor
-            $output.ErrorForegroundColor = $ErrorForegroundColor
-            $output.ErrorBackgroundColor = $ErrorBackgroundColor
-        }
-
-        $output
+        [PoshCode.PowerLine.Block]$PSBoundParameters
     }
 }

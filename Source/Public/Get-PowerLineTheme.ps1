@@ -7,7 +7,7 @@ function Get-PowerLineTheme {
     param()
 
     $Local:Configuration = $Script:PowerLineConfig
-    $Configuration.Prompt = [ScriptBlock[]]$global:Prompt
+    $Configuration.Prompt = [PoshCode.PowerLine.Block[]]$global:Prompt
     $Configuration.Colors = [PoshCode.Pansies.RgbColor[]]$global:Prompt.Colors
 
     $null = $Configuration.Remove("DefaultAddIndex")
