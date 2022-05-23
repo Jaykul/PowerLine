@@ -18,4 +18,16 @@ using namespace PoshCode.Pansies
     }
 )
 
-Add-MetadataConverter @{ [char] = { "'$_'" } }
+Add-MetadataConverter @{
+    PowerLineBlock = { New-PowerLineBlock @Args }
+    [char]                     = { "'$_'" }
+    [PoshCode.PowerLine.Block] = {
+        if ($_.Object -is [PoshCode.PowerLine.Space]) {
+            "PowerLineBlock -$($_.Object) -Separator @('$($_.Separator.Left)', '$($_.Separator.Right)') -Cap @('$($_.Cap.Left)', '$($_.Cap.Right)')"
+        } elseif ($_.Object -is [scriptblock]) {
+            "PowerLineBlock $("(ScriptBlock '{0}')" -f ($_.Object -replace "'", "''")) -Separator @('$($_.Separator.Left)', '$($_.Separator.Right)') -Cap @('$($_.Cap.Left)', '$($_.Cap.Right)') -ForegroundColor '$($_.ForegroundColor)' -BackgroundColor '$($_.BackgroundColor)' -ElevatedForegroundColor '$($_.ElevatedForegroundColor)' -ElevatedBackgroundColor '$($_.ElevatedBackgroundColor)' -ErrorForegroundColor '$($_.ErrorForegroundColor)' -ErrorBackgroundColor '$($_ErrorBackgroundColor)'"
+        } else {
+            "PowerLineBlock $(ConvertTo-Metadata $_.Object) -Separator @('$($_.Separator.Left)', '$($_.Separator.Right)') -Cap @('$($_.Cap.Left)', '$($_.Cap.Right)') -ForegroundColor '$($_.ForegroundColor)' -BackgroundColor '$($_.BackgroundColor)' -ElevatedForegroundColor '$($_.ElevatedForegroundColor)' -ElevatedBackgroundColor '$($_.ElevatedBackgroundColor)' -ErrorForegroundColor '$($_.ErrorForegroundColor)' -ErrorBackgroundColor '$($_ErrorBackgroundColor)'"
+        }
+    }
+}
