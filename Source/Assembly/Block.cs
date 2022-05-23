@@ -17,13 +17,15 @@ namespace PoshCode.PowerLine
         public RgbColor ErrorBackgroundColor { get; set; }
 
         private RgbColor foregroundColor;
-        public new RgbColor ForegroundColor {
-            get {
+        public new RgbColor ForegroundColor
+        {
+            get
+            {
                 if (State.Elevated && null != ElevatedForegroundColor)
                 {
                     return ElevatedForegroundColor;
                 }
-                else if(!State.LastSuccess && null != ErrorForegroundColor)
+                else if (!State.LastSuccess && null != ErrorForegroundColor)
                 {
                     return ErrorForegroundColor;
                 }
@@ -32,14 +34,17 @@ namespace PoshCode.PowerLine
                     return foregroundColor;
                 }
             }
-            set {
+            set
+            {
                 foregroundColor = value;
             }
         }
 
         private RgbColor backgroundColor;
-        public new RgbColor BackgroundColor {
-            get {
+        public new RgbColor BackgroundColor
+        {
+            get
+            {
                 if (State.Elevated && null != ElevatedBackgroundColor)
                 {
                     return ElevatedBackgroundColor;
@@ -53,12 +58,43 @@ namespace PoshCode.PowerLine
                     return backgroundColor;
                 }
             }
-            set {
+            set
+            {
                 backgroundColor = value;
             }
         }
 
-
+        /// <summary>
+        /// Gets or sets the object.
+        /// </summary>
+        /// <value>A string</value>
+        public new object Object
+        {
+            get
+            {
+                return base.Object;
+            }
+            set
+            {
+                var spaceTest = value.ToString().Trim();
+                if (spaceTest.Equals("\"`t\"") || spaceTest.Equals("`t"))
+                {
+                    base.Object = Space.RightAlign;
+                }
+                else if (spaceTest.Equals("\"`n\"") || spaceTest.Equals("`n"))
+                {
+                    base.Object = Space.NewLine;
+                }
+                else if (spaceTest.Equals("\" \"") || spaceTest.Equals(" "))
+                {
+                    base.Object = Space.Spacer;
+                }
+                else
+                {
+                    base.Object = value;
+                }
+            }
+        }
 
         /// <summary>
         /// This constructor is here so we can allow partial matches to the property names.
@@ -96,23 +132,16 @@ namespace PoshCode.PowerLine
                 else if (Regex.IsMatch("InputObject", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("text", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("Content", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("Object", pattern, RegexOptions.IgnoreCase))
                 {
                     Object = values[key];
-                    if (Object.ToString() == "\t") {
-                        Object = Space.RightAlign;
-                    } else if (Object.ToString() == "\n") {
-                        Object = Space.NewLine;
-                    } else if (Object.ToString() == " ") {
-                        Object = Space.Spacer;
-                    }
                 }
-                else if (Regex.IsMatch("clear", pattern, RegexOptions.IgnoreCase) )
+                else if (Regex.IsMatch("clear", pattern, RegexOptions.IgnoreCase))
                 {
                     Clear = (bool)values[key];
                 }
-                else if (Regex.IsMatch("entities", pattern, RegexOptions.IgnoreCase) )
+                else if (Regex.IsMatch("entities", pattern, RegexOptions.IgnoreCase))
                 {
                     Entities = (bool)values[key];
                 }
-                else if (Regex.IsMatch("separator", pattern, RegexOptions.IgnoreCase) )
+                else if (Regex.IsMatch("separator", pattern, RegexOptions.IgnoreCase))
                 {
                     if (values[key] is Cap)
                     {
@@ -143,7 +172,7 @@ namespace PoshCode.PowerLine
                         Cap = new Cap(values[key].ToString());
                     }
                 }
-                else if (Regex.IsMatch("persist", pattern, RegexOptions.IgnoreCase) )
+                else if (Regex.IsMatch("persist", pattern, RegexOptions.IgnoreCase))
                 {
                     PersistentColor = (bool)values[key];
                 }
@@ -158,7 +187,8 @@ namespace PoshCode.PowerLine
         public Block() : this("") { }
 
         // Make sure we can output plain text
-        public Block(object @object) {
+        public Block(object @object)
+        {
             var cap = new Cap();
             var sep = new Cap();
 
