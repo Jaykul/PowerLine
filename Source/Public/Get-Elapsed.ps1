@@ -12,11 +12,12 @@ function Get-Elapsed {
         [Parameter()]
         [int]$Id,
 
-        # A Timespan format pattern such as "{0:ss\.ffff}"
-        [Parameter()]
-        [string]$Format = "{0:d\d\ h\:mm\:ss\.ffff}",
+        # A Timespan format pattern such as "{0:ss\.fff}"
+        [Parameter(ParameterSetName = 'SimpleFormat')]
+        [string]$Format = "{0:d\d\ h\:mm\:ss\.fff}",
 
-        # If set trim leading zeros and separators off to make the string as short as possible
+        # Automatically use different formats depending on the duration
+        [Parameter(ParameterSetName = 'AutoFormat')]
         [switch]$Trim
     )
     $null = $PSBoundParameters.Remove("Format")
@@ -26,13 +27,18 @@ function Get-Elapsed {
     $Duration = $LastCommand.EndExecutionTime - $LastCommand.StartExecutionTime
     $Result = $Format -f $Duration
     if ($Trim) {
-        $Short = $Result.Trim("0:d .")
-        if ($Short.Length -lt 5) {
-            $Short + "ms"
-        } elseif ($Short.Length -lt 8) {
-            $Short + "s"
+        if ($Duration.Days -ne 0) {
+            "{0:d\d\ h\:mm}" -f $Duration
+        } elseif ($Duration.Hours -ne 0) {
+            "{0:h\:mm\:ss}" -f $Duration
+        } elseif ($Duration.Minutes -ne 0) {
+            "{0:m\:ss\.fff}" -f $Duration
+        } elseif ($Duration.Seconds -ne 0) {
+            "{0:s\.fff\s}" -f $Duration
+        } elseif ($Duration.Milliseconds -gt 10) {
+            ("{0:fff\m\s}" -f $Duration).Trim("0")
         } else {
-            $Short
+            ("{0:ffffff\μ\s}" -f $Duration).Trim("0")
         }
     } else {
         $Result
