@@ -80,6 +80,9 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
+        4.0.0: Major refactor to use a C# `Blocks` class
+            - Enables mixing and matching line endings
+            - Enables spacers
         3.4.0: Support right-aligned blocks (with PSReadLine 2.2.0)
             - Fix Get-SegmentedPath so it works with other paths
             - Speed up some things using new PANSIES
