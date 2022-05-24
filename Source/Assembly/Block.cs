@@ -415,7 +415,8 @@ namespace PoshCode.PowerLine
                             Space.RightAlign => "\"`t\"",
                             _ => "\" \""
                         } :
-                        Object is ScriptBlock script ? "{" + script.ToString().Replace("'", "''") + "}" :
+                        // no need to mess with the quotes, because we'll end up in a @'here'@ string
+                        Object is ScriptBlock script ? "{" + script.ToString() + "}" :
                         Object.ToString());
         }
         public void FromPsMetadata(string Metadata) {
