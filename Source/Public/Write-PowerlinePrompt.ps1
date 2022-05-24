@@ -66,6 +66,8 @@ function Write-PowerlinePrompt {
                         $b.BackgroundColor = $ActualColors[$ColorIndex]
                         $ColorUsed = $True
                     }
+                } elseif($b.BackgroundColor -in $ActualColors) {
+                    $ActualColors = $ActualColors -ne $b.BackgroundColor
                 }
             }
             $ColorIndex += $ColorUsed
