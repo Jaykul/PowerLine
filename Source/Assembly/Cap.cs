@@ -2,7 +2,7 @@ using System;
 
 namespace PoshCode.PowerLine
 {
-    public struct Cap
+    public struct Cap : IEquatable<Cap>, IPsMetadataSerializable
     {
         public string Left;
 
@@ -34,6 +34,33 @@ namespace PoshCode.PowerLine
         {
             // If we're right-aligned, use the LEFT cap, and vice-versa
             return State.Alignment == Alignment.Right ? Left : Right;
+        }
+
+        public string ToPsMetadata()
+        {
+            return Left + '\u200D' + Right;
+        }
+
+        public void FromPsMetadata(string Metadata)
+        {
+            var caps = Metadata.Split('\u200D',2);
+            Left = caps[0];
+            Right = caps[1];
+        }
+
+        public bool Equals(Cap other)
+        {
+            return this.Left.Equals(other.Left) && this.Right.Equals(other.Right);
+        }
+
+        public override bool Equals(object other)
+        {
+            return other is Cap cap && this.Left.Equals(cap.Left) && this.Right.Equals(cap.Right);
+        }
+
+        public override int GetHashCode()
+        {
+            return (Left + Right).GetHashCode();
         }
     }
 }

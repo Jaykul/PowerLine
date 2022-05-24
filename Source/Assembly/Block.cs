@@ -2,15 +2,28 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Management.Automation;
 using System.Text;
 using System.Text.RegularExpressions;
 using PoshCode.Pansies;
 
 namespace PoshCode.PowerLine
 {
-    public class Block : PoshCode.Pansies.Text
+    public class Block : PoshCode.Pansies.Text, IPsMetadataSerializable
     {
-        public object Cap { get; set; } = string.Empty;
+        public Cap Cap { get; set; }
+        public new Cap Separator
+        {
+            get
+            {
+                return (Cap)base.Separator;
+            }
+            set
+            {
+                base.Separator = value;
+            }
+        }
+
         public RgbColor ElevatedForegroundColor { get; set; }
         public RgbColor ElevatedBackgroundColor { get; set; }
         public RgbColor ErrorForegroundColor { get; set; }
@@ -102,6 +115,10 @@ namespace PoshCode.PowerLine
         /// <param name="values"></param>
         public Block(IDictionary values) : this()
         {
+            FromDictionary(values);
+        }
+        private void FromDictionary(IDictionary values)
+        {
             foreach (string key in values.Keys)
             {
                 var pattern = "^" + Regex.Escape(key);
@@ -135,11 +152,11 @@ namespace PoshCode.PowerLine
                 }
                 else if (Regex.IsMatch("clear", pattern, RegexOptions.IgnoreCase))
                 {
-                    Clear = (bool)values[key];
+                    Clear = LanguagePrimitives.ConvertTo<bool>(values[key]);
                 }
                 else if (Regex.IsMatch("entities", pattern, RegexOptions.IgnoreCase))
                 {
-                    Entities = (bool)values[key];
+                    Entities = LanguagePrimitives.ConvertTo<bool>(values[key]);
                 }
                 else if (Regex.IsMatch("separator", pattern, RegexOptions.IgnoreCase))
                 {
@@ -174,7 +191,7 @@ namespace PoshCode.PowerLine
                 }
                 else if (Regex.IsMatch("persist", pattern, RegexOptions.IgnoreCase))
                 {
-                    PersistentColor = (bool)values[key];
+                    PersistentColor = LanguagePrimitives.ConvertTo<bool>(values[key]);
                 }
                 else
                 {
@@ -241,7 +258,7 @@ namespace PoshCode.PowerLine
                 case null:
                     break;
                 default:
-                    Cache = ConvertToString(Object, Separator?.ToString());
+                    Cache = ConvertToString(Object, Separator.ToString());
                     if (string.IsNullOrEmpty(Cache.ToString()))
                     {
                         Cache = null;
@@ -254,12 +271,12 @@ namespace PoshCode.PowerLine
 
         public override string ToString()
         {
-            return GetString(ForegroundColor, BackgroundColor, Invoke(null), Cap?.ToString(), Clear, Entities, PersistentColor);
+            return GetString(ForegroundColor, BackgroundColor, Invoke(null), Cap.ToString(), Clear, Entities, PersistentColor);
         }
 
         public string ToLine(RgbColor otherBackground, object cacheKey = null)
         {
-            return GetString(ForegroundColor, BackgroundColor, Invoke(cacheKey), Cap?.ToString(), Clear, Entities, PersistentColor, otherBackground);
+            return GetString(ForegroundColor, BackgroundColor, Invoke(cacheKey), Cap.ToString(), Clear, Entities, PersistentColor, otherBackground);
         }
 
         public static string GetString(RgbColor foreground, RgbColor background, object @object, string cap = null, bool clear = false, bool entities = true, bool persistentColor = true, RgbColor otherBackground = null)
@@ -370,8 +387,61 @@ namespace PoshCode.PowerLine
 
         public bool Equals(Block other)
         {
-            return other != null && (Object == other.Object && ForegroundColor == other.ForegroundColor && BackgroundColor == other.BackgroundColor) && Separator == other.Separator && Cap == other.Cap;
+            return other != null &&
+                (Object == other.Object &&
+                    ForegroundColor == other.ForegroundColor &&
+                    BackgroundColor == other.BackgroundColor) &&
+                Separator.Equals(other.Separator) &&
+                Cap.Equals(other.Cap);
+        }
+
+        public string ToPsMetadata() {
+            return  "ForegroundColor:" + ForegroundColor?.ToString() +
+                    "\nBackgroundColor:" + BackgroundColor?.ToString() +
+                    "\nElevatedForegroundColor:" + ElevatedForegroundColor?.ToString() +
+                    "\nElevatedBackgroundColor:" + ElevatedBackgroundColor?.ToString() +
+                    "\nErrorForegroundColor:" + ErrorForegroundColor?.ToString() +
+                    "\nErrorBackgroundColor:" + ErrorBackgroundColor?.ToString() +
+                    "\nSeparator:" + Separator.ToPsMetadata() +
+                    "\nCap:" + Cap.ToPsMetadata() +
+                    "\nClear:" + (Clear ? 1 : 0) +
+                    "\nEntities:" + (Entities ? 1 : 0)+
+                    "\nPersist:" + (PersistentColor ? 1 : 0)+
+                    "\nObject:" + (
+                        Object is Space space ? space switch
+                        {
+                            Space.Spacer => "\" \"",
+                            Space.NewLine => "\"`n\"",
+                            Space.RightAlign => "\"`t\"",
+                            _ => "\" \""
+                        } :
+                        Object is ScriptBlock script ? "{" + script.ToString().Replace("'", "''") + "}" :
+                        Object.ToString());
+        }
+        public void FromPsMetadata(string Metadata) {
+            var data = Metadata.Split('\n',12)
+                .Select(x => x.Split(':',2))
+                .ToDictionary(x => x[0], x => (object)x[1]);
+
+            string @object = (string)data["Object"];
+
+            // transform the Caps separately
+            Cap.FromPsMetadata((string)data["Cap"]);
+            data.Remove("Cap");
+
+            Separator.FromPsMetadata((string)data["Separator"]);
+            data.Remove("Separator");
+            // strip the null colors
+            var empties = data.Where( x => x.Value.ToString().Length == 0).Select( x => x.Key);
+            foreach(var empty in empties)
+            {
+                data.Remove(empty);
+            }
+
+            if (@object.StartsWith("{") && @object.EndsWith("}")) {
+                data["Object"] = ScriptBlock.Create(@object.Substring(1, @object.Length - 2));
+            }
+            FromDictionary(data);
         }
     }
-
 }

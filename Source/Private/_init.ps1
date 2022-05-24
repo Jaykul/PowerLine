@@ -18,6 +18,7 @@ using namespace PoshCode.Pansies
     }
 )
 
+<#
 Add-MetadataConverter @{
     PowerLineBlock = { New-PowerLineBlock @Args }
     [char]                     = { "'$_'" }
@@ -31,3 +32,4 @@ Add-MetadataConverter @{
         }
     }
 }
+#>
