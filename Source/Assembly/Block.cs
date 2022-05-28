@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
+using System.Management.Automation.Language;
 using System.Text;
 using System.Text.RegularExpressions;
 using PoshCode.Pansies;
@@ -81,7 +82,9 @@ namespace PoshCode.PowerLine
         /// Gets or sets the object.
         /// </summary>
         /// <value>A string</value>
+#pragma warning disable CA1720 // Identifier contains type name
         public new object Object
+#pragma warning restore CA1720 // Identifier contains type name
         {
             get
             {
@@ -89,16 +92,16 @@ namespace PoshCode.PowerLine
             }
             set
             {
-                var spaceTest = value.ToString().Trim();
-                if (spaceTest.Equals("\"`t\"") || spaceTest.Equals("`t"))
+                var spaceTest = value.ToString();
+                if (spaceTest.Equals("\t", StringComparison.Ordinal))
                 {
                     base.Object = Space.RightAlign;
                 }
-                else if (spaceTest.Equals("\"`n\"") || spaceTest.Equals("`n"))
+                else if (spaceTest.Equals("\n", StringComparison.Ordinal))
                 {
                     base.Object = Space.NewLine;
                 }
-                else if (spaceTest.Equals("\" \"") || spaceTest.Equals(" "))
+                else if (spaceTest.Equals(" ", StringComparison.Ordinal))
                 {
                     base.Object = Space.Spacer;
                 }
@@ -146,7 +149,10 @@ namespace PoshCode.PowerLine
                 {
                     ForegroundColor = RgbColor.ConvertFrom(values[key]);
                 }
-                else if (Regex.IsMatch("InputObject", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("text", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("Content", pattern, RegexOptions.IgnoreCase) || Regex.IsMatch("Object", pattern, RegexOptions.IgnoreCase))
+                else if (Regex.IsMatch("InputObject", pattern, RegexOptions.IgnoreCase) ||
+                        Regex.IsMatch("text", pattern, RegexOptions.IgnoreCase) ||
+                        Regex.IsMatch("Content", pattern, RegexOptions.IgnoreCase) ||
+                        Regex.IsMatch("Object", pattern, RegexOptions.IgnoreCase))
                 {
                     Object = values[key];
                 }
@@ -204,7 +210,7 @@ namespace PoshCode.PowerLine
         public Block() : this("") { }
 
         // Make sure we can output plain text
-        public Block(object @object)
+        public Block(object obj)
         {
             var cap = new Cap();
             var sep = new Cap();
@@ -229,7 +235,7 @@ namespace PoshCode.PowerLine
 
             Cap = cap;
             Separator = sep;
-            Object = @object;
+            Object = obj;
         }
 
         public object Cache { get; private set; }
@@ -247,19 +253,22 @@ namespace PoshCode.PowerLine
             switch (Object)
             {
                 case Space space:
-                    State.Alignment = space switch
+                    switch(space)
                     {
-                        Space.RightAlign => Alignment.Right,
-                        Space.NewLine => State.Alignment = Alignment.Left,
-                        _ => State.Alignment
-                    };
+                        case Space.RightAlign:
+                            State.Alignment = Alignment.Right;
+                            break;
+                        case Space.NewLine:
+                            State.Alignment = Alignment.Left;
+                            break;
+                    }
                     Cache = Object;
                     break;
                 case null:
                     break;
                 default:
                     Cache = ConvertToString(Object, Separator.ToString());
-                    if (string.IsNullOrEmpty(Cache.ToString()))
+                    if (string.IsNullOrEmpty(Cache?.ToString()))
                     {
                         Cache = null;
                     }
@@ -279,16 +288,16 @@ namespace PoshCode.PowerLine
             return GetString(ForegroundColor, BackgroundColor, Invoke(cacheKey), Cap.ToString(), Clear, Entities, PersistentColor, otherBackground);
         }
 
-        public static string GetString(RgbColor foreground, RgbColor background, object @object, string cap = null, bool clear = false, bool entities = true, bool persistentColor = true, RgbColor otherBackground = null)
+        public static string GetString(RgbColor foreground, RgbColor background, object obj, string cap = null, bool clear = false, bool entities = true, bool persistentColor = true, RgbColor otherBackground = null)
         {
             var output = new StringBuilder();
-            if (@object is Space space)
+            if (obj is Space space)
             {
                 switch (space)
                 {
                     case Space.Spacer:
                         cap = "\u001b[7m" + cap + "\u001b[27m";
-                        @object = string.Empty;
+                        obj = string.Empty;
                         background = otherBackground;
                         foreground = otherBackground = null;
                         break;
@@ -342,7 +351,7 @@ namespace PoshCode.PowerLine
             }
 
             output.Append(color.ToString());
-            output.Append(@object.ToString());
+            output.Append(obj.ToString());
 
             if (cap != null && State.Alignment == Alignment.Left)
             {
@@ -395,54 +404,75 @@ namespace PoshCode.PowerLine
                 Cap.Equals(other.Cap);
         }
 
-        public string ToPsMetadata() {
-            return  "ForegroundColor:" + ForegroundColor?.ToString() +
-                    "\nBackgroundColor:" + BackgroundColor?.ToString() +
-                    "\nElevatedForegroundColor:" + ElevatedForegroundColor?.ToString() +
-                    "\nElevatedBackgroundColor:" + ElevatedBackgroundColor?.ToString() +
-                    "\nErrorForegroundColor:" + ErrorForegroundColor?.ToString() +
-                    "\nErrorBackgroundColor:" + ErrorBackgroundColor?.ToString() +
-                    "\nSeparator:" + Separator.ToPsMetadata() +
-                    "\nCap:" + Cap.ToPsMetadata() +
-                    "\nClear:" + (Clear ? 1 : 0) +
-                    "\nEntities:" + (Entities ? 1 : 0)+
-                    "\nPersist:" + (PersistentColor ? 1 : 0)+
-                    "\nObject:" + (
-                        Object is Space space ? space switch
-                        {
-                            Space.Spacer => "\" \"",
-                            Space.NewLine => "\"`n\"",
-                            Space.RightAlign => "\"`t\"",
-                            _ => "\" \""
-                        } :
-                        // no need to mess with the quotes, because we'll end up in a @'here'@ string
-                        Object is ScriptBlock script ? "{" + script.ToString() + "}" :
-                        Object.ToString());
-        }
-        public void FromPsMetadata(string Metadata) {
-            var data = Metadata.Split('\n',12)
-                .Select(x => x.Split(':',2))
-                .ToDictionary(x => x[0], x => (object)x[1]);
+        public override string ToPsMetadata() {
 
-            string @object = (string)data["Object"];
-
-            // transform the Caps separately
-            Cap.FromPsMetadata((string)data["Cap"]);
-            data.Remove("Cap");
-
-            Separator.FromPsMetadata((string)data["Separator"]);
-            data.Remove("Separator");
-            // strip the null colors
-            var empties = data.Where( x => x.Value.ToString().Length == 0).Select( x => x.Key);
-            foreach(var empty in empties)
+            var objectString = string.Empty;
+            // ToDictionary and Constructor handle single-character strings (with quotes) for Space
+            if (Object is Space space)
             {
-                data.Remove(empty);
+                objectString = "\" \"";
+                switch (space)
+                {
+                    case Space.Spacer:
+                        objectString = "\" \"";
+                        break;
+                    case Space.NewLine:
+                        objectString = "\"`n\"";
+                        break;
+                    case Space.RightAlign:
+                        objectString = "\"`t\"";
+                        break;
+                }
+            }
+            else if (Object is ScriptBlock script)
+            {
+                objectString = "(ScriptBlock '" + script.ToString().Replace("\'","\'\'") + "')";
+            }
+            else
+            {
+                objectString = "\'" + Object.ToString().Replace("\'", "\'\'") + "\'";
             }
 
-            if (@object.StartsWith("{") && @object.EndsWith("}")) {
-                data["Object"] = ScriptBlock.Create(@object.Substring(1, @object.Length - 2));
+            return  "@{" +
+                    (ForegroundColor != null ? "\nForegroundColor='" + ForegroundColor.ToString() + "'" : "") +
+                    (BackgroundColor != null ? "\nBackgroundColor='" + BackgroundColor.ToString() + "'" : "") +
+                    (ErrorForegroundColor != null ? "\nErrorForegroundColor='" + ErrorForegroundColor.ToString() + "'" : "") +
+                    (ErrorBackgroundColor != null ? "\nErrorBackgroundColor='" + ErrorBackgroundColor.ToString() + "'" : "") +
+                    (ElevatedForegroundColor != null ? "\nElevatedForegroundColor='" + ElevatedForegroundColor.ToString() + "'" : "") +
+                    (ElevatedBackgroundColor != null ? "\nElevatedBackgroundColor='" + ElevatedBackgroundColor.ToString() + "'" : "") +
+                    "\nSeparator='" + Separator.ToPsMetadata() + "'" +
+                    "\nCap='" + Cap.ToPsMetadata() + "'" +
+                    "\nClear=" + (Clear ? 1 : 0) +
+                    "\nEntities=" + (Entities ? 1 : 0) +
+                    "\nPersist=" + (PersistentColor ? 1 : 0) +
+                    "\nObject=" + objectString +
+                    "\n}";
+        }
+
+        public override void FromPsMetadata(string metadata)
+        {
+            var ps = PowerShell.Create(RunspaceMode.CurrentRunspace);
+            var languageMode = ps.Runspace.SessionStateProxy.LanguageMode;
+            Hashtable data;
+            try
+            {
+                ps.Runspace.SessionStateProxy.LanguageMode = PSLanguageMode.RestrictedLanguage;
+                ps.AddScript(metadata, true);
+                data = ps.Invoke<Hashtable>().FirstOrDefault();
+
+                // transform the Caps separately
+                Cap.FromPsMetadata(data["Cap"].ToString());
+                data.Remove("Cap");
+
+                Separator.FromPsMetadata(data["Separator"].ToString());
+                data.Remove("Separator");
+
+                FromDictionary(data);
             }
-            FromDictionary(data);
+            finally
+            {
+                ps.Runspace.SessionStateProxy.LanguageMode = languageMode;
+            }
         }
     }
 }

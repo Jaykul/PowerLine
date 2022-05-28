@@ -1,5 +1,8 @@
-public interface IPsMetadataSerializable
+namespace PoshCode.PowerLine
 {
-    string ToPsMetadata();
-    void FromPsMetadata(string Metadata);
+    public interface IPsMetadataSerializable
+    {
+        string ToPsMetadata();
+        void FromPsMetadata(string metadata);
+    }
 }

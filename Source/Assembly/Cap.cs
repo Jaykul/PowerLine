@@ -4,9 +4,9 @@ namespace PoshCode.PowerLine
 {
     public struct Cap : IEquatable<Cap>, IPsMetadataSerializable
     {
-        public string Left;
+        public string Left { get; set; }
 
-        public string Right;
+        public string Right { get; set; }
 
         public Cap(string left = " ", string right = null)
         {
@@ -38,29 +38,39 @@ namespace PoshCode.PowerLine
 
         public string ToPsMetadata()
         {
-            return Left + '\u200D' + Right;
+            return Left + "\u200D" + Right;
         }
 
-        public void FromPsMetadata(string Metadata)
+        public void FromPsMetadata(string metadata)
         {
-            var caps = Metadata.Split('\u200D',2);
+            var caps = metadata.Split( new char[] { '\u200D' }, 2);
             Left = caps[0];
             Right = caps[1];
         }
 
         public bool Equals(Cap other)
         {
-            return this.Left.Equals(other.Left) && this.Right.Equals(other.Right);
+            return this.Left.Equals(other.Left, StringComparison.Ordinal) && this.Right.Equals(other.Right, StringComparison.Ordinal);
         }
 
-        public override bool Equals(object other)
+        public override bool Equals(object obj)
         {
-            return other is Cap cap && this.Left.Equals(cap.Left) && this.Right.Equals(cap.Right);
+            return obj is Cap cap && this.Left.Equals(cap.Left, StringComparison.Ordinal) && this.Right.Equals(cap.Right, StringComparison.Ordinal);
         }
 
         public override int GetHashCode()
         {
             return (Left + Right).GetHashCode();
+        }
+
+        public static bool operator ==(Cap left, Cap right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Cap left, Cap right)
+        {
+            return !(left == right);
         }
     }
 }

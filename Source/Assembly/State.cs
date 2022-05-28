@@ -4,7 +4,8 @@ using System.Runtime.InteropServices;
 
 namespace PoshCode.PowerLine
 {
-    static class NativeMethods {
+    static class NativeMethods
+    {
         [DllImport("libc")]
         internal static extern uint getuid();
 
@@ -14,19 +15,29 @@ namespace PoshCode.PowerLine
 
     public static class State
     {
-        [ThreadStatic] public static Alignment Alignment = Alignment.Left;
-        [ThreadStatic] public static bool LastSuccess = true;
+        [ThreadStatic] private static Alignment alignment = Alignment.Left;
+        [ThreadStatic] private static bool lastSuccess = true;
 
-        public static bool Elevated = false;
+        public static bool Elevated { get; }
 
-        static State() {
+        public static Alignment Alignment { get => alignment; set => alignment = value; }
 
-            try {
+        public static bool LastSuccess { get => lastSuccess; set => lastSuccess = value; }
+
+        static State()
+        {
+
+            try
+            {
                 Elevated = WindowsIdentity.GetCurrent().Owner.IsWellKnown(WellKnownSidType.BuiltinAccountOperatorsSid);
-            } catch {
-                try {
+            }
+            catch
+            {
+                try
+                {
                     Elevated = 0 == NativeMethods.getuid();
-                } catch {}
+                }
+                catch {}
             }
         }
     }
