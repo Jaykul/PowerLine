@@ -2,7 +2,7 @@ using System;
 
 namespace PoshCode.PowerLine
 {
-    public struct Cap : IEquatable<Cap>, IPsMetadataSerializable
+    public class Cap : IEquatable<Cap>, IPsMetadataSerializable
     {
         public string Left { get; set; }
 
