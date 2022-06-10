@@ -35,68 +35,68 @@ function Write-PowerlinePrompt {
             [PoshCode.Pansies.NativeMethods]::EnableVirtualTerminalProcessing()
         }
 
-        # Evaluate all the scriptblocks in $prompt
-        $UniqueColorsCount = 0
-        $PromptText = @($Prompt)
-
-        # Based on the number of text blocks, make up colors if we need to...
-        [PoshCode.Pansies.RgbColor[]]$ActualColors = @(
-            if ($Script:Colors.Count -ge $UniqueColorsCount) {
-                $Script:Colors
-            } elseif ($Script:Colors.Count -eq 2) {
-                Get-Gradient ($Script:Colors[0]) ($Script:Colors[1]) -Count $UniqueColorsCount -Flatten
-            } else {
-                $Script:Colors * ([Math]::Ceiling($UniqueColorsCount/$Script:Colors.Count))
+        # Pre-evaluate all the scriptblocks in $prompt (then we just use .Cache)
+        $Buffer = @($Prompt)
+        $MissingColorCount = 0
+        $CacheKey = if ($Script:PowerLineConfig.NoCache) { [Guid]::NewGuid() } else { $MyInvocation.HistoryId }
+        for ($b = 0; $b -lt $Buffer.Count; $b++) {
+            try {
+                $MissingColorCount += $Buffer[$b].Invoke($CacheKey) -isnot [PoshCode.PowerLine.Space] -and -not $Buffer[$b].BackgroundColor
+            } catch {
+                $PromptErrors.Add("$b { $($_.Object) }", $_)
             }
-        )
-
-        $CacheKey = if ($Script:PowerLineConfig.NoCache) {
-            [Guid]::NewGuid()
-        } else {
-            $MyInvocation.HistoryId
         }
 
-        # Loop through the text blocks and set colors
-        $ColorIndex = 0
-        foreach ($block in $PromptText) {
-            $ColorUsed = $False
-            foreach ($b in @($block)) {
-                if (!$b.BackgroundColor) {
-                    if ($b.Object -isnot [PoshCode.PowerLine.Space]) {
-                        $b.BackgroundColor = $ActualColors[$ColorIndex]
+        # Now that we're using blocks, we can skip this after the first pass
+        if ($MissingColorCount -gt 0) {
+            # Based on the number of text blocks, make up colors if we need to...
+            [PoshCode.Pansies.RgbColor[]]$ActualColors = @(
+                if ($Script:Colors.Count -ge $MissingColorCount) {
+                    $Script:Colors
+                } elseif ($Script:Colors.Count -eq 2) {
+                    Get-Gradient ($Script:Colors[0]) ($Script:Colors[1]) -Count $MissingColorCount -Flatten
+                } elseif ($Script:Colors.Count -gt 0) {
+                    $Script:Colors * ([Math]::Ceiling($MissingColorCount/$Script:Colors.Count))
+                }
+            )
+
+            # Loop through the text blocks and set colors
+            $ColorIndex = 0
+            foreach ($block in $Buffer) {
+                $ColorUsed = $False
+                if (!$block.BackgroundColor) {
+                    if ($block.Object -isnot [PoshCode.PowerLine.Space]) {
+                        $block.BackgroundColor = $ActualColors[$ColorIndex]
                         $ColorUsed = $True
                     }
-                } elseif($b.BackgroundColor -in $ActualColors) {
-                    $ActualColors = $ActualColors -ne $b.BackgroundColor
+                } elseif($block.BackgroundColor -in $ActualColors) {
+                    $ActualColors = $ActualColors -ne $block.BackgroundColor
                 }
-            }
-            $ColorIndex += $ColorUsed
+                $ColorIndex += $ColorUsed
 
-            foreach ($b in @($block)) {
-                if ($null -ne $b.BackgroundColor -and $null -eq $b.ForegroundColor) {
+                if ($block.BackgroundColor -and !$block.ForegroundColor) {
                     if ($Script:PowerLineConfig.FullColor) {
-                        $b.ForegroundColor = Get-Complement $b.BackgroundColor -ForceContrast
+                        $block.ForegroundColor = Get-Complement $block.BackgroundColor -ForceContrast
                     } else {
-                        $b.BackgroundColor, $b.ForegroundColor = Get-Complement $b.BackgroundColor -ConsoleColor -Passthru
+                        $block.BackgroundColor, $block.ForegroundColor = Get-Complement $block.BackgroundColor -ConsoleColor -Passthru
                     }
                 }
             }
         }
 
         ## Finally, unroll all the output and join into one string (using separators and spacing)
-        $Buffer = $PromptText | ForEach-Object { $_ }
         $extraLineCount = 0
         $line = ""
         $result = ""
         $BufferWidth = [Console]::BufferWidth
         $CSI = "$([char]27)["
 
-        # Pre-invoke everything, because then we can use .Cache
-        for ($b = 0; $b -lt $Buffer.Count; $b++) {
-            $block = $Buffer[$b].Invoke($CacheKey)
-        }
-
         [PoshCode.PowerLine.State]::Alignment = "Left"
+
+        # The trick to right-aligned text is to know where to start it
+        # So we need to know how long it is, and then PREFIX it with an alignment sequence.
+        # In order to support putting the prompt back on the left
+        # In order for that to work, we need to combine block output into a "line" and measure the length
 
         # $LastBackground = $null
         for ($b = 0; $b -lt $Buffer.Count; $b++) {
@@ -105,11 +105,11 @@ function Write-PowerlinePrompt {
             # Column Separator
             if ($block.Object -eq [PoshCode.PowerLine.Space]::RightAlign) {
                 [PoshCode.PowerLine.State]::Alignment = "Right"
-                $result += $line + $Csi + "s" # STORE
+                $result += $line + $CSI + "s" # STORE
                 $line = ""
             # New Line
             } elseif ($block.Object -eq [PoshCode.PowerLine.Space]::NewLine) {
-                if ([PoshCode.PowerLine.State]::Alignment) {
+                if ([PoshCode.PowerLine.State]::Alignment -eq "Right") {
                     [PoshCode.PowerLine.State]::Alignment = "Left"
                     ## This is a VERY simplistic test for escape sequences
                     $lineLength = ($line -replace "\u001B.*?\p{L}").Length

@@ -2,15 +2,29 @@ using System;
 
 namespace PoshCode.PowerLine
 {
-    public class Cap : IEquatable<Cap>, IPsMetadataSerializable
+    public class PowerLineCap : IEquatable<PowerLineCap>, IPsMetadataSerializable
     {
         public string Left { get; set; }
 
         public string Right { get; set; }
 
-        public Cap(string left = " ", string right = null)
+        public PowerLineCap(string caps = " ")
         {
-            left = !String.IsNullOrEmpty(left) ? left : " ";
+            caps = !String.IsNullOrEmpty(caps) ? PoshCode.Pansies.Entities.Decode(caps) : " ";
+            if (caps.Length > 1)
+            {
+                Left = char.IsSurrogate(caps, 0) ? char.ConvertFromUtf32(char.ConvertToUtf32(caps, 1)) : caps.Substring(0, 1);
+                Right = char.IsSurrogate(caps, Left.Length) ? char.ConvertFromUtf32(char.ConvertToUtf32(caps, Left.Length)) : caps.Substring(Left.Length, 1);
+            }
+            else
+            {
+                Right = Left = caps;
+            }
+        }
+
+        public PowerLineCap(string left, string right)
+        {
+            left = !String.IsNullOrEmpty(left) ? PoshCode.Pansies.Entities.Decode(left) : " ";
             if (right == null)
             {
                 if (left.Length > 1)
@@ -26,14 +40,14 @@ namespace PoshCode.PowerLine
             else
             {
                 Left = left;
-                Right = right;
+                Right = PoshCode.Pansies.Entities.Decode(right);
             }
         }
 
         public override string ToString()
         {
-            // If we're right-aligned, use the LEFT cap, and vice-versa
-            return State.Alignment == Alignment.Right ? Left : Right;
+            // If we're right-aligned, use the right cap, and vice-versa
+            return State.Alignment == Alignment.Right ? Right : Left;
         }
 
         public string ToPsMetadata()
@@ -48,14 +62,14 @@ namespace PoshCode.PowerLine
             Right = caps[1];
         }
 
-        public bool Equals(Cap other)
+        public bool Equals(PowerLineCap other)
         {
             return this.Left.Equals(other.Left, StringComparison.Ordinal) && this.Right.Equals(other.Right, StringComparison.Ordinal);
         }
 
         public override bool Equals(object obj)
         {
-            return obj is Cap cap && this.Left.Equals(cap.Left, StringComparison.Ordinal) && this.Right.Equals(cap.Right, StringComparison.Ordinal);
+            return obj is PowerLineCap cap && this.Left.Equals(cap.Left, StringComparison.Ordinal) && this.Right.Equals(cap.Right, StringComparison.Ordinal);
         }
 
         public override int GetHashCode()
@@ -63,12 +77,12 @@ namespace PoshCode.PowerLine
             return (Left + Right).GetHashCode();
         }
 
-        public static bool operator ==(Cap left, Cap right)
+        public static bool operator ==(PowerLineCap left, PowerLineCap right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator !=(Cap left, Cap right)
+        public static bool operator !=(PowerLineCap left, PowerLineCap right)
         {
             return !(left == right);
         }

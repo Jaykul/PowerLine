@@ -227,10 +227,9 @@ There are a few extra functions included as part of the PowerLine module:
 
 Cmdlet                | Description
 ----                  | -----------
-New-PromptText        | A wrapper for New-Text that supports changing foreground or background colors based on whether there's an error or whether the session is elevated.
+New-PowerLineBlock    | A wrapper for New-Text that supports changing foreground or background colors based on whether there's an error or whether the session is elevated.
 Get-Elapsed           | Calls Get-History to get a single command (the most recent, or by ID) and returns the difference between the Start and End execution time.
-Get-SegmentedPath     | Converts a path to an array of Pansies Text objects (one for each folder), with a limit on how many folders to return. Truncates and appends an ellipsis.
-Get-ShortenedPath     | Shortens a path to a specified length, with some options for the output
+Get-ShortPath         | Get a shortened version of a path for use in the prompt
 Test-Elevation        | Returns True if the current session is elevated, false otherwise
 Test-Success          | Returns True if the last command was successful, false otherwise
 
@@ -241,9 +240,9 @@ PowerLine also provides some additional functions for adding and removing from t
 
 PowerLine gives you an `Add-PowerLineBlock` which lets you pass in a `ScriptBlock` and have it added to the prompt only if it's not already there -- which means the user can move it around, and re-import the module without having it show up twice. It even has an `-AutoRemove` switch which can be used when adding to the PowerLine from a module to automatically remove that block if the module is removed by the user. And of course, there's a `Remove-PowerLineBlock` which lets you clean up manually.
 
-There is a `New-PromptText` function which allows you to change the colors based on elevation, or the success of the last command.
+There is a `New-PowerLineBlock` function which allows you to change the colors based on elevation, or the success of the last command.
 
-Finally, there are separate `Test-Success` and `Test-Elevation` functions (which are used by New-PromptText), if you just want to output something conditionally, or deal with it on your own.
+Finally, there are separate `Test-Success` and `Test-Elevation` functions (which are used by New-PowerLineBlock), if you just want to output something conditionally, or deal with it on your own.
 
 ## Future Plans
 

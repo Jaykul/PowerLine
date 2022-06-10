@@ -48,7 +48,7 @@ RequiredModules = @(
 # RequiredAssemblies = "lib\PowerLine.dll"
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'Set-PowerLinePrompt', 'Write-PowerlinePrompt', 'Export-PowerLinePrompt', 'Get-PowerLineTheme', 'Add-PowerLineBlock', 'Remove-PowerLineBlock', 'New-PromptText', 'Get-Elapsed', 'Get-ErrorCount', 'Get-SegmentedPath', 'Get-ShortenedPath', 'Test-Success', 'Test-Elevation'
+FunctionsToExport = @()
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
@@ -57,7 +57,7 @@ CmdletsToExport = @()
 VariablesToExport = @()
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = 'New-PowerLineBlock', 'Set-PowerLineTheme'
+AliasesToExport = @()
 
 # List of all files packaged with this module
 # FileList = @()
@@ -80,7 +80,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
-        4.0.0: Major refactor to use a C# `Blocks` class
+        4.0.0: Major refactor to use a C# `PowerLineBlock` class
             - Enables mixing and matching line endings
             - Enables spacers
         3.4.0: Support right-aligned blocks (with PSReadLine 2.2.0)

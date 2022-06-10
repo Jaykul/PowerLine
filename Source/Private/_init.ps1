@@ -4,7 +4,7 @@ using namespace System.Collections.Generic
 using namespace PoshCode.Pansies
 
 # Ensure the global prompt variable exists and is typed the way we expect
-[System.Collections.Generic.List[PoshCode.PowerLine.Block]]$Global:Prompt = [PoshCode.PowerLine.Block[]]@(
+[System.Collections.Generic.List[PoshCode.PowerLine.PowerLineBlock]]$Global:Prompt = [PoshCode.PowerLine.PowerLineBlock[]]@(
     if (Test-Path Variable:Prompt) {
         if ($Prompt.Colors) {
             try {
@@ -14,22 +14,31 @@ using namespace PoshCode.Pansies
             }
         }
 
-        $Prompt | ForEach-Object { [PoshCode.PowerLine.Block]$_ }
+        $Prompt | ForEach-Object { [PoshCode.PowerLine.PowerLineBlock]$_ }
     }
 )
 
-<#
-Add-MetadataConverter @{
-    PowerLineBlock = { New-PowerLineBlock @Args }
-    [char]                     = { "'$_'" }
-    [PoshCode.PowerLine.Block] = {
-        if ($_.Object -is [PoshCode.PowerLine.Space]) {
-            "PowerLineBlock -$($_.Object) -Separator @('$($_.Separator.Left)', '$($_.Separator.Right)') -Cap @('$($_.Cap.Left)', '$($_.Cap.Right)')"
-        } elseif ($_.Object -is [scriptblock]) {
-            "PowerLineBlock $("(ScriptBlock '{0}')" -f ($_.Object -replace "'", "''")) -Separator @('$($_.Separator.Left)', '$($_.Separator.Right)') -Cap @('$($_.Cap.Left)', '$($_.Cap.Right)') -ForegroundColor '$($_.ForegroundColor)' -BackgroundColor '$($_.BackgroundColor)' -ElevatedForegroundColor '$($_.ElevatedForegroundColor)' -ElevatedBackgroundColor '$($_.ElevatedBackgroundColor)' -ErrorForegroundColor '$($_.ErrorForegroundColor)' -ErrorBackgroundColor '$($_ErrorBackgroundColor)'"
-        } else {
-            "PowerLineBlock $(ConvertTo-Metadata $_.Object) -Separator @('$($_.Separator.Left)', '$($_.Separator.Right)') -Cap @('$($_.Cap.Left)', '$($_.Cap.Right)') -ForegroundColor '$($_.ForegroundColor)' -BackgroundColor '$($_.BackgroundColor)' -ElevatedForegroundColor '$($_.ElevatedForegroundColor)' -ElevatedBackgroundColor '$($_.ElevatedBackgroundColor)' -ErrorForegroundColor '$($_.ErrorForegroundColor)' -ErrorBackgroundColor '$($_ErrorBackgroundColor)'"
-        }
+$xlr8r = [psobject].assembly.gettype("System.Management.Automation.TypeAccelerators")
+@{
+    "PowerLineBlock" = [PoshCode.PowerLine.PowerLineBlock]
+    "PowerLineCap" = [PoshCode.PowerLine.PowerLineCap]
+    "Space" = [PoshCode.PowerLine.Space]
+}.GetEnumerator().ForEach({
+    $Name = $_.Key
+    $Type = $_.Value
+    if ($xlr8r::AddReplace) {
+        $xlr8r::AddReplace( $Name, $Type)
+    } else {
+        $null = $xlr8r::Remove( $Name )
+        $xlr8r::Add( $Name, $Type)
     }
-}
-#>
+    trap [System.Management.Automation.MethodInvocationException] {
+        if ($xlr8r::get.keys -contains $Name) {
+            if ($xlr8r::get[$Name] -ne $Type) {
+                Write-Error "Cannot add accelerator [$Name] for [$($Type.FullName)]n                  [$Name] is already defined as [$($xlr8r::get[$Name].FullName)]"
+            }
+            Continue;
+        }
+        throw
+    }
+})

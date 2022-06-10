@@ -10,14 +10,14 @@ using PoshCode.Pansies;
 
 namespace PoshCode.PowerLine
 {
-    public class Block : PoshCode.Pansies.Text, IPsMetadataSerializable
+    public class PowerLineBlock : PoshCode.Pansies.Text, IPsMetadataSerializable
     {
-        public Cap Cap { get; set; }
-        public new Cap Separator
+        public PowerLineCap Cap { get; set; }
+        public new PowerLineCap Separator
         {
             get
             {
-                return (Cap)base.Separator;
+                return (PowerLineCap)base.Separator;
             }
             set
             {
@@ -93,15 +93,15 @@ namespace PoshCode.PowerLine
             set
             {
                 var spaceTest = value.ToString();
-                if (spaceTest.Equals("\t", StringComparison.Ordinal))
+                if (spaceTest.Equals("\t", StringComparison.Ordinal) || spaceTest.Trim().Equals("\"`t\"", StringComparison.Ordinal))
                 {
                     base.Object = Space.RightAlign;
                 }
-                else if (spaceTest.Equals("\n", StringComparison.Ordinal))
+                else if (spaceTest.Equals("\n", StringComparison.Ordinal) || spaceTest.Trim().Equals("\"`n\"", StringComparison.Ordinal))
                 {
                     base.Object = Space.NewLine;
                 }
-                else if (spaceTest.Equals(" ", StringComparison.Ordinal))
+                else if (spaceTest.Equals(" ", StringComparison.Ordinal) || spaceTest.Trim().Equals("\" \"", StringComparison.Ordinal))
                 {
                     base.Object = Space.Spacer;
                 }
@@ -116,7 +116,7 @@ namespace PoshCode.PowerLine
         /// This constructor is here so we can allow partial matches to the property names.
         /// </summary>
         /// <param name="values"></param>
-        public Block(IDictionary values) : this()
+        public PowerLineBlock(IDictionary values) : this()
         {
             FromDictionary(values);
         }
@@ -166,33 +166,38 @@ namespace PoshCode.PowerLine
                 }
                 else if (Regex.IsMatch("separator", pattern, RegexOptions.IgnoreCase))
                 {
-                    if (values[key] is Cap)
+                    if (values[key] is PowerLineCap)
                     {
-                        Separator = (Cap)values[key];
+                        Separator = (PowerLineCap)values[key];
                     }
                     else if (values[key] is Array array && array.Length > 1)
                     {
-                        Separator = new Cap(array.GetValue(0).ToString(), array.GetValue(1).ToString());
+                        Separator = new PowerLineCap(array.GetValue(0).ToString(), array.GetValue(1).ToString());
                     }
                     else
                     {
-                        Separator = new Cap(values[key].ToString());
+                        Separator = new PowerLineCap(values[key].ToString());
                     }
                 }
                 else if (Regex.IsMatch("cap", pattern, RegexOptions.IgnoreCase))
                 {
-                    if (values[key] is Cap)
+                    if (values[key] is PowerLineCap)
                     {
-                        Cap = (Cap)values[key];
+                        Cap = (PowerLineCap)values[key];
                     }
                     else if (values[key] is Array && ((Array)values[key]).Length > 1)
                     {
                         var kv = (Array)values[key];
-                        Cap = new Cap(kv.GetValue(0).ToString(), kv.GetValue(1).ToString());
+                        Cap = new PowerLineCap(kv.GetValue(0).ToString(), kv.GetValue(1).ToString());
+                    }
+                    else if (values[key] is Array && ((Array)values[key]).Length == 1)
+                    {
+                        var kv = (Array)values[key];
+                        Cap = new PowerLineCap(kv.GetValue(0).ToString());
                     }
                     else
                     {
-                        Cap = new Cap(values[key].ToString());
+                        Cap = new PowerLineCap(values[key].ToString());
                     }
                 }
                 else if (Regex.IsMatch("persist", pattern, RegexOptions.IgnoreCase))
@@ -207,37 +212,17 @@ namespace PoshCode.PowerLine
         }
 
         // Make sure we support the default ctor
-        public Block() : this("") { }
+        public PowerLineBlock() : this("") { }
 
         // Make sure we can output plain text
-        public Block(object obj)
+        public PowerLineBlock(object obj)
         {
-            var cap = new Cap();
-            var sep = new Cap();
-
-            var chars = Pansies.Entities.ExtendedCharacters;
-            if (chars.ContainsKey("ColorSeparator"))
-            {
-                cap.Right = chars["ColorSeparator"];
-            }
-            if (chars.ContainsKey("ReverseColorSeparator"))
-            {
-                cap.Left = chars["ReverseColorSeparator"];
-            }
-            if (chars.ContainsKey("Separator"))
-            {
-                sep.Right = chars["Separator"];
-            }
-            if (chars.ContainsKey("ReverseSeparator"))
-            {
-                sep.Left = chars["ReverseSeparator"];
-            }
-
-            Cap = cap;
-            Separator = sep;
+            Cap = State.DefaultCap;
+            Separator = State.DefaultSeparator;
             Object = obj;
         }
 
+        // The Cache is always a string or a Space enum
         public object Cache { get; private set; }
         private object CacheKey;
         public object Invoke(object cacheKey = null)
@@ -267,7 +252,7 @@ namespace PoshCode.PowerLine
                 case null:
                     break;
                 default:
-                    Cache = ConvertToString(Object, Separator.ToString());
+                    Cache = ConvertToString(Object, Separator?.ToString());
                     if (string.IsNullOrEmpty(Cache?.ToString()))
                     {
                         Cache = null;
@@ -280,12 +265,12 @@ namespace PoshCode.PowerLine
 
         public override string ToString()
         {
-            return GetString(ForegroundColor, BackgroundColor, Invoke(null), Cap.ToString(), Clear, Entities, PersistentColor);
+            return GetString(ForegroundColor, BackgroundColor, Invoke(null), Cap?.ToString(), Clear, Entities, PersistentColor);
         }
 
         public string ToLine(RgbColor otherBackground, object cacheKey = null)
         {
-            return GetString(ForegroundColor, BackgroundColor, Invoke(cacheKey), Cap.ToString(), Clear, Entities, PersistentColor, otherBackground);
+            return GetString(ForegroundColor, BackgroundColor, Invoke(cacheKey), Cap?.ToString(), Clear, Entities, PersistentColor, otherBackground);
         }
 
         public static string GetString(RgbColor foreground, RgbColor background, object obj, string cap = null, bool clear = false, bool entities = true, bool persistentColor = true, RgbColor otherBackground = null)
@@ -394,14 +379,14 @@ namespace PoshCode.PowerLine
             }
         }
 
-        public bool Equals(Block other)
+        public bool Equals(PowerLineBlock other)
         {
             return other != null &&
                 (Object == other.Object &&
                     ForegroundColor == other.ForegroundColor &&
                     BackgroundColor == other.BackgroundColor) &&
-                Separator.Equals(other.Separator) &&
-                Cap.Equals(other.Cap);
+                (Separator == null && other.Separator == null || Separator.Equals(other.Separator)) &&
+                (Cap == null && other.Cap == null || Cap.Equals(other.Cap));
         }
 
         public override string ToPsMetadata() {
@@ -434,17 +419,17 @@ namespace PoshCode.PowerLine
             }
 
             return  "@{" +
-                    (ForegroundColor != null ? "\nForegroundColor='" + ForegroundColor.ToString() + "'" : "") +
-                    (BackgroundColor != null ? "\nBackgroundColor='" + BackgroundColor.ToString() + "'" : "") +
-                    (ErrorForegroundColor != null ? "\nErrorForegroundColor='" + ErrorForegroundColor.ToString() + "'" : "") +
-                    (ErrorBackgroundColor != null ? "\nErrorBackgroundColor='" + ErrorBackgroundColor.ToString() + "'" : "") +
-                    (ElevatedForegroundColor != null ? "\nElevatedForegroundColor='" + ElevatedForegroundColor.ToString() + "'" : "") +
-                    (ElevatedBackgroundColor != null ? "\nElevatedBackgroundColor='" + ElevatedBackgroundColor.ToString() + "'" : "") +
-                    "\nSeparator='" + Separator.ToPsMetadata() + "'" +
-                    "\nCap='" + Cap.ToPsMetadata() + "'" +
-                    "\nClear=" + (Clear ? 1 : 0) +
-                    "\nEntities=" + (Entities ? 1 : 0) +
-                    "\nPersist=" + (PersistentColor ? 1 : 0) +
+                    (ForegroundColor is null ? "" : "\nForegroundColor='" + ForegroundColor.ToString() + "'") +
+                    (BackgroundColor is null ? "" : "\nBackgroundColor='" + BackgroundColor.ToString() + "'") +
+                    (ErrorForegroundColor is null ? "" : "\nErrorForegroundColor='" + ErrorForegroundColor.ToString() + "'") +
+                    (ErrorBackgroundColor is null ? "" : "\nErrorBackgroundColor='" + ErrorBackgroundColor.ToString() + "'") +
+                    (ElevatedForegroundColor is null ? "" : "\nElevatedForegroundColor='" + ElevatedForegroundColor.ToString() + "'") +
+                    (ElevatedBackgroundColor is null ? "" : "\nElevatedBackgroundColor='" + ElevatedBackgroundColor.ToString() + "'") +
+                    (Separator is null ? "" : "\nSeparator='" + Separator.ToPsMetadata() + "'") +
+                    (Cap is null ? "" : "\nCap='" + Cap.ToPsMetadata() + "'") +
+                    (Clear ? "\nClear=1" : "") +
+                    (Entities ? "\nEntities=1" : "")  +
+                    (PersistentColor ? "\nPersist=1" : "") +
                     "\nObject=" + objectString +
                     "\n}";
         }
@@ -461,11 +446,19 @@ namespace PoshCode.PowerLine
                 data = ps.Invoke<Hashtable>().FirstOrDefault();
 
                 // transform the Caps separately
-                Cap.FromPsMetadata(data["Cap"].ToString());
-                data.Remove("Cap");
+                if (data.Contains("Cap"))
+                {
+                    Cap = new PowerLineCap();
+                    Cap.FromPsMetadata(data["Cap"].ToString());
+                    data.Remove("Cap");
+                }
 
-                Separator.FromPsMetadata(data["Separator"].ToString());
-                data.Remove("Separator");
+                if (data.Contains("Separator"))
+                {
+                    Separator = new PowerLineCap();
+                    Separator.FromPsMetadata(data["Separator"].ToString());
+                    data.Remove("Separator");
+                }
 
                 FromDictionary(data);
             }

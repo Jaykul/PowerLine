@@ -20,9 +20,6 @@ function SyncColor {
         # Otherwise, if the script colors are set (they're our cache), use those
         } elseif ($script:Colors) {
             $script:Colors
-        } else {
-            # Finally, here's some fallback colors
-            "Cyan","DarkCyan","Gray","DarkGray","Gray"
         }
 
     if ($Passthru) {

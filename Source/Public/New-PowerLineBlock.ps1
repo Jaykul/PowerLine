@@ -1,18 +1,18 @@
-function New-PromptText {
+function New-PowerLineBlock {
     <#
         .Synopsis
-            Create PoshCode.PowerLine.Block with variable background colors
+            Create PoshCode.PowerLine.PowerLineBlock with variable background colors
         .Description
             Allows changing the foreground and background colors based on elevation or success.
 
             Tests elevation fist, and then whether the last command was successful, so if you pass separate colors for each, the Elevated*Color will be used when PowerShell is running as administrator and there is no error. The Error*Color will be used whenever there's an error, whether it's elevated or not.
         .Example
-            New-PromptText { Get-Elapsed } -ForegroundColor White -BackgroundColor DarkBlue -ErrorBackground DarkRed -ElevatedForegroundColor Yellow
+            New-PowerLineBlock { Get-Elapsed } -ForegroundColor White -BackgroundColor DarkBlue -ErrorBackground DarkRed -ElevatedForegroundColor Yellow
 
             This example shows the time elapsed executing the last command in White on a DarkBlue background, but switches the text to yellow if elevated, and the background to red on error.
     #>
     [CmdletBinding(DefaultParameterSetName = "InputObject")]
-    [Alias("New-PowerLineBlock", "PowerLineBlock", "Block", "New-TextFactory")]
+    [Alias("New-PromptText", "PowerLineBlock", "Block", "New-TextFactory")]
     param(
         # The text, object, or scriptblock to show as output
         [Alias("Text", "Object")]
@@ -112,6 +112,6 @@ function New-PromptText {
         }
         $PSBoundParameters["InputObject"] = $InputObject
 
-        [PoshCode.PowerLine.Block]$PSBoundParameters
+        [PoshCode.PowerLine.PowerLineBlock]$PSBoundParameters
     }
 }

@@ -10,12 +10,12 @@ function Add-PowerLineBlock {
             Adds the classic "I ♥ PS" to your prompt on a new line. We actually recommend having a simple line in pure 16-color mode on the last line of your prompt, to ensures that PSReadLine won't mess up your colors. PSReadline overwrites your prompt line when you type -- and it can only handle 16 color mode.
         .Example
             Add-PowerLineBlock {
-                New-PromptText { Get-Elapsed } -ForegroundColor White -BackgroundColor DarkBlue -ErrorBackground DarkRed -ElevatedForegroundColor Yellow
+                New-PowerLineBlock { Get-Elapsed } -ForegroundColor White -BackgroundColor DarkBlue -ErrorBackground DarkRed -ElevatedForegroundColor Yellow
             } -Index -2
 
             # This example uses Add-PowerLineBlock to insert a block into the prommpt _before_ the last block
             # It calls Get-Elapsed to show the duration of the last command as the text of the block
-            # It uses New-PromptText to control the color so that it's highlighted in red if there is an error, but otherwise in dark blue (or yellow if it's an elevated host).
+            # It uses New-PowerLineBlock to control the color so that it's highlighted in red if there is an error, but otherwise in dark blue (or yellow if it's an elevated host).
     #>
     [CmdletBinding(DefaultParameterSetName="InputObject")]
     param(
@@ -53,6 +53,15 @@ function Add-PowerLineBlock {
         } elseif ($Spacer){
             $InputObject = { " " }
         }
+
+        $InputObject = switch ($InputObject) {
+            "Azure" { { "ﴃ " + (Get-AzContext).Name } }
+
+
+            default { $InputObject }
+        }
+
+
 
         Write-Debug "Add-PowerLineBlock $InputObject"
         if(!$PSBoundParameters.ContainsKey("Index")) {

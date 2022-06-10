@@ -7,17 +7,10 @@ function Get-PowerLineTheme {
     param()
 
     $Local:Configuration = $Script:PowerLineConfig
-    $Configuration.Prompt = [PoshCode.PowerLine.Block[]]$global:Prompt
+    $Configuration.Prompt = [PoshCode.PowerLine.PowerLineBlock[]]$global:Prompt
     $Configuration.Colors = [PoshCode.Pansies.RgbColor[]]$global:Prompt.Colors
 
     $null = $Configuration.Remove("DefaultAddIndex")
-
-    $Configuration.PowerLineCharacters = @{
-        'ColorSeparator' = [PoshCode.Pansies.Entities]::ExtendedCharacters['ColorSeparator']
-        'ReverseColorSeparator' = [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseColorSeparator']
-        'Separator' = [PoshCode.Pansies.Entities]::ExtendedCharacters['Separator']
-        'ReverseSeparator' = [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseSeparator']
-    }
 
     if (Get-Command Get-PSReadLineOption) {
         $PSReadLineOptions = Get-PSReadLineOption
