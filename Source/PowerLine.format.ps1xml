@@ -3,7 +3,7 @@
         <View>
             <Name>PowerLine-Preview</Name>
             <ViewSelectedBy>
-                <TypeName>PowerLine.Theme</TypeName>
+                <TypeName>PowerLineTheme</TypeName>
             </ViewSelectedBy>
             <CustomControl>
                 <CustomEntries>

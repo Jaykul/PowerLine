@@ -7,10 +7,14 @@ function Get-PowerLineTheme {
     param()
 
     $Local:Configuration = $Script:PowerLineConfig
-    $Configuration.Prompt = [PoshCode.PowerLine.PowerLineBlock[]]$global:Prompt
-    $Configuration.Colors = [PoshCode.Pansies.RgbColor[]]$global:Prompt.Colors
+    $Configuration.Prompt = [PoshCode.TerminalBlock[]]$global:Prompt
 
     $null = $Configuration.Remove("DefaultAddIndex")
+
+    # Strip common parameters if they're on here (so we can use -Verbose)
+    foreach($name in [System.Management.Automation.PSCmdlet]::CommonParameters) {
+        $null = $Configuration.Remove($name)
+    }
 
     if (Get-Command Get-PSReadLineOption) {
         $PSReadLineOptions = Get-PSReadLineOption
@@ -25,7 +29,5 @@ function Get-PowerLineTheme {
         $null = $Configuration.Remove("Title")
     }
 
-    $Result = New-Object PSObject -Property $Configuration
-    $Result.PSTypeNames.Insert(0, "PowerLine.Theme")
-    $Result
+    [PowerLineTheme]$Configuration
 }

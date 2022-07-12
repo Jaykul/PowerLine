@@ -11,20 +11,42 @@ function Remove-PowerLineBlock {
 
             Removes the specified block. Note that it must be _exactly_ the same as when you added it.
     #>
-    [CmdletBinding(DefaultParameterSetName="Error")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidDefaultValueForMandatoryParameter', "Index",
+        Justification = 'This rule should ignore parameters that are only mandatory in some parameter sets')]
+    [CmdletBinding(DefaultParameterSetName="ByObject")]
     param(
         # The text, object, or scriptblock to show as output
-        [Parameter(Position=0, Mandatory, ValueFromPipeline)]
+        [Parameter(Position=0, Mandatory, ValueFromPipeline, ParameterSetName = "ByObject")]
         [Alias("Text")]
-        $InputObject
+        $InputObject,
+
+        [Parameter(Mandatory, ParameterSetName = "ByIndex")]
+        [int]$Index = -1
     )
     process {
-        # TODO: Make sure this works
-        $Index = @($Global:Prompt).ForEach{$_.ToString().Trim()}.IndexOf($InputObject.ToString().Trim())
-        if($Index -ge 0) {
+        if ($PSCmdlet.ParameterSetName -eq "ByObject") {
+            if ($InputObject -is [PoshCode.TerminalBlock]) {
+                $Index = @($Global:Prompt).IndexOf($InputObject)
+            }
+            if ($Index -ge 0) {
+                $InputString = if ($InputObject.Object) {
+                    $InputObject.Object.ToString().Trim()
+                } else {
+                    $InputObject.ToString().Trim()
+                }
+                $Index = @($Global:Prompt).ForEach{$_.Object.ToString().Trim()}.IndexOf($InputString)
+            }
+        }
+
+        if ($Index -lt 0) {
+            $Index = $Global:Prompt.Count - $Index
+        }
+
+        if ($Index -ge 0) {
             $null = $Global:Prompt.RemoveAt($Index)
         }
-        if($Index -lt $Script:PowerLineConfig.DefaultAddIndex) {
+
+        if ($Index -lt $Script:PowerLineConfig.DefaultAddIndex) {
             $Script:PowerLineConfig.DefaultAddIndex--
         }
     }

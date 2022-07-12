@@ -4,7 +4,7 @@
 RootModule = 'PowerLine.psm1'
 
 # Version number of this module.
-ModuleVersion = '3.3.0'
+ModuleVersion = '4.0.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -19,10 +19,10 @@ Author = 'Joel Bennett'
 CompanyName = 'HuddledMasses.org'
 
 # Copyright statement for this module
-Copyright = '(c) 2016-2021 Joel Bennett. All rights reserved.'
+Copyright = '(c) 2016-2022 Joel Bennett. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Classes for richer output and prompts'
+Description = 'Pure PowerShell Prompts'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.1.0'
@@ -37,13 +37,14 @@ PowerShellVersion = '5.1.0'
 FormatsToProcess = @("PowerLine.format.ps1xml")
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-NestedModules = @( "lib\PowerLine.dll" )
+NestedModules = @()
 
 RequiredModules = @(
     # Make sure we get the fixed version of Metadata
-    @{ModuleName="Metadata";      ModuleVersion="1.5.4"}
-    @{ModuleName="Configuration"; ModuleVersion="1.5.0"}
-    @{ModuleName="Pansies";       ModuleVersion="2.3.0"}
+    @{ModuleName="TerminalBlocks"; ModuleVersion="0.1.16"}
+    @{ModuleName="Metadata";       ModuleVersion="1.5.4"}
+    @{ModuleName="Configuration";  ModuleVersion="1.5.1"}
+    @{ModuleName="Pansies";        ModuleVersion="2.4.0"}
 )
 # RequiredAssemblies = "lib\PowerLine.dll"
 
@@ -80,7 +81,7 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
-        4.0.0: Major refactor to use a C# `PowerLineBlock` class
+        4.0.0: Major refactor to use a C# `TerminalBlock` class
             - Enables mixing and matching line endings
             - Enables spacers
         3.4.0: Support right-aligned blocks (with PSReadLine 2.2.0)
@@ -94,7 +95,7 @@ PrivateData = @{
             - Adds Get-PowerLineTheme (and alias for Set-PowerLinePrompt)
         '
     } # End of PSData hashtable
-    "EzTheme" = @{
+    EzTheme = @{
         Get = 'Get-PowerLineTheme'
         Set = 'Set-PowerLineTheme'
     }

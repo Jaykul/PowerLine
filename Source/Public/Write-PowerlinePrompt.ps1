@@ -1,16 +1,16 @@
 function Write-PowerlinePrompt {
     [CmdletBinding()]
     [OutputType([string])]
-    param()
+    param(
+        [switch]$NoCache
+    )
 
     try {
-        # FIRST, make a note if there was an error in the previous command
-        [PoshCode.PowerLine.State]::LastSuccess = $?
+        # Stuff these into static properties in case I want to use them from C#
+        [PoshCode.TerminalBlock]::LastSuccess = $global:?
+        [PoshCode.TerminalBlock]::LastExitCode = $global:LASTEXITCODE
+
         $PromptErrors = [ordered]@{}
-        # When someone sets $Prompt, they loose the colors.
-        # To fix that, we cache the colors whenever we get a chance
-        # And if it's not set, we re-initialize from the cache
-        SyncColor
 
         # Then handle PowerLinePrompt Features:
         if ($Script:PowerLineConfig.Title) {
@@ -31,141 +31,52 @@ function Write-PowerlinePrompt {
                 Write-Error "Failed to set CurrentDirectory to: (Get-Location -PSProvider FileSystem).ProviderPath"
             }
         }
-        if ($Script:PowerLineConfig.RestoreVirtualTerminal -and (-not $IsLinux -and -not $IsMacOS)) {
-            [PoshCode.Pansies.NativeMethods]::EnableVirtualTerminalProcessing()
+
+
+        $CacheKey = if ($NoCache) {
+            $null
+        } else {
+            $MyInvocation.HistoryId
         }
 
-        # Pre-evaluate all the scriptblocks in $prompt (then we just use .Cache)
-        $Buffer = @($Prompt)
-        $MissingColorCount = 0
-        $CacheKey = if ($Script:PowerLineConfig.NoCache) { [Guid]::NewGuid() } else { $MyInvocation.HistoryId }
-        for ($b = 0; $b -lt $Buffer.Count; $b++) {
+        # invoke them all, to find out if they have content
+        $PromptErrors = [ordered]@{}
+        for ($b = 0; $b -lt $Prompt.Count; $b++) {
             try {
-                $MissingColorCount += $Buffer[$b].Invoke($CacheKey) -isnot [PoshCode.PowerLine.Space] -and -not $Buffer[$b].BackgroundColor
+                $null = $Prompt[$b].Invoke($CacheKey)
             } catch {
-                $PromptErrors.Add("$b { $($_.Object) }", $_)
+                $PromptErrors.Add("$b { $($Prompt[$b].Content) }", $_)
             }
         }
 
-        # Now that we're using blocks, we can skip this after the first pass
-        if ($MissingColorCount -gt 0) {
-            # Based on the number of text blocks, make up colors if we need to...
-            [PoshCode.Pansies.RgbColor[]]$ActualColors = @(
-                if ($Script:Colors.Count -ge $MissingColorCount) {
-                    $Script:Colors
-                } elseif ($Script:Colors.Count -eq 2) {
-                    Get-Gradient ($Script:Colors[0]) ($Script:Colors[1]) -Count $MissingColorCount -Flatten
-                } elseif ($Script:Colors.Count -gt 0) {
-                    $Script:Colors * ([Math]::Ceiling($MissingColorCount/$Script:Colors.Count))
-                }
-            )
+        # now output them all
+        $builder = [System.Text.StringBuilder]::new()
+        for ($b = 0; $b -lt $Prompt.Count; $b++) {
+            $Neighbor = @{}
+            $Block = $Prompt[$b]
 
-            # Loop through the text blocks and set colors
-            $ColorIndex = 0
-            foreach ($block in $Buffer) {
-                $ColorUsed = $False
-                if (!$block.BackgroundColor) {
-                    if ($block.Object -isnot [PoshCode.PowerLine.Space]) {
-                        $block.BackgroundColor = $ActualColors[$ColorIndex]
-                        $ColorUsed = $True
-                    }
-                } elseif($block.BackgroundColor -in $ActualColors) {
-                    $ActualColors = $ActualColors -ne $block.BackgroundColor
-                }
-                $ColorIndex += $ColorUsed
-
-                if ($block.BackgroundColor -and !$block.ForegroundColor) {
-                    if ($Script:PowerLineConfig.FullColor) {
-                        $block.ForegroundColor = Get-Complement $block.BackgroundColor -ForceContrast
-                    } else {
-                        $block.BackgroundColor, $block.ForegroundColor = Get-Complement $block.BackgroundColor -ConsoleColor -Passthru
-                    }
+            $n = $b
+            # Your neighbor is the next non-empty block with the same alignment as you
+            while (++$n -lt $Prompt.Count -and $Block.Alignment -eq $Prompt[$n].Alignment) {
+                if ($Prompt[$n].Cache) {
+                    $Neighbor = $Prompt[$n]
+                    break;
                 }
             }
-        }
 
-        ## Finally, unroll all the output and join into one string (using separators and spacing)
-        $extraLineCount = 0
-        $line = ""
-        $result = ""
-        $BufferWidth = [Console]::BufferWidth
-        $CSI = "$([char]27)["
-
-        [PoshCode.PowerLine.State]::Alignment = "Left"
-
-        # The trick to right-aligned text is to know where to start it
-        # So we need to know how long it is, and then PREFIX it with an alignment sequence.
-        # In order to support putting the prompt back on the left
-        # In order for that to work, we need to combine block output into a "line" and measure the length
-
-        # $LastBackground = $null
-        for ($b = 0; $b -lt $Buffer.Count; $b++) {
-            $block = $Buffer[$b]
-
-            # Column Separator
-            if ($block.Object -eq [PoshCode.PowerLine.Space]::RightAlign) {
-                [PoshCode.PowerLine.State]::Alignment = "Right"
-                $result += $line + $CSI + "s" # STORE
-                $line = ""
-            # New Line
-            } elseif ($block.Object -eq [PoshCode.PowerLine.Space]::NewLine) {
-                if ([PoshCode.PowerLine.State]::Alignment -eq "Right") {
-                    [PoshCode.PowerLine.State]::Alignment = "Left"
-                    ## This is a VERY simplistic test for escape sequences
-                    $lineLength = ($line -replace "\u001B.*?\p{L}").Length
-                    # Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long so we're aligning to $($Align)"
-                    $result += "$CSI$(1 + $BufferWidth - $lineLength)G"
-                }
-                $extraLineCount++
-                $result += $line + $CSI + "0m`n" # CLEAR
-                $line = ""
-            # If the cache is null, it won't draw anything
-            } elseif ($block.Cache) {
-                $Neighbor = $null
-                $Direction = if ([PoshCode.PowerLine.State]::Alignment) { -1 } else { +1 }
-                $n = $b
-                # If this is not a spacer, it should use the color of the next non-empty block
-                do {
-                    $n += $Direction
-                    if ($n -lt 0 -or $n -ge $Buffer.Count) {
-                        $Neighbor = $null
-                        break;
-                    } elseif ($Buffer[$n].Cache) {
-                        $Neighbor = $Buffer[$n]
-                    }
-                } while(!$Neighbor)
-
-                # If this is a spacer, it should not render at all if the next non-empty block is a spacer
-                if ($block.Object -eq [PoshCode.PowerLine.Space]::Spacer -and $Neighbor.Object -eq [PoshCode.PowerLine.Space]::Spacer) {
-                    continue
-                }
-
-                if ($text = $block.ToLine($Neighbor.BackgroundColor, $CacheKey)) {
-                    $line += $text
-                }
-
-                #Write-Debug "Normal output ($($string -replace "\u001B.*?\p{L}")) ($($($string -replace "\u001B.*?\p{L}").Length)) on $LastBackground"
+            # Don't render spacers, if they don't have a real (non-space) neighbors
+            if ($Block.Content -eq "Spacer" -and (!$Neighbor.Cache -or $Neighbor.Content -eq "Spacer")) {
+                continue
             }
-        }
 
-        [string]$PromptErrorString = if (-not $Script:PowerLineConfig.HideErrors) {
-            WriteExceptions $PromptErrors
+            $null = $builder.Append($Block.ToString($true, $Neighbor.BackgroundColor, $CacheKey))
         }
-
-        # With the latest PSReadLine, we can support ending with a right-aligned block...
-        if ([PoshCode.PowerLine.State]::Alignment) {
-            ## This is a VERY simplistic test for escape sequences
-            $lineLength = ($line -replace "\u001B.*?\p{L}").Length
-            #Write-Debug "The buffer is $($BufferWidth) wide, and the line is $($lineLength) long"
-            $result += "$CSI$(1 + $BufferWidth - $lineLength)G"
-            $line += $CSI + "u" # Recall
-            [PoshCode.PowerLine.State]::Alignment = "Left"
-        }
+        $result = $builder.ToString()
+        $extraLineCount = $result.Split("`n").Count
 
         # At the end, output everything as one single string
         # create the number of lines we need for output up front:
-        ("`n" * $extraLineCount) + ("$([char]27)M" * $extraLineCount) +
-        $PromptErrorString + $result + $line
+        ("`n" * $extraLineCount) + ("$([char]27)M" * $extraLineCount) + $result
     } catch {
         Write-Warning "Exception in PowerLinePrompt`n$_"
         "${PWD}>"

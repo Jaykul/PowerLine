@@ -29,6 +29,34 @@ function Set-PowerLinePrompt {
     [Alias("Set-PowerLineTheme")]
     [CmdletBinding(DefaultParameterSetName = "PowerLine")]
     param(
+        # Resets the prompt to use the default PowerLine characters as cap and separator
+        [Parameter(ParameterSetName = "PowerLine")]
+        [switch]$PowerLineFont,
+
+        [Parameter(ParameterSetName = "Manual")]
+        [Alias("LeftCaps")]
+        [PoshCode.BlockCaps]$DefaultCapsLeftAligned,
+
+        [Parameter(ParameterSetName = "Manual")]
+        [Alias("RightCaps")]
+        [PoshCode.BlockCaps]$DefaultCapsRightAligned,
+
+        # The Left pointing and Right pointing separator characters are used when a script-based PowerLine block outputs multiple objects
+        # Set this by passing either a BlockCap object, or an array of two strings. Left, then right, like: "",""
+        [Parameter(ParameterSetName = "Manual")]
+        [Alias("Separator")]
+        [PoshCode.BlockCaps]$DefaultSeparator,
+
+        # Sets the powerline prompt without the PowerLine effect.
+        # Disables background on ALL TerminalBlocks
+        # Switches the Cap and Separator to just a space.
+        [Parameter(ParameterSetName = "Reset")]
+        [switch]$NoBackground,
+
+        # If set, calls Export-PowerLinePrompt
+        [Parameter()]
+        [Switch]$Save,
+
         # A script which outputs a string used to update the Window Title each time the prompt is run
         [Parameter(ValueFromPipelineByPropertyName)]
         [scriptblock]$Title,
@@ -38,61 +66,13 @@ function Set-PowerLinePrompt {
         [Alias("CurrentDirectory")]
         [switch]$SetCurrentDirectory,
 
-        # Resets the prompt to use the default PowerLine characters as cap and separator
-        [Parameter(ParameterSetName = "PowerLine", ValueFromPipelineByPropertyName)]
-        [switch]$PowerLineFont,
-
-        # Sets the powerline prompt without the PowerLine effect.
-        # Disables background on ALL PowerLineBlocks
-        # Switches the Cap and Separator to just a space.
-        [Parameter(ParameterSetName = "Reset")]
-        [switch]$NoBackground,
-
-        # If true, assume full color support, otherwise normalize to 16 ConsoleColor
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [switch]$FullColor,
-
-        # If true, adds ENABLE_VIRTUAL_TERMINAL_PROCESSING to the console output mode. Useful on PowerShell versions that don't restore the console
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [switch]$RestoreVirtualTerminal,
-
-        # Add a "I ♥ PS" on a line by itself to it's prompt (using ConsoleColors, to keep it safe from PSReadLine)
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [switch]$Newline,
-
-        # Add a right-aligned timestamp before the newline (implies Newline)
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [switch]$Timestamp,
-
         # Prevent errors in the prompt from being shown (like the normal PowerShell behavior)
         [Parameter(ValueFromPipelineByPropertyName)]
         [switch]$HideErrors,
 
-        # One or more scriptblocks or PowerLineBlocks you want to use as your new prompt
+        # One or more scriptblocks or TerminalBlocks you want to use as your new prompt
         [Parameter(Position = 0, ValueFromPipelineByPropertyName)]
         $Prompt,
-
-        # One or more colors you want to use as the prompt background colors
-        [Parameter(Position = 1, ValueFromPipelineByPropertyName)]
-        [System.Collections.Generic.List[PoshCode.Pansies.RgbColor]]$Colors,
-
-        # If set, calls Export-PowerLinePrompt
-        [Parameter()]
-        [Switch]$Save,
-
-        # The Left pointing and Right pointing cap characters are used to cap PowerLine blocks.
-        # Set this by passing either a Cap object, or a string with two characters in it. Left, then right, like: 
-        #
-        # Following the standard PowerLine naming, when the block is left aligned, PowerLine uses the left cap on the end of each block (in the color of the background of the block, and with the background matching the NEXT block). When the block is right aligned, PowerLine uses the right cap on the start of each block, in the color of the background of the block, and with the background set to the color of the previous block.
-        # Defaults to: -join [PoshCode.Pansies.Entities]::ExtendedCharacters["ColorSeparator", "ReverseColorSeparator"]
-        [PoshCode.PowerLine.PowerLineCap]$Cap,
-
-        # The Left pointing and Right pointing separator characters are used when a script-based PowerLine block outputs multiple objects
-        # Set this by passing either a Cap object, or a string with two characters in it. Left, then right, like: 
-        #
-        # Following the standard PowerLine naming, when the block is left aligned, PowerLine uses the left separator between outputs from a PowerLineBlock, and when it is right aligned, PowerLine uses the right separator.
-        # Defaults to: -join [PoshCode.Pansies.Entities]::ExtendedCharacters["Separator", "ReverseSeparator"]
-        [PoshCode.PowerLine.PowerLineCap]$Separator,
 
         # When there's a parse error, PSReadLine changes a part of the prompt...
         # Use this option to override PSReadLine by either specifying the characters it should replace, or by specifying both the normal and error strings.
@@ -108,14 +88,9 @@ function Set-PowerLinePrompt {
 
         [Parameter(ValueFromPipelineByPropertyName)]
         [AllowEmptyString()]
-        [string]$PSReadLineContinuationPromptColor,
-
-        # By default PowerLine caches output based on the prompt's history id
-        # That makes if *very* fase if you hit ENTER or Ctrl+C or Ctrl+L repeatedly
-        # But if you print the time, it wouldn't change, so you can disable that here
-        [switch]$NoCache
+        [string]$PSReadLineContinuationPromptColor
     )
-    process {
+    begin {
         if ($null -eq $script:OldPrompt) {
             $script:OldPrompt = $function:global:prompt
             $MyInvocation.MyCommand.Module.OnRemove = {
@@ -123,12 +98,7 @@ function Set-PowerLinePrompt {
             }
         }
 
-        # These switches aren't stored in the config
-        $null = $PSBoundParameters.Remove("Save")
-        $null = $PSBoundParameters.Remove("Newline")
-        $null = $PSBoundParameters.Remove("Timestamp")
-
-        $Configuration = Import-Configuration
+        $Configuration = Import-Configuration -ErrorAction SilentlyContinue
 
         # Upodate the saved PowerLinePrompt with the parameters
         if(!$Configuration.PowerLineConfig) {
@@ -136,26 +106,11 @@ function Set-PowerLinePrompt {
         }
         $PowerLineConfig = $Configuration.PowerLineConfig | Update-Object $PSBoundParameters
 
-        if($Configuration.ExtendedCharacters) {
-            foreach($key in $Configuration.ExtendedCharacters.Keys) {
-                [PoshCode.Pansies.Entities]::ExtendedCharacters.$key = $Configuration.ExtendedCharacters.$key
-            }
-        }
-
-        if($Configuration.EscapeSequences) {
-            foreach($key in $Configuration.EscapeSequences.Keys) {
-                [PoshCode.Pansies.Entities]::EscapeSequences.$key = $Configuration.EscapeSequences.$key
-            }
-        }
-
-        if ($Null -eq $PowerLineConfig.FullColor -and $Host.UI.SupportsVirtualTerminal) {
-            $PowerLineConfig.FullColor = (Get-Process -Id $global:Pid).MainWindowHandle -ne 0
-        }
-
         # Set the default cap before we cast prompt blocks
         if ($NoBackground) {
-            $PowerLineConfig["Cap"] = [PoshCode.PowerLine.State]::DefaultCap = " "
-            $PowerLineConfig["Separator"] = [PoshCode.PowerLine.State]::DefaultSeparator = " "
+            $PowerLineConfig["DefaultCapsLeftAligned"] = [PoshCode.TerminalBlock]::DefaultCapsLeftAligned = " "
+            $PowerLineConfig["DefaultCapsRightAligned"] = [PoshCode.TerminalBlock]::DefaultCapsRightAligned = " "
+            $PowerLineConfig["DefaultSeparator"] = [PoshCode.TerminalBlock]::DefaultSeparator = " "
         }
 
         # For backward compatibility:
@@ -169,10 +124,6 @@ function Set-PowerLinePrompt {
                 [PoshCode.Pansies.Entities]::ExtendedCharacters['Branch'] = [char]0xE0A0
                 [PoshCode.Pansies.Entities]::ExtendedCharacters['Gear'] = [char]0x26EF
 
-                # Set the new Cap and Separator options too
-                [PoshCode.PowerLine.State]::DefaultCap = $PowerLineConfig["Cap"] = -join [PoshCode.Pansies.Entities]::ExtendedCharacters["ColorSeparator", "ReverseColorSeparator"]
-                [PoshCode.PowerLine.State]::DefaultSeparator = $PowerLineConfig["Separator"] = -join [PoshCode.Pansies.Entities]::ExtendedCharacters["Separator", "ReverseSeparator"]
-
                 # [PoshCode.Pansies.Entities]::EnableNerdFonts = $true
             } else  {
                 # Use characters that at least work in Consolas and Lucida Console
@@ -182,109 +133,98 @@ function Set-PowerLinePrompt {
                 [PoshCode.Pansies.Entities]::ExtendedCharacters['ReverseSeparator'] = [char]0x25C4
                 [PoshCode.Pansies.Entities]::ExtendedCharacters['Branch'] = [char]0x00A7
                 [PoshCode.Pansies.Entities]::ExtendedCharacters['Gear'] = [char]0x263C
-                # Set the new Cap and Separator options too
-                [PoshCode.PowerLine.State]::DefaultCap = $PowerLineConfig["Cap"] = -join [PoshCode.Pansies.Entities]::ExtendedCharacters["ColorSeparator", "ReverseColorSeparator"]
-                [PoshCode.PowerLine.State]::DefaultSeparator = $PowerLineConfig["Separator"] = -join [PoshCode.Pansies.Entities]::ExtendedCharacters["Separator", "ReverseSeparator"]
+            }
+            # Set the new Cap and Separator options too
+            [PoshCode.TerminalBlock]::DefaultCapsLeftAligned = $PowerLineConfig["DefaultCapsLeftAligned"] = "", [PoshCode.Pansies.Entities]::ExtendedCharacters["ColorSeparator"]
+            [PoshCode.TerminalBlock]::DefaultCapsRightAligned = $PowerLineConfig["DefaultCapsRightAligned"] = [PoshCode.Pansies.Entities]::ExtendedCharacters["ReverseColorSeparator"], ""
+
+            [PoshCode.TerminalBlock]::DefaultSeparator = $PowerLineConfig["Separator"] = -join [PoshCode.Pansies.Entities]::ExtendedCharacters["Separator", "ReverseSeparator"]
+        }
+
+        if ($PSBoundParameters.ContainsKey("DefaultCapsLeftAligned")) {
+            [PoshCode.TerminalBlock]::DefaultCapsLeftAligned = $PowerLineConfig["DefaultCapsLeftAligned"] = $DefaultCapsLeftAligned
+            [PoshCode.Pansies.Entities]::ExtendedCharacters["ColorSeparator"] = $DefaultCapsLeftAligned.Right
+            [PoshCode.Pansies.Entities]::ExtendedCharacters["ReverseColorSeparator"] = $DefaultCapsLeftAligned.Left
+        } elseif (!$PowerLineConfig.ContainsKey("DefaultCapsLeftAligned")) {
+            # If there's nothing in the config, then default to Powerline style!
+            [PoshCode.TerminalBlock]::DefaultCapsLeftAligned = $PowerLineConfig["DefaultCapsLeftAligned"] = "", [PoshCode.Pansies.Entities]::ExtendedCharacters["ColorSeparator"]
+        } elseif ($PowerLineConfig.ContainsKey("DefaultCapsLeftAligned")) {
+            [PoshCode.TerminalBlock]::DefaultCapsLeftAligned = $PowerLineConfig["DefaultCapsLeftAligned"]
+        }
+
+        if ($PSBoundParameters.ContainsKey("DefaultCapsRightAligned")) {
+            [PoshCode.TerminalBlock]::DefaultCapsRightAligned = $PowerLineConfig["DefaultCapsRightAligned"] = $DefaultCapsRightAligned
+            [PoshCode.Pansies.Entities]::ExtendedCharacters["ReverseColorSeparator"] = $DefaultCapsRightAligned.Left
+        } elseif (!$PowerLineConfig.ContainsKey("DefaultCapsRightAligned")) {
+            # If there's nothing in the config, then default to Powerline style!
+            [PoshCode.TerminalBlock]::DefaultCapsRightAligned = $PowerLineConfig["DefaultCapsRightAligned"] = [PoshCode.Pansies.Entities]::ExtendedCharacters["ReverseColorSeparator"], ""
+        } elseif ($PowerLineConfig.ContainsKey("DefaultCapsRightAligned")) {
+            [PoshCode.TerminalBlock]::DefaultCapsRightAligned = $PowerLineConfig["DefaultCapsRightAligned"]
+        }
+
+        if ($PSBoundParameters.ContainsKey("DefaultSeparator")) {
+            [PoshCode.TerminalBlock]::DefaultSeparator = $PowerLineConfig["DefaultSeparator"] = $DefaultSeparator
+            [PoshCode.Pansies.Entities]::ExtendedCharacters["Separator"] = $DefaultSeparator.Left
+            [PoshCode.Pansies.Entities]::ExtendedCharacters["ReverseSeparator"] = $DefaultSeparator.Right
+        } elseif (!$PowerLineConfig.ContainsKey("DefaultSeparator")) {
+            # If there's nothing in the config, then default to Powerline style!
+            [PoshCode.TerminalBlock]::DefaultSeparator = $PowerLineConfig["DefaultSeparator"] = -join [PoshCode.Pansies.Entities]::ExtendedCharacters["DefaultSeparator", "ReverseSeparator"]
+        } elseif ($PowerLineConfig.ContainsKey("DefaultSeparator")) {
+            [PoshCode.TerminalBlock]::DefaultSeparator = $PowerLineConfig["DefaultSeparator"]
+        }
+    }
+    process {
+        # These switches aren't stored in the config
+        $null = $PSBoundParameters.Remove("Save")
+
+        if($Configuration.ExtendedCharacters) {
+            foreach($key in $Configuration.ExtendedCharacters.Keys) {
+                [PoshCode.Pansies.Entities]::ExtendedCharacters.$key = $Configuration.ExtendedCharacters.$key
             }
         }
 
-        if ($PSBoundParameters.ContainsKey("Cap")) {
-            [PoshCode.PowerLine.State]::DefaultCap = $PowerLineConfig["Cap"] = $Cap
-            [PoshCode.Pansies.Entities]::ExtendedCharacters["ReverseColorSeparator"] = $Cap.Left
-            [PoshCode.Pansies.Entities]::ExtendedCharacters["ColorSeparator"] = $Cap.Right
-        } elseif (!$PowerLineConfig.ContainsKey("Cap")) {
-            # If there's nothing in the config, then default to Powerline style!
-            [PoshCode.PowerLine.State]::DefaultCap = $PowerLineConfig["Cap"] = -join [PoshCode.Pansies.Entities]::ExtendedCharacters["ColorSeparator", "ReverseColorSeparator"]
-        } elseif ($PowerLineConfig.ContainsKey("Cap")) {
-            [PoshCode.PowerLine.State]::DefaultCap = $PowerLineConfig["Cap"]
-        }
-        if ($PSBoundParameters.ContainsKey("Separator")) {
-            [PoshCode.PowerLine.State]::DefaultSeparator = $PowerLineConfig["Separator"] = $Separator
-            [PoshCode.Pansies.Entities]::ExtendedCharacters["ReverseSeparator"] = $Separator.Left
-            [PoshCode.Pansies.Entities]::ExtendedCharacters["Separator"] = $Separator.Right
-        } elseif (!$PowerLineConfig.ContainsKey("Separator")) {
-            # If there's nothing in the config, then default to Powerline style!
-            [PoshCode.PowerLine.State]::DefaultSeparator = $PowerLineConfig["Separator"] = -join [PoshCode.Pansies.Entities]::ExtendedCharacters["Separator", "ReverseSeparator"]
-        } elseif ($PowerLineConfig.ContainsKey("Separator")) {
-            [PoshCode.PowerLine.State]::DefaultSeparator = $PowerLineConfig["Separator"]
+        if($Configuration.EscapeSequences) {
+            foreach($key in $Configuration.EscapeSequences.Keys) {
+                [PoshCode.Pansies.Entities]::EscapeSequences.$key = $Configuration.EscapeSequences.$key
+            }
         }
 
-        # For Prompt and Colors we want to support modifying the global variable outside this function
-        [System.Collections.Generic.List[PoshCode.PowerLine.PowerLineBlock]]$global:Prompt = `
-        [PoshCode.PowerLine.PowerLineBlock[]]$PowerLineConfig.Prompt = $(
+        Write-Verbose "Setting global:Prompt"
+        # We want to support modifying the global:prompt variable outside this function
+        [System.Collections.Generic.List[PoshCode.TerminalBlock]]$global:Prompt = `
+        [PoshCode.TerminalBlock[]]$PowerLineConfig.Prompt = @(
             if ($PSBoundParameters.ContainsKey("Prompt")) {
+                Write-Verbose "Setting global:Prompt from prompt parameter"
                 $Local:Prompt
             # They didn't pass anything, and there's nothing set
             } elseif ($global:Prompt.Count -eq 0) {
                 # If we found something in config
                 if ($PowerLineConfig.Prompt.Count -gt 0) {
-                    # If the config is already PowerLineBlock, just use that:
-                    if ($PowerLineConfig.Prompt -as [PoshCode.PowerLine.PowerLineBlock[]]) {
+                    Write-Verbose "Setting global:Prompt from powerline config"
+                    # If the config is already TerminalBlock, just use that:
+                    if ($PowerLineConfig.Prompt -as [PoshCode.TerminalBlock[]]) {
                         $PowerLineConfig.Prompt
                     } else {
                         # Try to upgrade by casting through scriptblock
                         [ScriptBlock[]]@($PowerLineConfig.Prompt)
                     }
                 } else {
+                    Write-Verbose "Setting global:Prompt from default prompt"
                     # The default PowerLine Prompt
-                    [ScriptBlock[]]@(
-                        { $MyInvocation.HistoryId }
-                        { Get-ShortPath -HomeString "~" -Depth 3 }
-                    )
+                    Show-HistoryId -DefaultBackgroundColor DarkGray -ErrorBackgroundColor Red
+                    Show-Path -DefaultBackgroundColor White
                 }
             } else {
+                Write-Verbose "Setting global:Prompt from existing global:prompt"
                 $global:Prompt
             }
         )
-
-        # If they passed in colors, update everything
-        if ($PSBoundParameters.ContainsKey("Colors")) {
-            SyncColor $Colors
-            # Otherwise, if we haven't cached the colors, and there's configured colors, use those
-        } elseif (!$global:Prompt.Colors -and !$Script:Colors -and $PowerLineConfig.Colors) {
-            SyncColor $PowerLineConfig.Colors
-        }
-
-        if ($NoBackground) {
-            @($global:Prompt).ForEach({ $_.BackgroundColor = $null })
-            $global:Prompt.Colors = $PowerLineConfig.Colors = $Script:Colors = @()
-        }
 
         if($null -eq $PowerLineConfig.DefaultAddIndex) {
             $PowerLineConfig.DefaultAddIndex    = -1
         }
 
         $Script:PowerLineConfig = $PowerLineConfig
-
-        if($Newline -or $Timestamp) {
-            $Script:PowerLineConfig.DefaultAddIndex = $global:Prompt.Count
-
-            # TODO: Update this to PowerLineBlocks
-            @(
-                if($Timestamp) {
-                    "`t"
-                    { Get-Elapsed }
-                    { Get-Date -format "T" }
-                }
-                "`n"
-                { New-PowerLineBlock { "I $(New-PowerLineBlock -Fg Red3 -EFg White "&hearts;$([char]27)[30m") PS" } -Bg White -EBg Red3 -Fg Black }
-            ) | Add-PowerLineBlock
-
-            if (Get-Module PSReadLine) {
-                if ($PSBoundParameters.ContainsKey("PSReadLinePromptText")) {
-                    Set-PSReadLineOption -PromptText $PSReadLinePromptText
-                } else {
-                    Set-PSReadLineOption -PromptText @(
-                        New-PowerLineBlock -Fg Black -Bg White "I ${Fg:Red3}&hearts;${Fg:Black} PS${Fg:White}${Bg:Clear}&ColorSeparator;"
-                        New-PowerLineBlock -Bg Red3 -Fg White "I ${Fg:White}&hearts;${Fg:White} PS${Fg:Red3}${Bg:Clear}&ColorSeparator;"
-                    )
-                }
-            }
-
-            $Script:PowerLineConfig.DefaultAddIndex = @($Global:Prompt).ForEach{ $_.ToString().Trim() }.IndexOf('"`t"')
-        } elseif ($PSBoundParameters.ContainsKey("Prompt")) {
-            $Script:PowerLineConfig.DefaultAddIndex = -1
-        }
 
         if (Get-Module PSReadLine) {
             $Options = @{}

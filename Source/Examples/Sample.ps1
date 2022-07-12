@@ -2,7 +2,7 @@
 
 $global:prompt = @(
     { "`t" } # On the first line, right-justify
-    { New-PowerLineBlock (Get-Elapsed) -ErrorBack DarkRed -ErrorFore Gray74 -Fore Gray74 -Back DodgerBlue4 }
+    { New-TerminalBlock (Get-Elapsed) -ErrorBack DarkRed -ErrorFore Gray74 -Fore Gray74 -Back DodgerBlue4 }
     { Get-Date -Format "T" }
     { "`n" } # Start another line
     { $MyInvocation.HistoryId }

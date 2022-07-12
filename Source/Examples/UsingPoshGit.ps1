@@ -13,15 +13,15 @@ Set-PowerLinePrompt -SetCurrentDirectory -PowerLineFont -Title {
         Convert-Path $pwd
     )
 } -Prompt @(
-    { New-PowerLineBlock -Fg Gray95 -Bg Gray20 -EBg VioletRed4 $MyInvocation.HistoryId }
+    { New-TerminalBlock -Fg Gray95 -Bg Gray20 -EBg VioletRed4 $MyInvocation.HistoryId }
     { Get-Elapsed -Trim }   # only shows the minimum portion of elapsed time necessary
     { Get-Date -f "HH:mm" } # 24-hour format
     { Write-VcsStatus }
     { Get-SegmentedPath }
     { "`n" }
-    { New-PowerLineBlock -Fg Gray95 -Bg Gray40 "I ${Fg:Green}&hearts;${Fg:Gray95} PS" }
+    { New-TerminalBlock -Fg Gray95 -Bg Gray40 "I ${Fg:Green}&hearts;${Fg:Gray95} PS" }
 ) -PSReadLinePromptText @(
     # Let PSReadLine use a red heart to let us know about syntax errors
-    New-PowerLineBlock -Fg Gray95 -Bg Gray40 "I ${Fg:Green}&hearts;${Fg:Gray95} PS${fg:Gray40}${bg:Clear}&ColorSeparator;"
-    New-PowerLineBlock -Fg Gray95 -Bg Gray40 "I ${Fg:Red}&hearts;${Fg:Gray95} PS${fg:Gray40}${bg:Clear}&ColorSeparator;"
+    New-TerminalBlock -Fg Gray95 -Bg Gray40 "I ${Fg:Green}&hearts;${Fg:Gray95} PS${fg:Gray40}${bg:Clear}&ColorSeparator;"
+    New-TerminalBlock -Fg Gray95 -Bg Gray40 "I ${Fg:Red}&hearts;${Fg:Gray95} PS${fg:Gray40}${bg:Clear}&ColorSeparator;"
 ) -Colors Gray54, Gray26

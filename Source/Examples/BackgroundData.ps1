@@ -27,7 +27,7 @@ Set-PowerLinePrompt -SetCurrentDirectory -PowerLineFont -Title {
         # In order for PSReadLine to work properly, it needs the $PromptText set to match the end of my prompt...
         $MyInvocation.HistoryId
 
-        # Because I don't have a "Write-PowerLineBlock" I am doing all this by hand:
+        # Because I don't have a "Write-TerminalBlock" I am doing all this by hand:
         # Need to draw ">ID>" but the > each have to be FOREGROUND = the BACKGROUND of the previous block
         # AND the color changes depending on whether nestedPrompt rendered or not
         [string]$CS = [PoshCode.Pansies.Entities]::ExtendedCharacters["ColorSeparator"]
