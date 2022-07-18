@@ -9,9 +9,8 @@ class PowerLineTheme {
     [string[]]$PSReadLinePromptText
     [bool]$SetCurrentDirectory
     [scriptblock]$Title
+    [int]$DefaultAddIndex = -1
 }
-
-
 
 Add-MetadataConverter @{
     "PowerLineTheme" = { [PowerLineTheme]$args[0] }
@@ -26,9 +25,12 @@ Add-MetadataConverter @{
     PSReadLineContinuationPrompt = '$($_.PSReadLineContinuationPrompt)'
     PSReadLineContinuationPromptColor = '$($_.PSReadLineContinuationPromptColor)'
     PSReadLinePromptText = '$($_.PSReadLinePromptText -join "','")'
-    SetCurrentDirectory = $(if ($_.SetCurrentDirectory) { '$true' } else { '$false' })
-    $(if (![string]::IsNullOrWhiteSpace($_.Title)) {
-        "Title = ScriptBlock @'`n$($_.Title)`n'@"
+    SetCurrentDirectory = $(if ($_.SetCurrentDirectory) { '$true' } else { '$false' })$(
+    if (![string]::IsNullOrWhiteSpace($_.Title)) {
+        "`n    Title = ScriptBlock @'`n$($_.Title)`n'@"
+    })$(
+        if ($_.DefaultAddIndex -ge 0) {
+        "`n    DefaultAddIndex = $($_.DefaultAddIndex)'@"
     })
 }"
     }

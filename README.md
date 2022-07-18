@@ -50,7 +50,7 @@ Add-TerminalBlock { if($pushed = (Get-Location -Stack).count) { "&raquo;$pushed"
 
 Note that in your PowerLine blocks, there is full support for [PANSIES](/PoshCode/PANSIES) `Text`, which means colors from it's drives, like `$fg:red` and named HTML Entities like `&hearts;` and `&euro;` and now, even emoji and nerdfont named entities -- if you enable them.
 
-There are some helper functions in PowerLine for common things you'd want in your prompt, like `Get-ShortenedPath` and `Get-SegmentedPath` as well as `Get-Elapsed` and `Test-Elevation` and `Test-Success`.
+There are some helper functions in PowerLine for common things you'd want in your prompt, like `Get-ShortenedPath` and `Get-SegmentedPath` as well as `Show-ElapsedTime` and `Test-Elevation` and `Test-Success`.
 
 Once you start playing with the [other options](#configuration), and get it the way you want, you can save it, and Powerline will re-load it on import in the future:
 
@@ -221,18 +221,7 @@ Additionally, Pansies treats the `ExtendedCharacters` dictionary of characters m
 
 ### Helper Functions for Prompts
 
-We recommend that modules which want to add information to the prompt create a function which returns a string, and then add a scriptblock wrapping that single function to the `$Prompt` using `Add-TerminalBlock` (or by hand, as shown above).
-
-There are a few extra functions included as part of the PowerLine module:
-
-Cmdlet                | Description
-----                  | -----------
-New-TerminalBlock    | A wrapper for New-Text that supports changing foreground or background colors based on whether there's an error or whether the session is elevated.
-Get-Elapsed           | Calls Get-History to get a single command (the most recent, or by ID) and returns the difference between the Start and End execution time.
-Get-ShortPath         | Get a shortened version of a path for use in the prompt
-Test-Elevation        | Returns True if the current session is elevated, false otherwise
-Test-Success          | Returns True if the last command was successful, false otherwise
-
+All of the helper functions have been moved to [TerminalBlocks](/Jaykul/TerminalBlocks), which provides the `TerminalBlock` object the module is named for, and a bunch of functions which create TerminalBlocks with embeded functions.
 
 ## Helpers for module authors
 

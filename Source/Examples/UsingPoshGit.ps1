@@ -14,7 +14,7 @@ Set-PowerLinePrompt -SetCurrentDirectory -PowerLineFont -Title {
     )
 } -Prompt @(
     { New-TerminalBlock -Fg Gray95 -Bg Gray20 -EBg VioletRed4 $MyInvocation.HistoryId }
-    { Get-Elapsed -Trim }   # only shows the minimum portion of elapsed time necessary
+    { Show-ElapsedTime -Trim }   # only shows the minimum portion of elapsed time necessary
     { Get-Date -f "HH:mm" } # 24-hour format
     { Write-VcsStatus }
     { Get-SegmentedPath }

@@ -12,7 +12,7 @@ function Write-PowerlinePrompt {
 
         $PromptErrors = [ordered]@{}
 
-        # Then handle PowerLinePrompt Features:
+        #PowerLinePrompt Features:
         if ($Script:PowerLineConfig.Title) {
             try {
                 $Host.UI.RawUI.WindowTitle = [System.Management.Automation.LanguagePrimitives]::ConvertTo( (& $Script:PowerLineConfig.Title), [string] )
@@ -32,14 +32,13 @@ function Write-PowerlinePrompt {
             }
         }
 
-
         $CacheKey = if ($NoCache) {
             $null
         } else {
             $MyInvocation.HistoryId
         }
 
-        # invoke them all, to find out if they have content
+        # invoke them all, to find out whether they have content
         $PromptErrors = [ordered]@{}
         for ($b = 0; $b -lt $Prompt.Count; $b++) {
             try {
@@ -49,10 +48,10 @@ function Write-PowerlinePrompt {
             }
         }
 
-        # now output them all
+        # Output them all, using the color of adjacent blocks for PowerLine's classic cap "overlap"
         $builder = [System.Text.StringBuilder]::new()
         for ($b = 0; $b -lt $Prompt.Count; $b++) {
-            $Neighbor = @{}
+            $Neighbor = $null
             $Block = $Prompt[$b]
 
             $n = $b
@@ -72,6 +71,7 @@ function Write-PowerlinePrompt {
             $null = $builder.Append($Block.ToString($true, $Neighbor.BackgroundColor, $CacheKey))
         }
         $result = $builder.ToString()
+        # This is the fastest way to count characters in PowerShell.
         $extraLineCount = $result.Split("`n").Count
 
         # At the end, output everything as one single string

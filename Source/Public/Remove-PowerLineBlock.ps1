@@ -6,7 +6,7 @@ function Remove-PowerLineBlock {
             This function exists primarily to ensure that modules are able to clean up the prompt easily when they're removed
         .Example
             Remove-PowerLineBlock {
-                New-PowerLineBlock { Get-Elapsed } -ForegroundColor White -BackgroundColor DarkBlue -ErrorBackground DarkRed -ElevatedForegroundColor Yellow
+                New-TerminalBlock { Show-ElapsedTime } -ForegroundColor White -BackgroundColor DarkBlue -ErrorBackground DarkRed -ElevatedForegroundColor Yellow
             }
 
             Removes the specified block. Note that it must be _exactly_ the same as when you added it.

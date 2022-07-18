@@ -13,7 +13,7 @@ $global:Prompt = @(
     { }
 
     { "`t" } # Add a few right-aligned blocks
-    { Get-Elapsed }
+    { Show-ElapsedTime }
     { Get-Date -Format "T" }
 )
 

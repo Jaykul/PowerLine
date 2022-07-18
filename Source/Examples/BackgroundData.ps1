@@ -41,6 +41,6 @@ Set-PowerLinePrompt -SetCurrentDirectory -PowerLineFont -Title {
         )
     }
     { "`t" }
-    { Get-Elapsed -Trim }
+    { Show-ElapsedTime -Trim }
     { Get-Date -Format "T" }
 )
