@@ -41,8 +41,8 @@ NestedModules = @()
 
 RequiredModules = @(
     # Make sure we get the fixed version of Metadata
-    @{ModuleName="TerminalBlocks"; ModuleVersion="0.1.16"}
-    @{ModuleName="Metadata";       ModuleVersion="1.5.4"}
+    @{ModuleName="TerminalBlocks"; ModuleVersion="1.0.1"}
+    @{ModuleName="Metadata";       ModuleVersion="1.5.5"}
     @{ModuleName="Configuration";  ModuleVersion="1.5.1"}
     @{ModuleName="Pansies";        ModuleVersion="2.4.0"}
 )
@@ -81,18 +81,9 @@ PrivateData = @{
 
         # ReleaseNotes of this module
         ReleaseNotes = '
-        4.0.0: Major refactor to use a C# `TerminalBlock` class
-            - Enables mixing and matching line endings
-            - Enables spacers
-        3.4.0: Support right-aligned blocks (with PSReadLine 2.2.0)
-            - Fix Get-SegmentedPath so it works with other paths
-            - Speed up some things using new PANSIES
-        3.3.1: Fix a series of bugs:
-            - Fix Get-Date format
-            - Fix Linux use of default BackgroundColor
-        3.3.0: Add support for Set-PSReadLineOption -Prompt
-        3.2.0: Add support for EzTheme
-            - Adds Get-PowerLineTheme (and alias for Set-PowerLinePrompt)
+        4.0.0: Major refactor to extract the `TerminalBlocks` module
+            - Enables mixing different caps within the prompt
+            - Enables gaps or "spacers" in the power lines
         '
     } # End of PSData hashtable
     EzTheme = @{
