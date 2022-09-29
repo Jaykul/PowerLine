@@ -9,6 +9,7 @@ function Write-PowerlinePrompt {
         # Stuff these into static properties in case I want to use them from C#
         [PoshCode.TerminalBlock]::LastSuccess = $global:?
         [PoshCode.TerminalBlock]::LastExitCode = $global:LASTEXITCODE
+        $global:LASTEXITCODE = 0
 
         $PromptErrors = [ordered]@{}
 
@@ -77,8 +78,14 @@ function Write-PowerlinePrompt {
         # At the end, output everything as one single string
         # create the number of lines we need for output up front:
         ("`n" * $extraLineCount) + ("$([char]27)M" * $extraLineCount) + $result
+        if ($global:LASTEXITCODE) {
+            Write-Warning "LASTEXITCODE set in PowerLinePrompt: $global:LASTEXITCODE"
+        }
     } catch {
         Write-Warning "Exception in PowerLinePrompt`n$_"
         "${PWD}>"
+    } finally {
+        # Put back LASTEXITCODE so you don't have to turn off your prompt when things go wrong
+        $global:LASTEXITCODE = [PoshCode.TerminalBlock]::LastExitCode
     }
 }
