@@ -41,7 +41,7 @@ NestedModules = @()
 
 RequiredModules = @(
     # Make sure we get the fixed version of Metadata
-    @{ModuleName="TerminalBlocks"; ModuleVersion="1.0.1"}
+    @{ModuleName="TerminalBlocks"; ModuleVersion="1.1.0"}
     @{ModuleName="Metadata";       ModuleVersion="1.5.5"}
     @{ModuleName="Configuration";  ModuleVersion="1.5.1"}
     @{ModuleName="Pansies";        ModuleVersion="2.4.0"}

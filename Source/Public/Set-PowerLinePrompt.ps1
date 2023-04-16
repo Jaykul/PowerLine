@@ -97,7 +97,6 @@ function Set-PowerLinePrompt {
         [string]$PSReadLineContinuationPromptColor
     )
     begin {
-        Write-Host "Set-PowerLinePrompt"
         if ($null -eq $script:OldPrompt) {
             $script:OldPrompt = $function:global:prompt
             $MyInvocation.MyCommand.Module.OnRemove = {

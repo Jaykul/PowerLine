@@ -43,7 +43,13 @@ function Write-PowerlinePrompt {
         $PromptErrors = [ordered]@{}
         for ($b = 0; $b -lt $Prompt.Count; $b++) {
             try {
+                # ignore the original output (we'll fetch it from the cache with ToString to handle colors)
                 $null = $Prompt[$b].Invoke($CacheKey)
+                if ($Prompt[$b].HadErrors) {
+                    foreach ($e in $Prompt[$b].Streams.Error) {
+                        $PromptErrors.Add("$b { $($Prompt[$b].Content) }", $e)
+                    }
+                }
             } catch {
                 $PromptErrors.Add("$b { $($Prompt[$b].Content) }", $_)
             }
@@ -72,12 +78,16 @@ function Write-PowerlinePrompt {
             $null = $builder.Append($Block.ToString($true, $Neighbor.BackgroundColor, $CacheKey))
         }
         $result = $builder.ToString()
-        # This is the fastest way to count characters in PowerShell.
+        # This is the fastest way to count lines in PowerShell.
         $extraLineCount = $result.Split("`n").Count
+
+        [string]$PromptErrorString = if (-not $Script:PowerLineConfig.HideErrors) {
+            WriteExceptions $PromptErrors
+        }
 
         # At the end, output everything as one single string
         # create the number of lines we need for output up front:
-        ("`n" * $extraLineCount) + ("$([char]27)M" * $extraLineCount) + $result
+        ("`n" * $extraLineCount) + ("$([char]27)M" * $extraLineCount) + $PromptErrorString + $result
         if ($global:LASTEXITCODE) {
             Write-Warning "LASTEXITCODE set in PowerLinePrompt: $global:LASTEXITCODE"
         }
