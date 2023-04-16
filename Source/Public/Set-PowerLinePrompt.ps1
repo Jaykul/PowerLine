@@ -97,6 +97,7 @@ function Set-PowerLinePrompt {
         [string]$PSReadLineContinuationPromptColor
     )
     begin {
+        Write-Host "Set-PowerLinePrompt"
         if ($null -eq $script:OldPrompt) {
             $script:OldPrompt = $function:global:prompt
             $MyInvocation.MyCommand.Module.OnRemove = {
@@ -105,6 +106,9 @@ function Set-PowerLinePrompt {
         }
 
         $Configuration = Import-Configuration -ErrorAction SilentlyContinue
+        # Switches have a (non-null) default value, so we need to set them in case they were not passed explicitly
+        $Configuration.HideErrors = $HideErrors
+        $Configuration.SetCurrentDirectory = $SetCurrentDirectory
 
         # Strip common parameters to avoid adding nonsense to the object
         foreach ($name in [System.Management.Automation.PSCmdlet]::CommonParameters + @("Save", "NoBackground", "PowerLineFont")) {
@@ -112,6 +116,7 @@ function Set-PowerLinePrompt {
         }
 
         [PowerLineTheme]$Local:PowerLineConfig = $Configuration | Update-Object $PSBoundParameters
+
 
         # Set the default cap before we cast prompt blocks
         if ($NoBackground) {
