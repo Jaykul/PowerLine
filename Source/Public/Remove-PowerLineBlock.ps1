@@ -11,9 +11,9 @@ function Remove-PowerLineBlock {
         .Example
             Show-ElapsedTime | Add-PowerLineBlock
 
-            Remove-PowerLineBlock { Show-ElapsedTime }
+            Show-ElapsedTime | Remove-PowerLineBlock
 
-            Removes the Show-ElapsedTime block from the prompt
+            Adds and then removes the Show-ElapsedTime block from the prompt
     #>
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidDefaultValueForMandatoryParameter', "Index",
         Justification = 'This rule should ignore parameters that are only mandatory in some parameter sets')]
