@@ -17,12 +17,12 @@ function Add-PowerLineBlock {
             # It calls Show-Elapsed to show the duration of the last command as the text of the block
             # It uses New-TerminalBlock to control the color so that it's highlighted in red if there is an error, but otherwise in dark blue (or yellow if it's an elevated host).
     #>
-    [CmdletBinding(DefaultParameterSetName="InputObject")]
+    [CmdletBinding()]
     param(
         # The text, object, or scriptblock to show as output
-        [Parameter(Position=0, Mandatory, ValueFromPipeline, ParameterSetName = "InputObject")]
+        [Parameter(Position = 0, Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [Alias("Text", "Content")]
-        [PoshCode.TerminalBlock]$InputObject,
+        $InputObject,
 
         # The position to insert the InputObject at, by default, inserts in the same place as the last one
         [int]$Index = -1,
@@ -38,6 +38,9 @@ function Add-PowerLineBlock {
         Write-Debug "Add-PowerLineBlock $InputObject"
         if(!$PSBoundParameters.ContainsKey("Index")) {
             $Index = $Script:PowerLineConfig.DefaultAddIndex++
+        }
+        if ($InputObject -isnot [PoshCode.TerminalBlock]) {
+            $InputObject = New-TerminalBlock $InputObject
         }
 
         # If force is true, it doesn't matter what Skip is. Otherwise, calculate Skip
