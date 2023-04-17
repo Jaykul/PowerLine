@@ -58,24 +58,32 @@ function Write-PowerlinePrompt {
         # Output them all, using the color of adjacent blocks for PowerLine's classic cap "overlap"
         $builder = [System.Text.StringBuilder]::new()
         for ($b = 0; $b -lt $Prompt.Count; $b++) {
-            $Neighbor = $null
+            $LeftNeighbor = $RightNeighbor = $null
             $Block = $Prompt[$b]
 
+            $p = $b
+            # Your left neighbor is the previous non-empty block with the same alignment as you
+            while (--$p -ge 0 -and $Block.Alignment -eq $Prompt[$p].Alignment -and $Prompt[$p].Content -isnot [PoshCode.SpecialBlock]) {
+                if ($Prompt[$p].Cache) {
+                    $LeftNeighbor = $Prompt[$p]
+                    break;
+                }
+            }
             $n = $b
             # Your neighbor is the next non-empty block with the same alignment as you
-            while (++$n -lt $Prompt.Count -and $Block.Alignment -eq $Prompt[$n].Alignment) {
+            while (++$n -lt $Prompt.Count -and $Block.Alignment -eq $Prompt[$n].Alignment -and $Prompt[$n].Content -isnot [PoshCode.SpecialBlock]) {
                 if ($Prompt[$n].Cache) {
-                    $Neighbor = $Prompt[$n]
+                    $RightNeighbor = $Prompt[$n]
                     break;
                 }
             }
 
-            # Don't render spacers, if they don't have a real (non-space) neighbors
-            if ($Block.Content -eq "Spacer" -and (!$Neighbor.Cache -or $Neighbor.Content -eq "Spacer")) {
+            # Don't render spacers, if they don't have a real (non-space) neighbors on the "right" side
+            if ($Block.Content -eq "Spacer" -and (!$RightNeighbor.Cache -or $RightNeighbor.Content -eq "Spacer")) {
                 continue
             }
 
-            $null = $builder.Append($Block.ToString($true, $Neighbor.BackgroundColor, $CacheKey))
+            $null = $builder.Append($Block.ToString($true, $LeftNeighbor.BackgroundColor, $RightNeighbor.BackgroundColor, $CacheKey))
         }
         $result = $builder.ToString()
         # This is the fastest way to count lines in PowerShell.
