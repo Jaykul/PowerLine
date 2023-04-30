@@ -5,7 +5,7 @@ function Remove-PowerLineBlock {
         .Description
             This function exists primarily to ensure that modules are able to clean up the prompt easily when they're removed
         .Example
-            $Prompt[-1] | Remove
+            Remove-PowerLineBlock -Index -1
 
             Removes the last block from the prompt
         .Example
@@ -49,7 +49,8 @@ function Remove-PowerLineBlock {
                 }
             }
         } elseif ($Index -lt 0) {
-            $Index = $Global:Prompt.Count - $Index
+            # We are ADDING the negative number to subract.
+            $Index = $Global:Prompt.Count + $Index
         }
 
         if ($Index -ge 0) {
@@ -60,6 +61,5 @@ function Remove-PowerLineBlock {
         } else {
             Write-Error "Could not find $InputObject to remove from the prompt."
         }
-
     }
 }
