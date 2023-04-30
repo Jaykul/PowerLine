@@ -6,12 +6,15 @@ function WriteExceptions {
     )
     $ErrorString = ""
 
-    if($PromptErrors.Count -gt 0) {
+    if ($PromptErrors.Count -gt 0) {
         $global:PromptErrors = [ordered]@{} + $ScriptExceptions
-        Write-Warning "Exception thrown from prompt block. Check `$PromptErrors. To suppress this message, Set-PowerLine -HideError"
-        #$PromptErrors.Insert(0, "0 Preview","Exception thrown from prompt block. Check `$PromptErrors:`n")
-        if(@($Host.PrivateData.PSTypeNames)[0] -eq "Microsoft.PowerShell.ConsoleHost+ConsoleColorProxy") {
-            foreach($e in $ScriptExceptions.Values) {
+        Write-Warning "$($global:PromptErrors.Count) error(s) in prompt. Check `$PromptErrors for details. To ignore, Set-PowerLinePrompt -HideError"
+        if ((Test-Path Variable:\PSStyle) -and $PSStyle.Formatting.Error) {
+            foreach ($e in $ScriptExceptions.Values) {
+                $ErrorString += $PSStyle.Formatting.Error + "$e" + $PSStyle.Reset + "`n"
+            }
+        } elseif (@($Host.PrivateData.PSTypeNames)[0] -eq "Microsoft.PowerShell.ConsoleHost+ConsoleColorProxy") {
+            foreach ($e in $ScriptExceptions.Values) {
                 $ErrorString += [PoshCode.Pansies.Text]@{
                     ForegroundColor = $Host.PrivateData.ErrorForegroundColor
                     BackgroundColor = $Host.PrivateData.ErrorBackgroundColor
@@ -20,7 +23,7 @@ function WriteExceptions {
                 $ErrorString += "`n"
             }
         } else {
-            foreach($e in $ScriptExceptions) {
+            foreach ($e in $ScriptExceptions) {
                 $ErrorString += [PoshCode.Pansies.Text]@{
                     ForegroundColor = "Red"
                     BackgroundColor = "Black"
