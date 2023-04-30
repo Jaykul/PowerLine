@@ -5,7 +5,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: GitVersion
         id: gitversion
         uses: PoshCode/Actions/gitversion@v1
@@ -18,22 +18,22 @@ jobs:
           version: ${{ steps.gitversion.outputs.LegacySemVerPadded }}
           destination: ${{github.workspace}}/output
       - name: Upload Build Output
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Modules
           path: ${{github.workspace}}/output
       - name: Upload Tests
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: PesterTests
           path: ${{github.workspace}}/Specs
       - name: Upload RequiredModules.psd1
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: RequiredModules
           path: ${{github.workspace}}/RequiredModules.psd1
       - name: Upload PSScriptAnalyzerSettings.psd1
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ScriptAnalyzer
           path: ${{github.workspace}}/PSScriptAnalyzerSettings.psd1
@@ -46,7 +46,7 @@ jobs:
     needs: build
     steps:
       - name: Download Build Output
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
       - uses: PoshCode/Actions/install-requiredmodules@v1
       - uses: PoshCode/Actions/pester@v1
         with:
@@ -54,7 +54,7 @@ jobs:
           moduleUnderTest: PowerLine
           additionalModulePaths: ${{github.workspace}}/Modules
       - name: Upload Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Pester Results
           path: ${{github.workspace}}/*.xml
