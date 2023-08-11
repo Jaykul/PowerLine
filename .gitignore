@@ -11,3 +11,4 @@
 # ignore visual studio artifacts
 *.suo
 /.vs/
+*.code-workspace
