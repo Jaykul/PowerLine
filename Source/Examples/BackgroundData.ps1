@@ -1,6 +1,6 @@
 #requires -module @{ModuleName='PowerLine';ModuleVersion='3.4.0'}
-
-Get-Job -Name WeatherQuery -EA 0| Stop-Job -PassThru | Remove-Job
+# If this is re-run, clear up the old job:
+Get-Job -Name WeatherQuery -EA 0 | Stop-Job -PassThru | Remove-Job
 $global:WeatherJob = Start-ThreadJob -Name WeatherQuery {
     while ($true) {
         Invoke-RestMethod "wttr.in?format=%c%t"
@@ -8,26 +8,32 @@ $global:WeatherJob = Start-ThreadJob -Name WeatherQuery {
     }
 }
 
-Set-PowerLinePrompt -SetCurrentDirectory -PowerLineFont -Title {
+Set-PowerLinePrompt -SetCurrentDirectory -PowerLineFont -SimpleTransient -Title {
     -join @(
         if (Test-Elevation) { "Admin: " }
         "PS" + $PSVersionTable.PSVersion.Major + " "
         Convert-Path $pwd
     )
-} -Colors @(
-    "SteelBlue4", "DodgerBlue3", "DeepSkyBlue2", "SkyBlue2", "SteelBlue2", "LightSkyBlue1"
-) -Prompt @(
-    # Consume the output of the job:
-    # In this case, I only want the most recent output, so [-1]
-    { $WeatherJob.Output[-1] }
-    { "&Gear;" * $NestedPromptLevel }
-    { $pwd.Drive.Name }
-    { Split-Path $pwd -Leaf }
-    {
+} -Prompt @(
+    Show-ElapsedTime -Autoformat -BackgroundColor 00688B -ForegroundColor White
+    New-TerminalBlock -Newline
+    New-TerminalBlock {
+        # Consume the output of the job:
+        # In this case, I only want the most recent output, so [-1]
+        $global:WeatherJob.Output[-1]
+    } -BackgroundColor 00BFFF -ForegroundColor Black
+    Show-NestedPromptLevel -RepeatCharacter "&Gear;" -Postfix " " -BackgroundColor 473C8B -ForegroundColor White
+    Show-Path -HomeString "&House;" -Separator '' -Bg B23AEE -Fg White
+    Show-PoshGitStatus -Bg Gray30
+    New-TerminalBlock -Spacer
+    Show-Date -Bg 7D26CD
+    New-TerminalBlock -Newline
+    # This is basically Show-HistoryId, but I want to use it as the last part of my prompt, and have PSReadLine updated.
+    New-TerminalBlock  {
         # In order for PSReadLine to work properly, it needs the $PromptText set to match the end of my prompt...
         $MyInvocation.HistoryId
 
-        # Because I don't have a "Write-TerminalBlock" I am doing all this by hand:
+        # Because I don't have a "Write-TerminalBlock" I am doing all this by hand:This is
         # Need to draw ">ID>" but the > each have to be FOREGROUND = the BACKGROUND of the previous block
         # AND the color changes depending on whether nestedPrompt rendered or not
         [string]$CS = [PoshCode.Pansies.Entities]::ExtendedCharacters["ColorSeparator"]
@@ -39,8 +45,5 @@ Set-PowerLinePrompt -SetCurrentDirectory -PowerLineFont -Title {
             ($thisBg + $previousFg + $CS + $fg:white + $MyInvocation.HistoryId + $thisFg + $bg:clear + $CS)
             ($bg:Gray44 + $previousFg + $CS + $fg:white + $MyInvocation.HistoryId + $fg:Gray44 + $bg:clear + $CS)
         )
-    }
-    { "`t" }
-    { Show-ElapsedTime -Trim }
-    { Get-Date -Format "T" }
+    } -BackgroundColor SteelBlue2 -ForegroundColor Black
 )
