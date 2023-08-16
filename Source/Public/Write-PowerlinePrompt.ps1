@@ -1,9 +1,7 @@
 function Write-PowerlinePrompt {
     [CmdletBinding()]
     [OutputType([string])]
-    param(
-        [switch]$NoCache
-    )
+    param()
 
     try {
         # Stuff these into static properties in case I want to use them from C#
@@ -33,14 +31,19 @@ function Write-PowerlinePrompt {
             }
         }
 
-        if ($Script:PowerLineConfig.SimpleTransient -and $MyInvocation.HistoryId -eq $Script:LastHistoryId) {
-            # if we're transient, and SimpleTransient, just output the last line
-            $LastLine = 1 + $Prompt.FindLastIndex([Predicate[PoshCode.TerminalBlock]] { $args[0].Content -eq "NewLine" })
-            $local:Prompt = $Prompt.GetRange($LastLine, $Prompt.Count - $LastLine)
+        if ($MyInvocation.HistoryId -eq $Script:LastHistoryId) {
+            if ($Script:PowerLineConfig.RepeatPrompt -eq "LastLine") {
+                # Repeat only the last line
+                $LastLine = 1 + $Prompt.FindLastIndex([Predicate[PoshCode.TerminalBlock]] { $args[0].Content -in "NewLine", "`n" })
+                $local:Prompt = $Prompt.GetRange($LastLine, $Prompt.Count - $LastLine)
+            } elseif ($Script:PowerLineConfig.RepeatPrompt -eq "LastBlock") {
+                # Repeat only the last block
+                $local:Prompt = $Prompt.GetRange($Prompt.Count - 1, 1)
+            }
         }
 
         $CacheKey = $Script:LastHistoryId = $MyInvocation.HistoryId
-        if ($NoCache -or $Script:PowerLineConfig.NoCache) {
+        if ($Script:PowerLineConfig.RepeatPrompt -eq "Recalculate") {
             $CacheKey = $null
         }
 
@@ -106,6 +109,22 @@ function Write-PowerlinePrompt {
             }
 
             $null = $builder.Append($Block.ToString($PreviousNeighbor.BackgroundColor, $NextNeighbor.BackgroundColor, $CacheKey))
+        }
+
+        if ($Colors = $PowerLineConfig.PSReadLineErrorColor) {
+            $DefaultColor, $Replacement = if ($Colors.Count -eq 1) {
+                $Prompt.BackgroundColor.Where({$_},"Last",1)
+                $Colors[0]
+            } else {
+                $Colors[0]
+                $Colors[-1]
+            }
+
+            $LastLine = $builder.ToString().Split("`n")[-1]
+            Set-PSReadLineOption -PromptText @(
+                $LastLine
+                $LastLine -replace ([regex]::escape($DefaultColor.ToVt())), $Replacement.ToVt() -replace ([regex]::escape($DefaultColor.ToVt($true))), $Replacement.ToVt($true)
+            )
         }
 
         # At the end, output everything that's left

@@ -13,8 +13,7 @@ function Get-PowerLineTheme {
 
     if (Get-Command Get-PSReadLineOption) {
         $PSReadLineOptions = Get-PSReadLineOption
-        # PromptText and ContinuationPrompt can have colors in them
-        $Configuration.PSReadLinePromptText = $PSReadLineOptions.PromptText
+        # ContinuationPrompt can have colors in them
         $Configuration.PSReadLineContinuationPrompt = $PSReadLineOptions.ContinuationPrompt
         # If the ContinuationPrompt has color in it, this is irrelevant, but keep it anyway
         $Configuration.PSReadLineContinuationPromptColor = $PSReadLineOptions.ContinuationPromptColor

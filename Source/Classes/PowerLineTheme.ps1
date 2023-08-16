@@ -1,16 +1,16 @@
 using namespace PoshCode
 class PowerLineTheme {
+    [TerminalBlock[]]$Prompt
     [BlockCaps]$DefaultCaps
     [string]$DefaultSeparator
-    [TerminalBlock[]]$Prompt
+    [scriptblock]$Title
+    [bool]$SetCurrentDirectory
+    [bool]$HideErrors
+    [string]$RepeatPrompt
+    [RgbColor[]]$PSReadLineErrorColor
     [string]$PSReadLineContinuationPrompt
     [string]$PSReadLineContinuationPromptColor
     [string[]]$PSReadLinePromptText
-    [bool]$SetCurrentDirectory
-    [bool]$HideErrors
-    [bool]$SimpleTransient
-    [bool]$NoCache
-    [scriptblock]$Title
     [int]$DefaultAddIndex = -1
 }
 
@@ -23,10 +23,9 @@ Add-MetadataConverter @{
     )
     PSReadLineContinuationPrompt = '$($_.PSReadLineContinuationPrompt)'
     PSReadLineContinuationPromptColor = '$($_.PSReadLineContinuationPromptColor)'
-    PSReadLinePromptText = '$($_.PSReadLinePromptText -join "','")'
+    PSReadLineErrorColor = '$($_.PSReadLineErrorColor -join "','")'
     HideErrors = $(if ($_.HideErrors) { '$true' } else { '$false' })
-    SimpleTransient = $(if ($_.SimpleTransient) { '$true' } else { '$false' })
-    NoCache = $(if ($_.NoCache) { '$true' } else { '$false' })
+    RepeatPrompt = '$(if ($_.RepeatPrompt) { $_.RepeatPrompt } else { 'CachedPrompt' })'
     SetCurrentDirectory = $(if ($_.SetCurrentDirectory) { '$true' } else { '$false' })$(
     if (![string]::IsNullOrWhiteSpace($_.Title)) {
         "`n    Title = ScriptBlock @'`n$($_.Title)`n'@"

@@ -13,19 +13,16 @@
                                 <ScriptBlock>
                                     $CurrentTheme = Get-PowerLineTheme
                                     # temporarily change the theme so we can use our functions to _render_ this one:
-                                    $_ | Set-PowerLineTheme
-                                    "$( Write-PowerLinePrompt )`n`n$(
-                                      $PSRL = $_.PSReadLinePromptText
-                                      @(if ($PSRL.Count -ge 2) {
-                                        "PSReadLine PromptText:"
-                                        $PSRL[0] + "$([char]27)[0m'Normal Prompt'"
-                                        $PSRL[1] + "$([char]27)[0m'Incomplete"
-                                      }) -join "`n"
-                                      if ($_.PSReadLineContinuationPrompt) {
-                                        "`n" + $_.PSReadLineContinuationPromptColor + $_.PSReadLineContinuationPrompt + "$([char]27)[0mContinuation..."
-                                      }
-                                    )"
-                                    $CurrentTheme | Set-PowerLineTheme
+                                    try {
+                                      $_ | Set-PowerLineTheme
+                                      "$( Write-PowerLinePrompt )$(
+                                        if ($_.PSReadLineContinuationPrompt) {
+                                          "`n" + $_.PSReadLineContinuationPromptColor + $_.PSReadLineContinuationPrompt + "$([char]27)[0mContinuation..."
+                                        }
+                                      )"
+                                    } finally {
+                                      $CurrentTheme | Set-PowerLineTheme
+                                    }
                                 </ScriptBlock>
                             </ExpressionBinding>
                         </CustomItem>

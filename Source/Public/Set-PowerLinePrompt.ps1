@@ -37,13 +37,14 @@ function Set-PowerLinePrompt {
         [Parameter(ParameterSetName = "PowerLine", Mandatory)]
         [switch]$PowerLineFont,
 
-        # The cap character(s) that will be used (by default) on normal, left-aligned blocks
+        # PowerLine uses TerminalBlocks, and the DefaultCaps parameter sets [PoshCode.TerminalBlocks]::DefaultCaps
+        # These are the cap character(s) that will be used (by default) on blocks
         # Pass two characters: the first for the left side, the second for the right side.
         [Parameter(ParameterSetName = "Manual", ValueFromPipelineByPropertyName)]
         [PoshCode.BlockCaps]$DefaultCaps,
 
-        # The Left pointing and Right pointing separator characters are used when a script-based PowerLine block outputs multiple objects
-        # Pass two strings. The first for blocks that are Left-aligned, the second for right-aligned blocks, like: "",""
+        # PowerLine uses TerminalBlocks, and the DefaultSeparator parameter sets [PoshCode.TerminalBlocks]::DefaultSeparator
+        # The separator character is used by some TerminalBlocks to separate multiple objects (like a path separator)
         [Parameter(ParameterSetName = "Manual", ValueFromPipelineByPropertyName)]
         [Alias("Separator")]
         [string]$DefaultSeparator,
@@ -71,23 +72,26 @@ function Set-PowerLinePrompt {
         [Parameter(ValueFromPipelineByPropertyName)]
         [switch]$HideErrors,
 
-        # If set, when the prompt is run multiple times without a command (e.g. pressing enter repeatedly, or hitting Ctrl+C)
-        # The prompt will render only the PSReadlinePromptText, and not the full prompt
+        # How to render repeated prompts. A prompt is considered a repeat if it's run multiple times without a command,
+        # such as when pressing enter repeatedly, or hitting Ctrl+C or Ctrl+L (any time the $MyInvcation.HistoryId does not change)
+        #
+        # By default, PowerLine uses "CachedPrompt" which repeats the whole prompt, but doesn't re-run the prompt blocks.
+        #
+        # You can choose to render only the last block, or the last line of the prompt, or to Recalculate the whole prompt.
         [Parameter(ValueFromPipelineByPropertyName)]
-        [switch]$SimpleTransient,
+        [ValidateSet("LastBlock", "LastLine", "CachedPrompt", "Recalculate")]
+        [string]$RepeatPrompt,
 
-        # If set, disables caching of output from the prompt blocks.
-        # Caching only affects blocks when you render the same prompt multiple times
-        # (i.e. pressing enter multiple times, or pressing Ctrl+C or Ctrl+L), but
-        # you may want to disable caching if you do that regularly and you have things
-        # in your prompt that change externally while you're not using your terminal, like the time, or git status, etc.
-        [switch]$NoCache,
-
-        # When there's a parse error, PSReadLine changes a part of the prompt...
-        # Use this option to override PSReadLine by either specifying the characters it should replace, or by specifying both the normal and error strings.
-        # If you specify two strings, they should both be the same length (ignoring escape sequences)
+        # When there's a parse error, PSReadLine changes a part of the prompt based on it's PromptText configuration.
+        # This setting causes PowerLine to update the PSReadLiine PromptText on each run.
+        #
+        # By default, if the last prompt block has a background color, it will be set to tomato red (otherwise, the foreground color)
+        # If you pass just one color, that color will be used instead of tomato red.
+        # If you pass a pair of colors, the first will be replaced with the second throughout the entire last line of the prompt
+        #
+        # To disable this feature, pass an empty array, and PowerLine will not change the PromptText
         [Parameter(ValueFromPipelineByPropertyName)]
-        [string[]]$PSReadLinePromptText,
+        [RgbColor[]]$PSReadLineErrorColor,
 
         # When you type a command that requires a second line (like if you type | and hit enter)
         # This is the prompt text. Can be an empty string. Can be anything, really.
@@ -110,7 +114,7 @@ function Set-PowerLinePrompt {
         }
 
         # Switches have a (non-null) default value, so we need to set them in case they were not passed explicitly
-        $Configuration = Import-Configuration -ErrorAction SilentlyContinue| Update-Object @{
+        $Configuration = Import-Configuration -ErrorAction SilentlyContinue | Update-Object @{
             HideErrors = $HideErrors
             SetCurrentDirectory = $SetCurrentDirectory
         }
@@ -181,7 +185,6 @@ function Set-PowerLinePrompt {
 
         Write-Verbose "Setting global:Prompt"
         # We want to support modifying the global:prompt variable outside this function
-        [System.Collections.Generic.List[PoshCode.TerminalBlock]]$global:Prompt = `
         [PoshCode.TerminalBlock[]]$PowerLineConfig.Prompt = @(
             if ($PSBoundParameters.ContainsKey("Prompt")) {
                 Write-Verbose "Setting global:Prompt from prompt parameter"
@@ -209,6 +212,13 @@ function Set-PowerLinePrompt {
                 $global:Prompt
             }
         )
+        if ($NoBackground) {
+            $PowerLineConfig.Prompt | ForEach-Object {
+                $_.BackgroundColor = $null
+            }
+        }
+
+        [System.Collections.Generic.List[PoshCode.TerminalBlock]]$global:Prompt = $PowerLineConfig.Prompt
 
         if ($null -eq $PowerLineConfig.DefaultAddIndex) {
             $PowerLineConfig.DefaultAddIndex    = -1
@@ -218,10 +228,6 @@ function Set-PowerLinePrompt {
 
         if (Get-Module PSReadLine) {
             $Options = @{}
-            if ($PowerLineConfig.PSReadLinePromptText) {
-                $Options["PromptText"] = $PowerLineConfig.PSReadLinePromptText
-            }
-
             if ($PowerLineConfig.PSReadLineContinuationPrompt) {
                 $Options["ContinuationPrompt"] = $PowerLineConfig.PSReadLineContinuationPrompt
             }

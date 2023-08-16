@@ -1,5 +1,5 @@
 ConvertFrom-Metadata @'
-(PowerLineTheme @{
+(PSObject @{
     DefaultCaps = '', ''
     DefaultSeparator = ''
     Prompt = @(
@@ -18,10 +18,8 @@ ConvertFrom-Metadata @'
     )
     PSReadLineContinuationPrompt = '▌ '
     PSReadLineContinuationPromptColor = '[38;2;99;184;255m'
-    PSReadLinePromptText = '[48;2;99;184;255m[38;2;255;255;255m[49m[38;2;99;184;255m[0m','[48;2;139;34;82m[38;2;255;255;255m[49m[38;2;139;34;82m[0m'
     HideErrors = $false
-    SimpleTransient = $false
-    NoCache = $false
+    RepeatPrompt = 'LastLine'
     SetCurrentDirectory = $false
 })
 '@ | Set-PowerLinePrompt
