@@ -1,4 +1,9 @@
-#requires -module @{ModuleName='PowerLine';ModuleVersion='3.4.0'}
+#requires -module @{ModuleName='PowerLine';ModuleVersion='4.0.0'}
+param(
+    $StartColor = "DeepSkyBlue",
+    $EndColor = "SlateBlue4"
+)
+$Colors = Get-Gradient $StartColor $EndColor -steps 8 | Get-Complement -Passthru -BlackAndWhite
 
 # If this is re-run, clear up the old job, and start a new one
 Get-Job -Name WeatherQuery -ErrorAction Ignore | Stop-Job -PassThru | Remove-Job
@@ -9,11 +14,9 @@ $null = Start-ThreadJob -Name WeatherQuery {
     }
 }
 
-$ContinuationPromptColor = [RgbColor]"DeepSkyBlue"
+$ContinuationPromptColor = $Colors[0]
 
-Set-PSReadLineOption -ContinuationPrompt █ -Colors @{ ContinuationPrompt = $ContinuationPromptColor.ToVt() }
-
-Set-PowerLinePrompt -SetCurrentDirectory -PowerLineFont -RepeatPrompt LastLine -PSReadlineErrorColor Tomato -Title {
+Set-PowerLinePrompt -SetCurrentDirectory -PowerLineFont -RepeatPrompt LastLine -PSReadlineErrorColor Tomato -PSReadLineContinuationPrompt █ -PSReadLineContinuationPromptColor $Colors[0] -Title {
     -join @(
         if (Test-Elevation) { "Admin: " }
         "PS" + $PSVersionTable.PSVersion.Major + " "
@@ -23,24 +26,18 @@ Set-PowerLinePrompt -SetCurrentDirectory -PowerLineFont -RepeatPrompt LastLine -
     Show-ElapsedTime -Autoformat -Bg White -Fg Black -Prefix "" -Caps '',''
     New-TerminalBlock -Newline
 
-    Show-Date -Format "h\:mm" -Bg DeepSkyBlue -Fg Black
-    Show-JobOutput -Name WeatherQuery -Bg DeepSkyBlue3 -Fg Black
-    Show-NestedPromptLevel -RepeatCharacter "&Gear;" -Postfix " " -Bg DeepSkyBlue4 -Fg White
-    New-TerminalBlock -Spacer
+    Show-Date -Format "h\:mm" -Bg $Colors[2] -Fg $Colors[3]
+    Show-JobOutput -Name WeatherQuery -Bg $Colors[4] -Fg $Colors[5]
+    Show-LocationStack
+    Show-NestedPromptLevel -RepeatCharacter "&Gear;" -Postfix " " -Bg $Colors[6] -Fg $Colors[7]
+    New-TerminalBlock -Spacer -Bg $Colors[6]
 
-    Show-PoshGitStatus -Bg Gray30
-    Show-Path -HomeString "&House;" -Separator '' -Bg SkyBlue4 -Fg White
+    Show-PoshGitStatus -Bg $Colors[8]
+    Show-Path -HomeString "&House;" -Separator '' -Bg $Colors[10] -Fg $Colors[11]
     New-TerminalBlock -Newline
 
-    # This is basically Show-HistoryId, but I want to use it as the last part of my prompt, and have PSReadLine updated.
-    # New-TerminalBlock  {
-    #     # In order for PSReadLine to work properly, it needs the $PromptText set to match the end of my prompt...
-    #     $ContinuationPromptColor = (Get-PSReadLineOption).ContinuationPromptColor
-    #     $fg:Black + ($ContinuationPromptColor -replace "\[3","[4") + "&ColorSeparator;" + $ContinuationPromptColor + $bg:LightSkyBlue + "&ColorSeparator;" + $Fg:Black + $MyInvocation.HistoryId
-
-    # } -BackgroundColor LightSkyBlue -ForegroundColor Black
-    # New-TerminalBlock -Spacer
-    New-TerminalBlock -Content "&ColorSeparator;" -Background $ContinuationPromptColor -Foreground Black
-    Show-HistoryId -Bg LightSkyBlue -Fg Black
+    # This is literally just a decorative chevron to match the continuation prompt
+    New-TerminalBlock -Content "&ColorSeparator;" -Background $Colors[0] -Foreground $colors[13]
+    Show-HistoryId -Bg $Colors[14] -Fg $Colors[15]
 )
 

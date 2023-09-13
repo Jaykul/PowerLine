@@ -1,10 +1,6 @@
 ﻿#requires -Module Pansies, PowerLine
 [CmdletBinding()]param()
 
-Write-Verbose "First we set the default caps"
-[PoshCode.TerminalBlock]::DefaultCaps = "","$([char]0xE0B0)"
-
-Write-Verbose "Then we set the prompt"
 Set-PowerLinePrompt -SetCurrentDirectory -DefaultSeparator "$([char]0xE0B1)" -DefaultCaps "","$([char]0xE0B0)" -Title {
     -join @(
         if (Test-Elevation) {
@@ -23,5 +19,4 @@ Set-PowerLinePrompt -SetCurrentDirectory -DefaultSeparator "$([char]0xE0B1)" -De
     Show-PoshGitStatus -Background 'Gray23'
     Show-Date -Format "h\:mm" -Prefix "🕒" -Background 'Gray23'
     Show-ElapsedTime -Autoformat -Prefix "⏱️" -Background 'Gray47'
-    New-TerminalBlock -DFg 'White' -DBg '#63B8FF' -EFg 'White' -Cap '‍' -Content ''
-) -Verbose -PSReadLineContinuationPrompt '▌ ' -PSReadLineContinuationPromptColor '[38;2;99;184;255m'
+) -PSReadLineContinuationPrompt '▌ ' -PSReadLineContinuationPromptColor '[38;2;99;184;255m'

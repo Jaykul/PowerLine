@@ -1,4 +1,11 @@
-﻿$global:GitPromptSettings = New-GitPromptSettings
+﻿#requires -module @{ModuleName='PowerLine';ModuleVersion='4.0.0'}
+param(
+    $StartColor = "Purple4",
+    $EndColor = "Violet"
+)
+$Color = Get-Gradient $StartColor $EndColor -steps 5 | Get-Complement -Passthru -BlackAndWhite
+
+$global:GitPromptSettings = New-GitPromptSettings
 $global:GitPromptSettings.BeforeStatus = ''
 $global:GitPromptSettings.AfterStatus = ''
 $global:GitPromptSettings.PathStatusSeparator = ''
@@ -13,11 +20,11 @@ Set-PowerLinePrompt -SetCurrentDirectory -PowerLineFont -Title {
         Convert-Path $pwd
     )
 } -Prompt @(
-    New-TerminalBlock -Fg Gray95 -Bg Gray20 -EBg VioletRed4 $MyInvocation.HistoryId
-    Show-ElapsedTime -Trim   # only shows the minimum portion of elapsed time necessary
-    Show-Date -f "HH:mm" # 24-hour format
-    Show-PoshGitStatus
-    Show-Path
+    New-TerminalBlock -Bg $Color[0] -Fg $Color[1] -EBg VioletRed4 $MyInvocation.HistoryId
+    Show-ElapsedTime -Autoformat -Bg $Color[2] -Fg $Color[3] -Prefix "&stopwatch; " # only shows the minimum portion of elapsed time necessary
+    Show-Date -Format "h:mm" -Bg $Color[4] -Fg $Color[5] # 24-hour format
+    Show-PoshGitStatus -Bg "Gray20"
+    Show-Path -Bg $Color[6] -Fg $Color[7]
     New-TerminalBlock -Newline
-    New-TerminalBlock -Fg Gray95 -Bg Gray40 "I ${Fg:Green}&hearts;${Fg:Gray95} PS"
+    New-TerminalBlock -Bg $Color[8] -Fg $Color[9] "I ${Fg:VioletRed4}&hearts;$($Color[9].ToVt()) PS"
 )
