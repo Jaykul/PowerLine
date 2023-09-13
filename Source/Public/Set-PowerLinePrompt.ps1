@@ -130,8 +130,8 @@ function Set-PowerLinePrompt {
 
         # Set the default cap & separator before we cast prompt blocks
         if ($NoBackground) {
-            $PowerLineConfig.DefaultCaps = [PoshCode.TerminalBlock]::DefaultCaps = " "
-            $PowerLineConfig.DefaultSeparator = [PoshCode.TerminalBlock]::DefaultSeparator = " "
+            $PowerLineConfig.DefaultCaps = [PoshCode.TerminalBlock]::DefaultCaps = "", " "
+            $PowerLineConfig.DefaultSeparator = [PoshCode.TerminalBlock]::DefaultSeparator = "/"
         }
 
         # For backward compatibility:
@@ -213,8 +213,8 @@ function Set-PowerLinePrompt {
             }
         )
         if ($NoBackground) {
-            $PowerLineConfig.Prompt | ForEach-Object {
-                $_.BackgroundColor = $null
+            foreach($block in $PowerLineConfig.Prompt){
+                $block.BackgroundColor = $null
             }
         }
 

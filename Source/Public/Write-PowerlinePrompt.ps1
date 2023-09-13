@@ -4,14 +4,10 @@ function Write-PowerlinePrompt {
     param()
 
     try {
-        # Stuff these into static properties in case I want to use them from C#
-        [PoshCode.TerminalBlock]::LastSuccess = $global:?
-        [PoshCode.TerminalBlock]::LastExitCode = $global:LASTEXITCODE
-        $global:LASTEXITCODE = 0
-
         $PromptErrors = [ordered]@{}
 
-        # PowerLinePrompt Features:
+        ### PowerLinePrompt Features:
+        # Title
         if ($Script:PowerLineConfig.Title) {
             try {
                 $Host.UI.RawUI.WindowTitle = [System.Management.Automation.LanguagePrimitives]::ConvertTo( (& $Script:PowerLineConfig.Title), [string] )
@@ -20,6 +16,7 @@ function Write-PowerlinePrompt {
                 Write-Error "Failed to set Title from scriptblock { $($Script:PowerLineConfig.Title) }"
             }
         }
+        # SetCurrentDirectory (for dotnet)
         if ($Script:PowerLineConfig.SetCurrentDirectory) {
             try {
                 # Make sure Windows & .Net know where we are
@@ -31,6 +28,7 @@ function Write-PowerlinePrompt {
             }
         }
 
+        # RepeatPrompt (for speed)
         if ($MyInvocation.HistoryId -eq $Script:LastHistoryId) {
             if ($Script:PowerLineConfig.RepeatPrompt -eq "LastLine") {
                 # Repeat only the last line
@@ -41,13 +39,12 @@ function Write-PowerlinePrompt {
                 $local:Prompt = $Prompt.GetRange($Prompt.Count - 1, 1)
             }
         }
-
         $CacheKey = $Script:LastHistoryId = $MyInvocation.HistoryId
         if ($Script:PowerLineConfig.RepeatPrompt -eq "Recalculate") {
             $CacheKey = $null
         }
 
-        # invoke them all, to find out whether they have content
+        ### Invoke the prompt blocks (before we start outputting anything), to find out whether they have content
         $PromptErrors = [ordered]@{}
         for ($b = 0; $b -lt $Prompt.Count; $b++) {
             try {
@@ -67,15 +64,14 @@ function Write-PowerlinePrompt {
             WriteExceptions $PromptErrors
         }
 
-        # Output them all, using the color of adjacent blocks for PowerLine's classic cap "overlap"
+        ### Output the prompt blocks, using the color of adjacent blocks for PowerLine's classic cap "overlap"
         $builder = [System.Text.StringBuilder]::new($PromptErrorString)
         # create the number of lines we need for output up front:
         $extraLineCount = $Prompt.Where{ $_.Content -eq "NewLine" }.Count
-
         $null = $builder.Append("`n" * $extraLineCount)
         $null = $builder.Append("$([char]27)M" * $extraLineCount)
         $rightAlign = $false
-        $EOL = Get-CursorPosition
+
         # Add-Content -Value "BEFORE $($extraLineCount+1) line prompt: $EOL" -Path $HOME\PowerLine.log
         for ($b = 0; $b -lt $Prompt.Count; $b++) {
             $PreviousNeighbor = $NextNeighbor = $null
@@ -120,11 +116,13 @@ function Write-PowerlinePrompt {
                 $Colors[-1]
             }
 
-            $LastLine = $builder.ToString().Split("`n")[-1]
-            Set-PSReadLineOption -PromptText @(
-                $LastLine
-                $LastLine -replace ([regex]::escape($DefaultColor.ToVt())), $Replacement.ToVt() -replace ([regex]::escape($DefaultColor.ToVt($true))), $Replacement.ToVt($true)
-            )
+            if ($DefaultColor -and $Replacement) {
+                $LastLine = $builder.ToString().Split("`n")[-1]
+                Set-PSReadLineOption -PromptText @(
+                    $LastLine
+                    $LastLine -replace ([regex]::escape($DefaultColor.ToVt())), $Replacement.ToVt() -replace ([regex]::escape($DefaultColor.ToVt($true))), $Replacement.ToVt($true)
+                )
+            }
         }
 
         # At the end, output everything that's left
