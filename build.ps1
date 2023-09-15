@@ -34,18 +34,7 @@ try {
     $null = $PSBoundParameters.Remove("SkipBinaryBuild")
     $Module = Build-Module @PSBoundParameters -Passthru
 
-    $Folder = Split-Path $Module.Path
-
-    if (!$SkipBinaryBuild) {
-        Write-Host "## Compiling binary module" -ForegroundColor Cyan
-
-        # dotnet restore
-        dotnet publish -c $Configuration -o "$($Folder)\lib" | Write-Host -ForegroundColor DarkGray
-        # We don't need to ship any of the System DLLs because they're all in PowerShell
-        Get-ChildItem $Folder -Filter System.* -Recurse | Remove-Item
-    }
-
-    $Folder
+    Split-Path $Module.Path
 
 } finally {
     Pop-Location -StackName BuildModuleScript

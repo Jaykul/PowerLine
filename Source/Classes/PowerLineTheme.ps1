@@ -19,7 +19,7 @@ Add-MetadataConverter @{
     DefaultCaps = '$($_.DefaultCaps.Left)', '$($_.DefaultCaps.Right)'
     DefaultSeparator = '$($_.DefaultSeparator)'
     Prompt = @(
-        $($_.Prompt.ToPsScript() -join "`n        ")
+        $($_.Prompt.ToPSMetadata() -join "`n        ")
     )
     PSReadLineContinuationPrompt = '$($_.PSReadLineContinuationPrompt)'
     PSReadLineContinuationPromptColor = '$($_.PSReadLineContinuationPromptColor)'
