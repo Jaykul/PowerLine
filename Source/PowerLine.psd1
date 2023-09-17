@@ -40,11 +40,11 @@ FormatsToProcess = @("PowerLine.format.ps1xml")
 NestedModules = @()
 
 RequiredModules = @(
+    @{ModuleName="TerminalBlocks"; ModuleVersion="2.0.0"}
     # Make sure we get the fixed version of Metadata
-    @{ModuleName="TerminalBlocks"; ModuleVersion="1.1.0"}
-    @{ModuleName="Metadata";       ModuleVersion="1.5.5"}
-    @{ModuleName="Configuration";  ModuleVersion="1.5.1"}
-    @{ModuleName="Pansies";        ModuleVersion="2.4.0"}
+    @{ModuleName="Metadata";       ModuleVersion="1.5.7"}
+    @{ModuleName="Configuration";  ModuleVersion="1.6.0"}
+    @{ModuleName="Pansies";        ModuleVersion="2.6.1"}
 )
 # RequiredAssemblies = "lib\PowerLine.dll"
 

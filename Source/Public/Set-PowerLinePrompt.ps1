@@ -125,8 +125,30 @@ function Set-PowerLinePrompt {
         }
     }
     process {
+        try {
+            [PowerLineTheme]$Local:PowerLineConfig = $Configuration | Update-Object $PSBoundParameters
+        } catch {
+            $ConfigPath = Join-Path (Get-ConfigurationPath) "Configuration.psd1"
+            $Date = Get-Date -f "yyyyMMdd"
+            $NewPath = [IO.Path]::ChangeExtension($ConfigPath, "$Date.psd1")
+            $Index = 0
+            while(Test-Path $NewPath) {
+                $Index++
+                $NewPath = [IO.Path]::ChangeExtension($ConfigPath, "$Date.$Index.psd1")
+            }
+            Write-Warning "Failed to import existing config, creating default prompt. Moved old '$ConfigPath' to '$NewPath'"
+            Move-Item $ConfigPath $NewPath -Force
 
-        [PowerLineTheme]$Local:PowerLineConfig = $Configuration | Update-Object $PSBoundParameters
+            try {
+                # Redo the import, so they get configuration from our default file
+                [PowerLineTheme]$Local:PowerLineConfig = Import-Configuration -ErrorAction SilentlyContinue | Update-Object @{
+                    HideErrors          = $HideErrors
+                    SetCurrentDirectory = $SetCurrentDirectory
+                } | Update-Object $PSBoundParameters
+            } catch {
+                [PowerLineTheme]$Local:PowerLineConfig = $PSBoundParameters
+            }
+        }
 
         # Set the default cap & separator before we cast prompt blocks
         if ($NoBackground) {

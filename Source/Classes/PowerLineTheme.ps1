@@ -23,7 +23,9 @@ Add-MetadataConverter @{
     )
     PSReadLineContinuationPrompt = '$($_.PSReadLineContinuationPrompt)'
     PSReadLineContinuationPromptColor = '$($_.PSReadLineContinuationPromptColor)'
-    PSReadLineErrorColor = '$($_.PSReadLineErrorColor -join "','")'
+    $(if ($_.PSReadLineErrorColor) {
+        "PSReadLineErrorColor = '$($_.PSReadLineErrorColor -join "','")'"
+    })
     HideErrors = $(if ($_.HideErrors) { '$true' } else { '$false' })
     RepeatPrompt = '$(if ($_.RepeatPrompt) { $_.RepeatPrompt } else { 'CachedPrompt' })'
     SetCurrentDirectory = $(if ($_.SetCurrentDirectory) { '$true' } else { '$false' })$(
