@@ -7,6 +7,7 @@ class PowerLineTheme {
     [bool]$SetCurrentDirectory
     [bool]$HideErrors
     [string]$RepeatPrompt
+    [string]$AutoRefresh
     [RgbColor[]]$PSReadLineErrorColor
     [string]$PSReadLineContinuationPrompt
     [string]$PSReadLineContinuationPromptColor
@@ -27,7 +28,8 @@ Add-MetadataConverter @{
         "PSReadLineErrorColor = '$($_.PSReadLineErrorColor -join "','")'"
     })
     HideErrors = $(if ($_.HideErrors) { '$true' } else { '$false' })
-    RepeatPrompt = '$(if ($_.RepeatPrompt) { $_.RepeatPrompt } else { 'CachedPrompt' })'
+    RepeatPrompt = '$(if ($_.AutoRefresh) { $_.AutoRefresh } elseif ($_.RepeatPrompt) { $_.RepeatPrompt } else { 'CachedPrompt' })'
+    AutoRefresh = '$(if ($_.AutoRefresh) { $_.AutoRefresh })'
     SetCurrentDirectory = $(if ($_.SetCurrentDirectory) { '$true' } else { '$false' })$(
     if (![string]::IsNullOrWhiteSpace($_.Title)) {
         "`n    Title = ScriptBlock @'`n$($_.Title)`n'@"

@@ -72,6 +72,12 @@ function Set-PowerLinePrompt {
         [Parameter(ValueFromPipelineByPropertyName)]
         [switch]$HideErrors,
 
+        # Overrides RepeatPrompt, but also registers a PowerShell.OnIdle event handler to redraw the prompt when PowerShell is idle.
+        #
+        # NOTE: PSReadLine stops the event once something has been typed into the prompt.
+        [ValidateSet("Recalculate", "RecalculateLastLine")]
+        [string]$AutoRefresh,
+
         # How to render repeated prompts. A prompt is considered a repeat if it's run multiple times without a command,
         # such as when pressing enter repeatedly, or hitting Ctrl+C or Ctrl+L (any time the $MyInvcation.HistoryId does not change)
         #
@@ -79,8 +85,8 @@ function Set-PowerLinePrompt {
         #
         # You can choose to render only the last block, or the last line of the prompt, or to Recalculate the whole prompt.
         [Parameter(ValueFromPipelineByPropertyName)]
-        [ValidateSet("LastBlock", "LastLine", "CachedPrompt", "Recalculate")]
-        [string]$RepeatPrompt,
+        [ValidateSet("LastBlock", "LastLine", "CachedPrompt", "Recalculate", "RecalculateLastLine", "RecalculateLastBlock")]
+        [string]$RepeatPrompt = $AutoRefresh,
 
         # When there's a parse error, PSReadLine changes a part of the prompt based on it's PromptText configuration.
         # This setting causes PowerLine to update the PSReadLiine PromptText on each run.
@@ -122,6 +128,20 @@ function Set-PowerLinePrompt {
         # Strip common parameters to avoid adding nonsense to the object
         foreach ($name in [System.Management.Automation.PSCmdlet]::CommonParameters + @("Save", "NoBackground", "PowerLineFont")) {
             $null = $PSBoundParameters.Remove($name)
+        }
+
+        if ($AutoRefresh) {
+            $PSBoundParameters["RepeatPrompt"] = $RepeatPrompt = $AutoRefresh
+            $Redraw = switch ($AutoRefresh) {
+                "Recalculate" {
+                    { Write-Host "`e[$($Prompt.Where{ $_.Content -eq "NewLine" }.Count)A`e[0G$(Write-PowerLinePrompt)" -NoNewline }
+                }
+                "RecalculateLastLine" {
+                    { Write-Host "`e[0G$(Write-PowerLinePrompt)" -NoNewline }
+                }
+            }
+            Get-EventSubscriber -SourceIdentifier PowerShell.OnIdle -ErrorAction Ignore | Unregister-Event
+            $null = Register-EngineEvent -SourceIdentifier PowerShell.OnIdle $Redraw
         }
     }
     process {
@@ -272,5 +292,8 @@ function Set-PowerLinePrompt {
         if($Save -or ($PSBoundParameters.Count -and !(Test-Path (Join-Path (Get-StoragePath) Configuration.psd1)))) {
             Export-PowerLinePrompt
         }
+    }
+    end {
+
     }
 }

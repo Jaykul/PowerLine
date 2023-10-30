@@ -9,28 +9,28 @@ $LineOne = Get-Gradient $LineOneStart $LineOneEnd -steps 8 | Get-Complement -Pas
 $LineTwo = Get-Gradient $LineTwoStart $LineTwoEnd -steps 8 | Get-Complement -Passthru -BlackAndWhite
 
 
-Set-PowerLinePrompt -SetCurrentDirectory -PowerLineFont -Title {
+Set-PowerLinePrompt -SetCurrentDirectory -AutoRefresh RecalculateLastLine -PowerLineFont -Title {
     -join @(
         if (Test-Elevation) { "Administrator: " }
         if ($IsCoreCLR) { "pwsh - " } else { "Windows PowerShell - " }
         Convert-Path $pwd
     )
 } -Prompt @(
-    New-TerminalBlock -Separator ' ' -Content { Update-ZLocation $pwd }
-    Show-ElapsedTime -Autoformat -Prefix "&hourglassdone;" -Bg $LineOne[2] -Fg $LineOne[3]
-    Show-Date -Format "h\:mm" -Prefix "🕒" -Bg $LineOne[4] -Fg $LineOne[5]
-    New-TerminalBlock -Spacer
-
-    Show-KubeContext -Bg $LineOne[8] -Fg $LineOne[9]
-    Show-AzureContext -Prefix "&nf-mdi-azure; " -Bg $LineOne[10] -Fg $LineOne[11]
-    Show-Path -HomeString "&House;" -Separator '' -Depth 3 -Bg $LineOne[12] -Fg $LineOne[13]
-    New-TerminalBlock -Spacer
-    Show-PoshGitStatus -Bg $LineOne[14] -Fg $LineOne[15]
+    New-TerminalBlock -Content { Update-ZLocation $pwd }
+    Show-ElapsedTime -Autoformat -Prefix "&hourglassdone;" -Bg DeepSkyBlue -Fg Black -Caps '', ''
+    New-TerminalBlock -NewLine
     New-TerminalBlock -NewLine
 
-    # This is literally just a decorative chevron to match the continuation prompt
-    New-TerminalBlock -Content "&ColorSeparator;" -Bg $LineTwo[-2] -Fg $LineTwo[0]
-    Show-LocationStack -Bg $LineTwo[2] -Fg $LineTwo[3]
-    Show-NestedPromptLevel -RepeatCharacter "&gear;" -Postfix " " -Bg $LineTwo[4] -Fg $LineTwo[5]
-    Show-HistoryId -Bg $LineTwo[6] -Fg $LineTwo[7]
+    Show-NestedPromptLevel -BackgroundColor Magenta1 -RepeatCharacter "&gear;" -Postfix " "
+    Show-HistoryId -Bg Magenta4 -Fg White
+    New-TerminalBlock -Spacer
+
+    Show-KubeContext -Bg DarkOrchid2 -Fg White
+    Show-AzureContext -Bg Purple3 -Prefix "&nf-mdi-azure; " -Fg White
+    Show-Path -HomeString "&House;" -Separator '' -Bg SlateBlue4 -Fg White -Depth 3
+    New-TerminalBlock -Spacer
+
+    Show-PoshGitStatus -Bg Gray30
+    New-TerminalBlock -NewLine
+    Show-Date -Format "h\:mm" -Bg DeepSkyBlue4 -Fg White
 )

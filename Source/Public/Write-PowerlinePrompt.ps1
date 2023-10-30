@@ -30,17 +30,17 @@ function Write-PowerlinePrompt {
 
         # RepeatPrompt (for speed)
         if ($MyInvocation.HistoryId -eq $Script:LastHistoryId) {
-            if ($Script:PowerLineConfig.RepeatPrompt -eq "LastLine") {
+            if ($Script:PowerLineConfig.RepeatPrompt -match "LastLine") {
                 # Repeat only the last line
                 $LastLine = 1 + $Prompt.FindLastIndex([Predicate[PoshCode.TerminalBlock]] { $args[0].Content -in "NewLine", "`n" })
                 $local:Prompt = $Prompt.GetRange($LastLine, $Prompt.Count - $LastLine)
-            } elseif ($Script:PowerLineConfig.RepeatPrompt -eq "LastBlock") {
+            } elseif ($Script:PowerLineConfig.RepeatPrompt -match "LastBlock") {
                 # Repeat only the last block
                 $local:Prompt = $Prompt.GetRange($Prompt.Count - 1, 1)
             }
         }
         $CacheKey = $Script:LastHistoryId = $MyInvocation.HistoryId
-        if ($Script:PowerLineConfig.RepeatPrompt -eq "Recalculate") {
+        if ($Script:PowerLineConfig.RepeatPrompt -match "Recalculate") {
             $CacheKey = $null
         }
 
